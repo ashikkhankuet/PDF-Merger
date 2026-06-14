@@ -371,6 +371,14 @@
     font-family: "IBM Plex Mono", monospace;
     font-size: 11.5px; color: var(--ink-faint); letter-spacing: .02em;
   }
+  .footnote a {
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color .15s ease;
+  }
+  .footnote a:hover { color: var(--signal); }
+  .footer-links { margin-top: 10px; }
 
   @media (max-width: 560px) {
     body { padding: 32px 14px 72px; }
@@ -474,6 +482,7 @@
   <p><strong>What's the file size limit?</strong> There's no strict limit, but very large files may take longer to process.</p>
   <p><strong>Do I need to create an account?</strong> No account needed. Just drag, merge, and download.</p>
     <p class="footnote">All processing happens in your browser via pdf-lib · v1.0</p>
+    <p class="footnote footer-links"><a href="/privacy.html">Privacy Policy</a></p>
   </div>
 
 <script>
