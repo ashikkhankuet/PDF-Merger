@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PDFMERGE — local PDF merge console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<!-- pdf-lib: runs entirely in the browser, no upload -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root {
+    --paper:      #F4F5F2;
+    --card:       #FFFFFF;
+    --ink:        #181A14;
+    --ink-soft:   #5C6052;
+    --ink-faint:  #8A8E80;
+    --line:       #E3E5DD;
+    --line-strong:#D2D5C9;
+    --signal:     #E5470B;
+    --signal-dk:  #C23A07;
+    --ok:         #1F7A4D;
+    --err:        #9E3919;
+    --shadow:     0 1px 2px rgba(24,26,20,.04), 0 8px 24px rgba(24,26,20,.06);
+    --radius:     14px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    padding: 48px 20px 96px;
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  /* ---- header ---- */
+  .masthead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .wordmark {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: .14em;
+    color: var(--ink);
+  }
+  .wordmark .slash { color: var(--signal); }
+  .status-dot {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: .08em;
+    color: var(--ink-soft);
+    display: inline-flex; align-items: center; gap: 7px;
+    text-transform: uppercase;
+  }
+  .status-dot::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ok); box-shadow: 0 0 0 3px rgba(31,122,77,.15);
+  }
+
+  h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5vw, 34px);
+    line-height: 1.12;
+    letter-spacing: -.01em;
+    margin: 28px 0 12px;
+    max-width: 18ch;
+  }
+  .lede { color: var(--ink-soft); margin: 0 0 22px; max-width: 56ch; }
+
+  .privacy {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px; letter-spacing: .02em;
+    color: var(--ok);
+    background: rgba(31,122,77,.07);
+    border: 1px solid rgba(31,122,77,.2);
+    padding: 7px 13px; border-radius: 999px;
+  }
+  .privacy svg { width: 14px; height: 14px; }
+
+  /* ---- console card ---- */
+  .console {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 28px;
+    overflow: hidden;
+  }
+
+  /* ---- dropzone ---- */
+  .intake { padding: 22px; }
+  .dropzone {
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 11px;
+    background: #FBFBF9;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  }
+  .dropzone:hover { border-color: var(--ink-faint); }
+  .dropzone.is-dragging {
+    border-color: var(--signal);
+    background: rgba(229,71,11,.04);
+    transform: scale(1.005);
+  }
+  .dropzone:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  .dz-icon {
+    width: 40px; height: 40px; margin: 0 auto 14px;
+    color: var(--ink-faint);
+  }
+  .dropzone.is-dragging .dz-icon { color: var(--signal); }
+  .dz-title { font-weight: 600; font-size: 16px; }
+  .dz-title b { color: var(--signal); font-weight: 600; }
+  .dz-sub {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--ink-faint);
+    margin-top: 6px; letter-spacing: .02em;
+  }
+
+  /* ---- notice (errors) ---- */
+  .notice {
+    margin: 0 22px 4px;
+    display: flex; align-items: flex-start; gap: 9px;
+    font-size: 13.5px; color: var(--err);
+    background: rgba(158,57,25,.06);
+    border: 1px solid rgba(158,57,25,.18);
+    border-radius: 9px; padding: 10px 13px;
+  }
+  .notice svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+  .notice.hidden { display: none; }
+
+  /* ---- queue ---- */
+  .queue-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; padding: 18px 24px 10px;
+    border-top: 1px solid var(--line);
+  }
+  .queue-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink);
+  }
+  .queue-totals {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--ink-soft); letter-spacing: .02em;
+  }
+
+  .empty {
+    padding: 8px 24px 26px;
+    color: var(--ink-faint); font-size: 14px;
+    font-family: "IBM Plex Mono", monospace; letter-spacing: .01em;
+  }
+
+  .rows { list-style: none; margin: 0; padding: 4px 14px 8px; }
+  .row {
+    display: grid;
+    grid-template-columns: 30px 1fr auto auto;
+    align-items: center; gap: 12px;
+    padding: 11px 10px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    transition: background .14s ease, border-color .14s ease, opacity .14s ease, transform .14s ease;
+    animation: rowin .22s ease both;
+  }
+  @keyframes rowin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .row:hover { background: #FAFAF8; }
+  .row.dragging { opacity: .45; }
+  .row.drop-before { border-top-color: var(--signal); }
+  .row.drop-after  { border-bottom-color: var(--signal); }
+  .row.has-error { background: rgba(158,57,25,.05); }
+
+  .seq {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px; font-weight: 600; color: var(--signal);
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+  }
+  .seq:active { cursor: grabbing; }
+
+  .meta { min-width: 0; }
+  .fname {
+    font-size: 14.5px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .fsub {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px; color: var(--ink-faint);
+    letter-spacing: .02em; margin-top: 1px;
+  }
+  .fsub.error { color: var(--err); }
+
+  .pages {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .row-actions { display: inline-flex; align-items: center; gap: 2px; }
+  .iconbtn {
+    border: none; background: none; cursor: pointer;
+    width: 30px; height: 30px; border-radius: 7px;
+    color: var(--ink-faint);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .12s ease, color .12s ease;
+  }
+  .iconbtn:hover { background: #EEEFEA; color: var(--ink); }
+  .iconbtn:disabled { opacity: .3; cursor: not-allowed; }
+  .iconbtn.remove:hover { background: rgba(158,57,25,.1); color: var(--err); }
+  .iconbtn:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
+  .iconbtn svg { width: 16px; height: 16px; }
+
+  /* ---- execute bar ---- */
+  .execute {
+    border-top: 1px solid var(--line);
+    padding: 20px 24px 24px;
+    background: #FCFCFA;
+  }
+  .out-field { margin-bottom: 14px; }
+  .out-label {
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 7px;
+  }
+  .out-input-wrap {
+    display: flex; align-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px; background: #fff;
+    overflow: hidden;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .out-input-wrap:focus-within {
+    border-color: var(--signal);
+    box-shadow: 0 0 0 3px rgba(229,71,11,.1);
+  }
+  .out-input-wrap input {
+    border: none; outline: none; flex: 1;
+    padding: 11px 13px; font: inherit;
+    font-family: "IBM Plex Mono", monospace; font-size: 14px;
+    color: var(--ink); background: transparent;
+  }
+  .out-ext {
+    font-family: "IBM Plex Mono", monospace; font-size: 14px;
+    color: var(--ink-faint); padding: 0 13px 0 4px;
+  }
+
+  .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .merge-btn {
+    flex: 1; min-width: 220px;
+    border: none; cursor: pointer;
+    background: var(--signal); color: #fff;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600; font-size: 15px; letter-spacing: .01em;
+    padding: 14px 20px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background .15s ease, transform .08s ease;
+  }
+  .merge-btn:hover:not(:disabled) { background: var(--signal-dk); }
+  .merge-btn:active:not(:disabled) { transform: translateY(1px); }
+  .merge-btn:disabled { background: #DADBD4; color: #9A9D90; cursor: not-allowed; }
+  .merge-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .merge-btn svg { width: 17px; height: 17px; }
+  .merge-btn .spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .clear-btn {
+    border: 1px solid var(--line-strong); background: #fff; cursor: pointer;
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 500; font-size: 14px;
+    color: var(--ink-soft);
+    padding: 13px 18px; border-radius: 10px;
+    transition: background .12s ease, color .12s ease;
+  }
+  .clear-btn:hover { background: #F3F3EF; color: var(--ink); }
+  .clear-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+  /* ---- result ---- */
+  .result {
+    margin-top: 16px;
+    border: 1px solid rgba(31,122,77,.28);
+    background: rgba(31,122,77,.05);
+    border-radius: 11px;
+    padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    animation: rowin .28s ease both;
+  }
+  .result.hidden { display: none; }
+  .result-badge {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: .12em;
+    color: var(--ok); border: 1px solid rgba(31,122,77,.35);
+    padding: 4px 9px; border-radius: 6px; white-space: nowrap;
+  }
+  .result-meta { flex: 1; min-width: 0; }
+  .result-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-sub {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    color: var(--ink-soft); margin-top: 2px;
+  }
+  .download-btn {
+    border: none; cursor: pointer;
+    background: var(--ok); color: #fff;
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 600; font-size: 14px;
+    padding: 11px 18px; border-radius: 9px;
+    display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+    transition: background .15s ease;
+    text-decoration: none;
+  }
+  .download-btn:hover { background: #18643E; }
+  .download-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .download-btn svg { width: 15px; height: 15px; }
+
+  .footnote {
+    margin-top: 22px; text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px; color: var(--ink-faint); letter-spacing: .02em;
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 32px 14px 72px; }
+    .row { grid-template-columns: 26px 1fr auto; gap: 9px; }
+    .pages { display: none; }
+    .seq { cursor: default; }
+    .actions { flex-direction: column-reverse; align-items: stretch; }
+    .merge-btn, .clear-btn { width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="masthead">
+        <div class="wordmark">PDF<span class="slash">/</span>MERGE</div>
+        <div class="status-dot">local</div>
+      </div>
+      <h1>Combine raw PDFs into one request file.</h1>
+      <p class="lede">Drop the files you need to send, set their order, and merge them into a single PDF. Built for assembling clean request packages — fast, offline, and yours alone.</p>
+      <span class="privacy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Files never leave this device
+      </span>
+    </header>
+
+    <main class="console">
+      <div class="intake">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Add PDF files">
+          <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="dz-title">Drop PDFs here, or <b>browse</b></div>
+          <div class="dz-sub">PDF only · multiple files · nothing uploaded</div>
+        </div>
+        <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden />
+      </div>
+
+      <div class="notice hidden" id="notice" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="noticeText"></span>
+      </div>
+
+      <div class="queue-head">
+        <div class="queue-label">Merge queue</div>
+        <div class="queue-totals" id="totals">0 files</div>
+      </div>
+
+      <div class="empty" id="empty">No files yet — add PDFs above to build your queue.</div>
+      <ul class="rows" id="rows" aria-label="Files to merge, in order"></ul>
+
+      <div class="execute">
+        <div class="out-field">
+          <label class="out-label" for="outName">Output file name</label>
+          <div class="out-input-wrap">
+            <input type="text" id="outName" value="merged_request" spellcheck="false" autocomplete="off" aria-label="Output file name" />
+            <span class="out-ext">.pdf</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="merge-btn" id="mergeBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
+            <span id="mergeLabel">Add at least 2 PDFs</span>
+          </button>
+          <button class="clear-btn" id="clearBtn" hidden>Clear all</button>
+        </div>
+
+        <div class="result hidden" id="result">
+          <span class="result-badge">READY</span>
+          <div class="result-meta">
+            <div class="result-name" id="resultName">merged_request.pdf</div>
+            <div class="result-sub" id="resultSub"></div>
+          </div>
+          <a class="download-btn" id="downloadBtn" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <p class="footnote">All processing happens in your browser via pdf-lib · v1.0</p>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const { PDFDocument } = window.PDFLib;
+
+  // ---- state ----
+  let files = [];          // { id, name, size, pageCount, bytes, error }
+  let uid = 0;
+  let lastUrl = null;      // object URL for the merged file (revoked on re-merge)
+
+  // ---- elements ----
+  const dropzone   = document.getElementById("dropzone");
+  const fileInput  = document.getElementById("fileInput");
+  const rowsEl     = document.getElementById("rows");
+  const emptyEl    = document.getElementById("empty");
+  const totalsEl   = document.getElementById("totals");
+  const mergeBtn   = document.getElementById("mergeBtn");
+  const mergeLabel = document.getElementById("mergeLabel");
+  const clearBtn   = document.getElementById("clearBtn");
+  const noticeEl   = document.getElementById("notice");
+  const noticeText = document.getElementById("noticeText");
+  const outName    = document.getElementById("outName");
+  const resultEl   = document.getElementById("result");
+  const resultName = document.getElementById("resultName");
+  const resultSub  = document.getElementById("resultSub");
+  const downloadBtn= document.getElementById("downloadBtn");
+
+  // ---- helpers ----
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  function showNotice(msg) {
+    noticeText.textContent = msg;
+    noticeEl.classList.remove("hidden");
+    clearTimeout(showNotice._t);
+    showNotice._t = setTimeout(() => noticeEl.classList.add("hidden"), 6000);
+  }
+
+  function cleanName(name) {
+    return name.replace(/[\\/:*?"<>|]+/g, "").trim() || "merged_request";
+  }
+
+  // ---- add files ----
+  async function addFiles(fileList) {
+    const incoming = Array.from(fileList);
+    const skipped = [];
+
+    for (const file of incoming) {
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      if (!isPdf) { skipped.push(file.name); continue; }
+
+      const entry = { id: ++uid, name: file.name, size: file.size, pageCount: null, bytes: null, error: null };
+      files.push(entry);
+      render();
+
+      try {
+        const buf = new Uint8Array(await file.arrayBuffer());
+        const doc = await PDFDocument.load(buf, { ignoreEncryption: true });
+        entry.bytes = buf;
+        entry.pageCount = doc.getPageCount();
+      } catch (e) {
+        entry.error = "Couldn't read this file — it may be corrupted or password-protected.";
+      }
+      render();
+    }
+
+    if (skipped.length) {
+      showNotice(
+        skipped.length === 1
+          ? `Skipped "${skipped[0]}" — only PDF files can be merged.`
+          : `Skipped ${skipped.length} non-PDF files — only PDFs can be merged.`
+      );
+    }
+  }
+
+  // ---- reorder ----
+  function moveItem(index, delta) {
+    const target = index + delta;
+    if (target < 0 || target >= files.length) return;
+    const [item] = files.splice(index, 1);
+    files.splice(target, 0, item);
+    render();
+  }
+
+  function removeItem(id) {
+    files = files.filter(f => f.id !== id);
+    render();
+  }
+
+  function clearAll() {
+    files = [];
+    hideResult();
+    render();
+  }
+
+  // ---- render ----
+  function render() {
+    const ok = files.filter(f => f.bytes && !f.error);
+    const totalPages = ok.reduce((s, f) => s + (f.pageCount || 0), 0);
+    const totalSize = files.reduce((s, f) => s + f.size, 0);
+
+    // totals line
+    if (files.length === 0) {
+      totalsEl.textContent = "0 files";
+    } else {
+      const parts = [`${files.length} file${files.length > 1 ? "s" : ""}`];
+      if (totalPages) parts.push(`${totalPages} pages`);
+      parts.push(fmtSize(totalSize));
+      totalsEl.textContent = parts.join(" · ");
+    }
+
+    // empty state
+    emptyEl.style.display = files.length === 0 ? "block" : "none";
+    clearBtn.hidden = files.length === 0;
+
+    // rows
+    rowsEl.innerHTML = "";
+    files.forEach((f, i) => {
+      const li = document.createElement("li");
+      li.className = "row" + (f.error ? " has-error" : "");
+      li.draggable = !f.error;
+      li.dataset.id = f.id;
+
+      const seq = String(i + 1).padStart(2, "0");
+      let subText, subClass = "fsub";
+      if (f.error) { subText = f.error; subClass += " error"; }
+      else if (f.bytes === null) { subText = "reading…"; }
+      else { subText = fmtSize(f.size); }
+
+      li.innerHTML = `
+        <div class="seq" title="Drag to reorder">${seq}</div>
+        <div class="meta">
+          <div class="fname"></div>
+          <div class="${subClass}"></div>
+        </div>
+        <div class="pages">${f.pageCount != null ? f.pageCount + " pg" : ""}</div>
+        <div class="row-actions">
+          <button class="iconbtn up" aria-label="Move up" ${i === 0 ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button class="iconbtn down" aria-label="Move down" ${i === files.length - 1 ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button class="iconbtn remove" aria-label="Remove file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>`;
+
+      li.querySelector(".fname").textContent = f.name;
+      li.querySelector("." + subClass.split(" ").join(".")).textContent = subText;
+      li.querySelector(".up").addEventListener("click", () => moveItem(i, -1));
+      li.querySelector(".down").addEventListener("click", () => moveItem(i, 1));
+      li.querySelector(".remove").addEventListener("click", () => removeItem(f.id));
+
+      attachDrag(li);
+      rowsEl.appendChild(li);
+    });
+
+    // merge button state
+    if (ok.length >= 2) {
+      mergeBtn.disabled = false;
+      mergeLabel.textContent = `Merge ${ok.length} files`;
+    } else {
+      mergeBtn.disabled = true;
+      mergeLabel.textContent = files.length === 0 ? "Add at least 2 PDFs" : "Add at least 2 valid PDFs";
+    }
+  }
+
+  // ---- drag reorder ----
+  let dragId = null;
+  function attachDrag(li) {
+    li.addEventListener("dragstart", (e) => {
+      dragId = Number(li.dataset.id);
+      li.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    li.addEventListener("dragend", () => {
+      dragId = null;
+      document.querySelectorAll(".row").forEach(r => r.classList.remove("dragging", "drop-before", "drop-after"));
+    });
+    li.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (dragId === null || Number(li.dataset.id) === dragId) return;
+      const rect = li.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      li.classList.toggle("drop-after", after);
+      li.classList.toggle("drop-before", !after);
+    });
+    li.addEventListener("dragleave", () => li.classList.remove("drop-before", "drop-after"));
+    li.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (dragId === null) return;
+      const fromIdx = files.findIndex(f => f.id === dragId);
+      let toIdx = files.findIndex(f => f.id === Number(li.dataset.id));
+      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+      const rect = li.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      const [item] = files.splice(fromIdx, 1);
+      toIdx = files.findIndex(f => f.id === Number(li.dataset.id));
+      files.splice(after ? toIdx + 1 : toIdx, 0, item);
+      render();
+    });
+  }
+
+  // ---- merge ----
+  async function merge() {
+    const ordered = files.filter(f => f.bytes && !f.error);
+    if (ordered.length < 2) return;
+
+    mergeBtn.disabled = true;
+    mergeLabel.textContent = "Merging…";
+    const icon = mergeBtn.querySelector("svg");
+    const spinner = document.createElement("span");
+    spinner.className = "spinner";
+    if (icon) icon.replaceWith(spinner);
+
+    try {
+      const out = await PDFDocument.create();
+      out.setProducer("PDFMERGE");
+      for (const f of ordered) {
+        const src = await PDFDocument.load(f.bytes, { ignoreEncryption: true });
+        const pages = await out.copyPages(src, src.getPageIndices());
+        pages.forEach(p => out.addPage(p));
+        await new Promise(r => setTimeout(r, 0)); // let UI breathe
+      }
+
+      const name = cleanName(outName.value) + ".pdf";
+      out.setTitle(name);
+      const bytes = await out.save();
+      const blob = new Blob([bytes], { type: "application/pdf" });
+
+      if (lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = URL.createObjectURL(blob);
+
+      const pageTotal = ordered.reduce((s, f) => s + f.pageCount, 0);
+      resultName.textContent = name;
+      resultSub.textContent = `${pageTotal} pages · ${fmtSize(blob.size)} · from ${ordered.length} files`;
+      downloadBtn.href = lastUrl;
+      downloadBtn.download = name;
+      resultEl.classList.remove("hidden");
+      resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (e) {
+      showNotice("Merge failed — one of the files may be unreadable. Try removing it and merging again.");
+    } finally {
+      spinner.replaceWith(buildMergeIcon());
+      render();
+    }
+  }
+
+  function buildMergeIcon() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.innerHTML = '<path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/>';
+    return svg;
+  }
+
+  function hideResult() {
+    resultEl.classList.add("hidden");
+    if (lastUrl) { URL.revokeObjectURL(lastUrl); lastUrl = null; }
+  }
+
+  // ---- events ----
+  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener("change", (e) => { addFiles(e.target.files); fileInput.value = ""; });
+
+  ["dragenter", "dragover"].forEach(ev =>
+    dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add("is-dragging"); })
+  );
+  ["dragleave", "drop"].forEach(ev =>
+    dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove("is-dragging"); })
+  );
+  dropzone.addEventListener("drop", (e) => {
+    if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+
+  mergeBtn.addEventListener("click", merge);
+  clearBtn.addEventListener("click", clearAll);
+
+  // prevent the window from opening a dropped file outside the zone
+  window.addEventListener("dragover", (e) => e.preventDefault());
+  window.addEventListener("drop", (e) => e.preventDefault());
+
+  render();
+})();
+</script>
+</body>
+</html>
