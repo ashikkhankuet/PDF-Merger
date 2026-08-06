@@ -11,7 +11,7 @@
 <meta name="keywords" content="pdf tools, merge pdf, compress pdf, image to pdf, pdf to image, jpg to pdf, split pdf, qr code generator, image to text, free pdf converter" />
 <meta name="robots" content="index, follow" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ConvertPro — Free PDF & Image Tools, Processed On Your Device" />
+<meta property="og:title" content="ConvertKoro — Free PDF & Image Tools, Processed On Your Device" />
 <meta property="og:description" content="Merge, compress, split and convert PDFs and images for free. Everything runs locally in your browser." />
 <meta name="twitter:card" content="summary_large_image" />
 
@@ -19,16 +19,17 @@
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "ConvertPro",
+  "name": "ConvertKoro",
   "description": "Free PDF and image conversion tools that run entirely in the browser.",
-  "url": "https://freepdfmergeonline.netlify.app/"
+  "url": "https://convertkoro.netlify.app/"
 }
 </script>
 
-<title>ConvertPro — Free PDF & Image Tools, Nothing Uploaded</title>
+<title>ConvertKoro — Free PDF & Image Tools, Nothing Uploaded</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/svg+xml" href="logo.svg" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body data-page="home">
@@ -66,7 +67,7 @@
   <section class="section" style="padding-top:0;">
     <div class="container">
       <div class="section-head">
-        <h2>Why people switch to ConvertPro</h2>
+        <h2>Why people switch to ConvertKoro</h2>
         <p>Most free converters route your files through a server somewhere. This one doesn't have to.</p>
       </div>
       <div class="feat-grid">
@@ -96,7 +97,7 @@
         <p>More detail in the <a href="faq.html" style="color:var(--signal-dk);">full FAQ</a>.</p>
       </div>
       <div class="faq-list">
-        <details class="faq-item"><summary>Is ConvertPro really free?</summary><p>Yes. Every tool is free to use, with no limit on file count and no watermark added to your output.</p></details>
+        <details class="faq-item"><summary>Is ConvertKoro really free?</summary><p>Yes. Every tool is free to use, with no limit on file count and no watermark added to your output.</p></details>
         <details class="faq-item"><summary>Do you store or see my files?</summary><p>No. Processing happens locally in your browser. We have no server that receives your documents, so there's nothing for us to store or see.</p></details>
         <details class="faq-item"><summary>Do I need to install anything?</summary><p>No installation needed &mdash; everything runs in a normal browser tab on desktop or mobile.</p></details>
       </div>
@@ -110,7 +111,7 @@
 <script>
   document.getElementById('toolGrid').innerHTML = TOOLS.map(t => `
     <a class="tool-card" href="${t.url}">
-      <span class="ico">${svgIcon(t.icon)}</span>
+      <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
       <h3>${t.name}</h3>
       <p>${t.short}</p>
       <span class="tag">${t.tag}</span>

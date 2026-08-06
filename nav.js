@@ -36,10 +36,21 @@ function svgIcon(key, extra) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra||''}>${ICONS[key]}</svg>`;
 }
 
+const TAG_TINT = {
+  PDF:    { bg: 'var(--signal-tint)',      fg: 'var(--signal-dk)' },
+  IMAGE:  { bg: 'var(--accent-blue-tint)', fg: 'var(--accent-blue)' },
+  OCR:    { bg: 'var(--ok-tint)',          fg: 'var(--ok)' },
+  CREATE: { bg: 'var(--accent-plum-tint)', fg: 'var(--accent-plum)' },
+};
+function tintStyle(tag) {
+  const t = TAG_TINT[tag] || TAG_TINT.PDF;
+  return `background:${t.bg};color:${t.fg};`;
+}
+
 function renderHeader(active) {
   const ddItems = TOOLS.map(t => `
     <a class="dd-item" href="${t.url}">
-      <span class="ico">${svgIcon(t.icon)}</span>
+      <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
       <span><strong>${t.name}</strong><span>${t.short}</span></span>
     </a>`).join('');
 
@@ -49,7 +60,7 @@ function renderHeader(active) {
   <header class="site-header">
     <div class="container">
       <div class="nav-row">
-        <a class="wordmark" href="index.html">CONVERT<span class="slash">/</span>PRO</a>
+        <a class="wordmark" href="index.html"><span class="brand-mark"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#181A14"/><path d="M13 11h10l6 6v11a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#F4F5F2"/><path d="M23 11l6 6h-6z" fill="#E5470B"/><rect x="14" y="22.5" width="10" height="2" rx="1" fill="#ADB19F"/><rect x="14" y="26.5" width="7" height="2" rx="1" fill="#ADB19F"/></svg></span>CONVERT<span class="slash">/</span>KORO</a>
         <nav class="nav-main">
           <a class="nav-link ${active==='home'?'active':''}" href="index.html">Home</a>
           <div class="nav-dd" id="toolsDD">
@@ -103,7 +114,7 @@ function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-about">
-          <a class="wordmark" href="index.html">CONVERT<span class="slash">/</span>PRO</a>
+          <a class="wordmark" href="index.html"><span class="brand-mark"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#181A14"/><path d="M13 11h10l6 6v11a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#F4F5F2"/><path d="M23 11l6 6h-6z" fill="#E5470B"/><rect x="14" y="22.5" width="10" height="2" rx="1" fill="#ADB19F"/><rect x="14" y="26.5" width="7" height="2" rx="1" fill="#ADB19F"/></svg></span>CONVERT<span class="slash">/</span>KORO</a>
           <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
         </div>
         <div><h4>Tools</h4><ul>${toolLinksA}</ul></div>
@@ -116,7 +127,7 @@ function renderFooter() {
         </ul></div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; <span id="yr"></span> ConvertPro. All rights reserved. ConvertPro is an independent project and is not affiliated with Adobe, Microsoft, or Google. "PDF" refers to the Portable Document Format specification.</p>
+        <p>&copy; <span id="yr"></span> ConvertKoro. All rights reserved. ConvertKoro is an independent project and is not affiliated with Adobe, Microsoft, or Google. "PDF" refers to the Portable Document Format specification.</p>
         <p class="mono" style="font-size:11.5px;">Built for people who'd rather not upload their files.</p>
       </div>
     </div>

@@ -16,10 +16,14 @@
   --signal-tint:#FCE9E1;
   --ok:         #1F7A4D;
   --ok-tint:    rgba(31,122,77,.08);
+  --accent-blue:    #2A5C8A;
+  --accent-blue-tint: rgba(42,92,138,.10);
+  --accent-plum:    #6B4A8F;
+  --accent-plum-tint: rgba(107,74,143,.10);
   --err:        #9E3919;
   --err-tint:   rgba(158,57,25,.08);
-  --shadow:     0 1px 2px rgba(24,26,20,.04), 0 8px 24px rgba(24,26,20,.06);
-  --shadow-lg:  0 4px 8px rgba(24,26,20,.05), 0 20px 40px rgba(24,26,20,.09);
+  --shadow:     0 1px 2px rgba(24,26,20,.05), 0 10px 28px rgba(24,26,20,.07);
+  --shadow-lg:  0 6px 14px rgba(24,26,20,.06), 0 26px 48px rgba(24,26,20,.11);
   --radius:     14px;
   --radius-sm:  9px;
   --maxw:       1120px;
@@ -67,12 +71,16 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
   font-family: "Space Grotesk", sans-serif;
   font-weight: 700;
   font-size: 19px;
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 10px;
 }
 .wordmark .slash { color: var(--signal); }
+.brand-mark { display: inline-flex; width: 30px; height: 30px; flex: none; }
+.brand-mark svg { width: 100%; height: 100%; }
+.footer-about .wordmark { margin-bottom: 4px; }
 
 .nav-main { display: flex; align-items: center; gap: 4px; }
 .nav-link {
@@ -162,7 +170,16 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
 .btn-lg { padding: 16px 28px; font-size: 15.5px; }
 
 /* ---------------- hero ---------------- */
-.hero { padding: 64px 0 40px; text-align: center; }
+.hero {
+  padding: 68px 0 44px; text-align: center; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -180px; left: 50%; transform: translateX(-50%);
+  width: 780px; height: 420px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(229,71,11,.10), transparent 72%);
+  pointer-events: none; z-index: 0;
+}
+.hero .container { position: relative; z-index: 1; }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 7px;
   font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em;
