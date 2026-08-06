@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Pull editable text out of a photo or screenshot with free OCR, processed entirely in your browser." />
+<meta name="keywords" content="image to text, ocr online, extract text from image, photo to text converter" />
+<meta name="robots" content="index, follow" />
+<meta property="og:title" content="Image to Text — Free OCR Online | ConvertPro" />
+<title>Image to Text — Free OCR, Extract Text from Photos | ConvertPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="index.html">Home</a> <span>/</span> <span>Image to Text</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco"></span>
+        <div>
+          <h1>Image to Text</h1>
+          <p class="lead">Drop in a photo or screenshot and get back editable, copyable text. Runs fully in your browser using on-device OCR.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="workspace">
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop an image here, or <span class="browse">browse</span></strong>
+        <div class="hint">JPG, PNG, WEBP &middot; one file at a time &middot; nothing uploaded</div>
+        <input type="file" id="fileInput" accept="image/*" hidden />
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+      <img id="preview" style="display:none;max-height:260px;border-radius:var(--radius-sm);border:1px solid var(--line);margin:16px 0;" />
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Reading text&hellip;</div>
+      </div>
+
+      <div class="err-box" id="errBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="errText"></span>
+      </div>
+
+      <div id="outputWrap" style="display:none;margin-top:18px;">
+        <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Extracted text</label>
+        <textarea id="outputText" rows="8" style="width:100%;padding:14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;resize:vertical;"></textarea>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="extractBtn" disabled>Extract text</button>
+        <button class="btn btn-ghost" id="copyBtn" style="display:none;">Copy text</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Add your image</strong><span>A clear photo, scan, or screenshot works best.</span></li>
+          <li><strong>Run text extraction</strong><span>On-device OCR reads the image and pulls out the text it finds.</span></li>
+          <li><strong>Copy the result</strong><span>Edit directly in the box, or copy it straight into another document.</span></li>
+        </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Works best on clear, well-lit, horizontal text</li>
+          <li>Handwriting recognition is far less reliable than printed text</li>
+          <li>First run downloads a small language file, then caches it in your browser</li>
+        </ul>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Why is the text extraction not perfect?</summary><p>OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan.</p></details>
+        <details class="faq-item"><summary>Does this work on handwriting?</summary><p>It can attempt handwriting, but accuracy is much lower than for printed or typed text.</p></details>
+        <details class="faq-item"><summary>Is my image sent anywhere for processing?</summary><p>No — the OCR engine runs entirely in your browser. Your image is never uploaded to a server.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('img2text');</script>
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileList = document.getElementById('fileList');
+  const preview = document.getElementById('preview');
+  const extractBtn = document.getElementById('extractBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const outputWrap = document.getElementById('outputWrap');
+  const outputText = document.getElementById('outputText');
+  let file = null;
+
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
+
+  function setFile(f) {
+    if (!f || !f.type.startsWith('image/')) return;
+    file = f;
+    fileList.innerHTML = `<div class="file-row">
+      <span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+      <span class="fname">${f.name}</span><span class="fsize">${fmtSize(f.size)}</span>
+      <button class="fremove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`;
+    preview.src = URL.createObjectURL(f); preview.style.display = 'block';
+    extractBtn.disabled = false; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
+    errBox.classList.remove('show');
+  }
+
+  function reset() {
+    file = null; fileList.innerHTML = ''; preview.style.display = 'none'; preview.src='';
+    extractBtn.disabled = true; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
+    outputText.value = ''; errBox.classList.remove('show');
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) reset(); });
+  clearBtn.addEventListener('click', reset);
+
+  extractBtn.addEventListener('click', async () => {
+    errBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '5%';
+    extractBtn.disabled = true;
+    try {
+      const result = await Tesseract.recognize(file, 'eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            progressFill.style.width = `${10 + m.progress * 85}%`;
+            progressLabel.textContent = `Reading text\u2026 ${Math.round(m.progress*100)}%`;
+          } else {
+            progressLabel.textContent = m.status.charAt(0).toUpperCase() + m.status.slice(1) + '\u2026';
+          }
+        }
+      });
+      outputText.value = result.data.text.trim();
+      outputWrap.style.display = 'block'; copyBtn.style.display = 'inline-flex';
+      progressFill.style.width = '100%';
+      setTimeout(() => progressWrap.classList.remove('show'), 250);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = 'Couldn\u2019t read this image. Try a clearer photo with good lighting and try again.';
+      errBox.classList.add('show');
+    }
+    extractBtn.disabled = false;
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(outputText.value);
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => copyBtn.textContent = 'Copy text', 1500);
+  });
+
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

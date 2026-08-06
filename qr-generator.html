@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Generate a free QR code for a link, text, or Wi-Fi details. Download as a PNG, created entirely in your browser." />
+<meta name="keywords" content="qr code generator, free qr code, make qr code, qr code maker" />
+<meta name="robots" content="index, follow" />
+<meta property="og:title" content="QR Code Generator — Free & Instant | ConvertPro" />
+<title>QR Code Generator — Free, Instant, No Sign-Up | ConvertPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="index.html">Home</a> <span>/</span> <span>QR Code Generator</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco"></span>
+        <div>
+          <h1>QR Code Generator</h1>
+          <p class="lead">Type a link or a message, watch the code update instantly, and download it as a PNG.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="workspace">
+      <div style="display:grid;grid-template-columns:1fr 260px;gap:28px;align-items:start;">
+        <div>
+          <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Link or text</label>
+          <textarea id="qrText" rows="4" placeholder="https://example.com or any text" style="width:100%;padding:14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;resize:vertical;"></textarea>
+
+          <div class="slider-row" style="margin-top:20px;">
+            <label>Size <span class="val" id="sizeVal">280px</span></label>
+            <input type="range" id="sizeSlider" min="160" max="500" value="280" step="20" />
+          </div>
+
+          <div class="opts-row">
+            <span style="font-size:13px;color:var(--ink-soft);align-self:center;margin-right:4px;">Colour:</span>
+            <button class="opt-chip active" data-color="#181A14">Black</button>
+            <button class="opt-chip" data-color="#E5470B">Signal orange</button>
+            <button class="opt-chip" data-color="#1F7A4D">Green</button>
+          </div>
+
+          <div class="actions-row">
+            <button class="btn btn-primary btn-lg" id="downloadBtn" disabled>Download PNG</button>
+          </div>
+        </div>
+
+        <div style="text-align:center;">
+          <div id="qrCanvas" style="display:inline-block;padding:18px;background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);"></div>
+          <p class="mono" style="font-size:11.5px;color:var(--ink-faint);margin-top:10px;">Updates as you type</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Type your content</strong><span>Paste a URL, or type any text you want the code to hold.</span></li>
+          <li><strong>Adjust size and colour</strong><span>Pick a pixel size and accent colour that fits where you'll use it.</span></li>
+          <li><strong>Download</strong><span>Save the QR code as a PNG, ready to print or share.</span></li>
+        </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>The code is generated entirely in your browser — nothing you type is sent anywhere</li>
+          <li>Codes don't expire and aren't tied to an account</li>
+          <li>Keep contrast high (dark code on light background) for reliable scanning</li>
+        </ul>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Do these QR codes expire?</summary><p>No. Since the content is encoded directly into the code's pattern, it works for as long as the image exists — there's no server or account behind it to expire.</p></details>
+        <details class="faq-item"><summary>Can I track scans?</summary><p>Not with this tool, since there's no server involved. If you need scan analytics, you'd need a link-shortener service that logs clicks.</p></details>
+        <details class="faq-item"><summary>What can I put in the code?</summary><p>Any text works — a website link, Wi-Fi details formatted as text, a phone number, or a short message.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('qr');</script>
+<script>
+(() => {
+  const qrText = document.getElementById('qrText');
+  const qrCanvas = document.getElementById('qrCanvas');
+  const sizeSlider = document.getElementById('sizeSlider');
+  const sizeVal = document.getElementById('sizeVal');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const colorOpts = document.querySelectorAll('[data-color]');
+  let color = '#181A14', qr = null;
+
+  function generate() {
+    const text = qrText.value.trim() || 'https://';
+    qrCanvas.innerHTML = '';
+    qr = new QRCode(qrCanvas, {
+      text, width: +sizeSlider.value, height: +sizeSlider.value,
+      colorDark: color, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M
+    });
+    downloadBtn.disabled = !qrText.value.trim();
+  }
+
+  qrText.addEventListener('input', generate);
+  sizeSlider.addEventListener('input', () => { sizeVal.textContent = sizeSlider.value + 'px'; generate(); });
+  colorOpts.forEach(c => c.addEventListener('click', () => {
+    colorOpts.forEach(x => x.classList.remove('active')); c.classList.add('active');
+    color = c.dataset.color; generate();
+  }));
+
+  downloadBtn.addEventListener('click', () => {
+    const canvas = qrCanvas.querySelector('canvas');
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'qr-code.png';
+    a.click();
+  });
+
+  generate();
+})();
+</script>
+</body>
+</html>
