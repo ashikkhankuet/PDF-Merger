@@ -37,27 +37,41 @@
 <div id="site-header"></div>
 
 <main>
-  <section class="hero">
-    <div class="container">
+  <section class="hero-split container">
+    <div>
       <span class="eyebrow"><span class="dot"></span> Runs on your device &mdash; nothing is uploaded</span>
-      <h1>Everyday file tools, <span class="accent">without the file upload.</span></h1>
+      <h1>All your file tools. <span class="accent">Fast. Private. Free.</span></h1>
       <p class="lead">Merge, compress, split, and convert PDFs and images in seconds. No account, no watermark, no server ever touching your documents.</p>
-      <div class="actions-row" style="justify-content:center;">
-        <a href="merge.html" class="btn btn-primary btn-lg">Start with PDF Merger</a>
-        <a href="#tools" class="btn btn-ghost btn-lg">See all 8 tools</a>
+      <div class="hero-trust-inline">
+        <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Private &mdash; files stay on your device</span>
+        <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>Fast &mdash; no upload queue</span>
+        <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Free &mdash; every tool, always</span>
       </div>
-      <div class="trust-row">
-        <span class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>100% free, no signup</span>
-        <span class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Files never leave your device</span>
-        <span class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No watermarks</span>
+    </div>
+
+    <div class="quick-start">
+      <div class="qs-stack">
+        <span class="qs-chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M13 3v5h5"/></svg></span>
+        <span class="qs-chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+        <span class="qs-chip c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>
+        <span class="qs-chip c4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="M4 16l4.5-4.5L12 15l3-3 5 5"/></svg></span>
+        <span class="qs-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14"/><path d="M6 13l6 6 6-6"/></svg></span>
       </div>
+      <div class="qs-select-row">
+        <label style="font-size:13px;font-weight:600;">Jump straight to a tool</label>
+        <select class="qs-select" id="qsSelect">
+          <option value="">Choose a tool&hellip;</option>
+        </select>
+        <button class="btn btn-primary btn-block" id="qsGo">Open tool</button>
+      </div>
+      <div class="qs-hint">8 tools &middot; nothing uploaded &middot; no account</div>
     </div>
   </section>
 
   <section class="section" id="tools">
     <div class="container">
       <div class="section-head">
-        <h2>Eight tools, one tab.</h2>
+        <h2>Popular tools</h2>
         <p>Pick a tool below &mdash; each one opens instantly and works the same way: drop a file, adjust the options, download the result.</p>
       </div>
       <div class="tool-grid" id="toolGrid"></div>
@@ -67,25 +81,75 @@
   <section class="section" style="padding-top:0;">
     <div class="container">
       <div class="section-head">
-        <h2>Why people switch to ConvertKoro</h2>
+        <h2>Browse by category</h2>
+      </div>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="section-head">
+        <h2>Why ConvertKoro</h2>
         <p>Most free converters route your files through a server somewhere. This one doesn't have to.</p>
       </div>
-      <div class="feat-grid">
-        <div class="feat">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <h3>Local by design</h3>
-          <p>Every conversion runs in your browser using client-side code. Your files are never transmitted, stored, or seen by us.</p>
+      <div class="feat2-grid">
+        <div class="feat2">
+          <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          <h3>100% private</h3>
+          <p>Files are processed locally and never transmitted, stored, or seen by us.</p>
         </div>
-        <div class="feat">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
-          <h3>No waiting, no queue</h3>
-          <p>Nothing to upload means nothing to wait on. Most conversions finish in under a second, even for larger files.</p>
+        <div class="feat2">
+          <span class="ico" style="background:var(--accent-blue-tint);color:var(--accent-blue);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+          <h3>Genuinely fast</h3>
+          <p>Nothing to upload means nothing to wait on &mdash; most conversions finish in under a second.</p>
         </div>
-        <div class="feat">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          <h3>No account required</h3>
-          <p>Open a tool and use it. No sign-up wall, no email capture, no daily limit counting down.</p>
+        <div class="feat2">
+          <span class="ico" style="background:var(--ok-tint);color:var(--ok);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.5"/></svg></span>
+          <h3>Always free</h3>
+          <p>No premium tier, no watermark, no daily limit counting down.</p>
         </div>
+        <div class="feat2">
+          <span class="ico" style="background:var(--accent-plum-tint);color:var(--accent-plum);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
+          <h3>Works everywhere</h3>
+          <p>Runs in any modern browser, on desktop or mobile &mdash; nothing to install.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="section-head"><h2>How it works</h2></div>
+      <div class="hiw-row">
+        <div class="hiw-step">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+          <h3>Add your file</h3>
+          <p>Drop it in or click browse &mdash; any of the 8 tools accepts what it needs.</p>
+        </div>
+        <div class="hiw-connector"><svg viewBox="0 0 60 14"><path d="M0 7h54M48 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="hiw-step">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+          <h3>Set the options</h3>
+          <p>Reorder pages, pick a quality, or choose a format &mdash; whatever that tool needs.</p>
+        </div>
+        <div class="hiw-connector"><svg viewBox="0 0 60 14"><path d="M0 7h54M48 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="hiw-step">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+          <h3>Download the result</h3>
+          <p>Your file downloads straight to your device. That's it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="stats-bar">
+        <div class="stat"><strong>8</strong><span>Tools available</span></div>
+        <div class="stat"><strong>$0</strong><span>Cost, always</span></div>
+        <div class="stat"><strong>0</strong><span>Files uploaded to us</span></div>
+        <div class="stat"><strong>100%</strong><span>Runs in your browser</span></div>
       </div>
     </div>
   </section>
@@ -103,6 +167,19 @@
       </div>
     </div>
   </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta-banner">
+        <h2>Pick a tool and try it &mdash; no sign-up needed</h2>
+        <p>Every conversion happens right here, right now, on your own device.</p>
+        <div class="actions-row">
+          <a href="merge.html" class="btn btn-primary btn-lg">Start with PDF Merger</a>
+          <a href="#tools" class="btn btn-ghost btn-lg">See all 8 tools</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <div id="site-footer"></div>
@@ -116,6 +193,28 @@
       <p>${t.short}</p>
       <span class="tag">${t.tag}</span>
     </a>`).join('');
+
+  const CATS = [
+    { tag: 'PDF',    label: 'PDF Tools' },
+    { tag: 'IMAGE',  label: 'Image Tools' },
+    { tag: 'OCR',    label: 'Text Extraction' },
+    { tag: 'CREATE', label: 'Create' },
+  ];
+  document.getElementById('catGrid').innerHTML = CATS.map(c => {
+    const count = TOOLS.filter(t => t.tag === c.tag).length;
+    const first = TOOLS.find(t => t.tag === c.tag);
+    return `<a class="cat-card" href="${first.url}">
+      <span class="ico" style="${tintStyle(c.tag)}">${svgIcon(first.icon)}</span>
+      <strong>${c.label}</strong>
+      <span>${count} tool${count>1?'s':''}</span>
+    </a>`;
+  }).join('');
+
+  const qsSelect = document.getElementById('qsSelect');
+  qsSelect.innerHTML += TOOLS.map(t => `<option value="${t.url}">${t.name}</option>`).join('');
+  document.getElementById('qsGo').addEventListener('click', () => {
+    if (qsSelect.value) window.location.href = qsSelect.value;
+  });
 </script>
 </body>
 </html>

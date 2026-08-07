@@ -73,6 +73,10 @@ function renderHeader(active) {
           <a class="nav-link ${active==='faq'?'active':''}" href="faq.html">FAQ</a>
         </nav>
         <a class="nav-cta" href="index.html#tools">All tools &rarr;</a>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+        </button>
         <button class="nav-toggle" id="mobToggle" aria-label="Menu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
         </button>
@@ -104,7 +108,21 @@ function renderHeader(active) {
   const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');
   if (mobToggle) mobToggle.addEventListener('click', () => mobPanel.classList.toggle('open'));
+
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', () => {
+    const root = document.documentElement;
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('ck-theme', next);
+  });
 }
+
+function applyStoredTheme() {
+  const stored = localStorage.getItem('ck-theme');
+  if (stored) document.documentElement.setAttribute('data-theme', stored);
+}
+applyStoredTheme();
 
 function renderFooter() {
   const toolLinksA = TOOLS.slice(0,4).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('');
@@ -125,6 +143,15 @@ function renderFooter() {
           <li><a href="privacy.html">Privacy Policy</a></li>
           <li><a href="terms.html">Terms of Service</a></li>
         </ul></div>
+        <div>
+          <h4>Stay updated</h4>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.5;">Get notified when new tools launch.</p>
+          <div class="newsletter-row">
+            <input type="email" id="newsEmail" placeholder="you@email.com" />
+            <button id="newsBtn" type="button">Notify me</button>
+          </div>
+          <div class="newsletter-msg" id="newsMsg"></div>
+        </div>
       </div>
       <div class="footer-bottom">
         <p>&copy; <span id="yr"></span> ConvertKoro. All rights reserved. ConvertKoro is an independent project and is not affiliated with Adobe, Microsoft, or Google. "PDF" refers to the Portable Document Format specification.</p>
@@ -134,6 +161,16 @@ function renderFooter() {
   </footer>`;
   const yr = document.getElementById('yr');
   if (yr) yr.textContent = new Date().getFullYear();
+
+  const newsBtn = document.getElementById('newsBtn');
+  const newsEmail = document.getElementById('newsEmail');
+  const newsMsg = document.getElementById('newsMsg');
+  if (newsBtn) newsBtn.addEventListener('click', () => {
+    const v = newsEmail.value.trim();
+    if (!v || !v.includes('@')) { newsMsg.style.color = 'var(--err)'; newsMsg.textContent = 'Enter a valid email address.'; return; }
+    newsMsg.style.color = 'var(--ok)'; newsMsg.textContent = 'Thanks! This list isn\u2019t active yet, but we\u2019ll have it ready soon.';
+    newsEmail.value = '';
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
