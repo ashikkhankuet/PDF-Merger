@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Extract text from a PDF into an editable Word (.docx) file. Text-only conversion, processed entirely in your browser — nothing uploaded." />
+<meta name="keywords" content="pdf to word, pdf to docx, convert pdf to word free, pdf text to word" />
+<meta name="robots" content="index, follow" />
+<meta property="og:title" content="PDF to Word — Extract Text to an Editable .docx | ConvertKoro" />
+<title>PDF to Word — Extract Text to Editable .docx | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="logo.svg" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="index.html">Home</a> <span>/</span> <span>PDF to Word</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-blue-tint);color:var(--accent-blue);"></span>
+        <div>
+          <h1>PDF to Word</h1>
+          <p class="lead">Pulls the readable text out of a PDF and packages it into a real, editable .docx file.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="workspace">
+      <div class="callout" style="margin-bottom:20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>This is a text-only conversion.</strong> It extracts the words from your PDF into an editable Word document, but does not reproduce the original layout, images, tables, or exact formatting. A full layout-preserving conversion would require a specialized server-side engine — this stays free, local, and private by keeping to text.</span>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop a PDF here, or <span class="browse">browse</span></strong>
+        <div class="hint">PDF only &middot; one file at a time &middot; nothing uploaded</div>
+        <input type="file" id="fileInput" accept="application/pdf" hidden />
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Reading text&hellip;</div>
+      </div>
+
+      <div class="err-box" id="errBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="errText"></span>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">document.docx is ready</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="document.docx">Download .docx</a>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="convertBtn" disabled>Extract to Word</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Add your PDF</strong><span>Works best on PDFs that already contain real text (not scanned images).</span></li>
+          <li><strong>Extract</strong><span>Every page's text is pulled out, in reading order, and split into paragraphs.</span></li>
+          <li><strong>Download</strong><span>You get a genuine .docx file that opens directly in Word, Google Docs, or LibreOffice.</span></li>
+        </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Best for reports, articles, and text-heavy documents</li>
+          <li>Scanned PDFs (photos of pages) won't extract text — try <a href="image-to-text.html" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> instead</li>
+          <li>Tables, columns, and images are not preserved</li>
+          <li>Output is a standard .docx, fully editable in any word processor</li>
+        </ul>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Why doesn't this keep my original formatting?</summary><p>True layout-preserving PDF-to-Word conversion needs specialized software that rebuilds fonts, positioning, and tables — something that isn't reliably possible in browser JavaScript. This tool focuses on getting your text out cleanly and editably instead.</p></details>
+        <details class="faq-item"><summary>My PDF is a scan — why did nothing come out?</summary><p>Scanned PDFs are actually images of text, not real text characters, so there's nothing for this tool to extract. Use <a href="image-to-text.html" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for scanned pages instead.</p></details>
+        <details class="faq-item"><summary>Can I edit the result in Word?</summary><p>Yes — the output is a standard .docx file, fully editable in Microsoft Word, Google Docs, or LibreOffice.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('pdf2word');</script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileList = document.getElementById('fileList');
+  const convertBtn = document.getElementById('convertBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  let file = null;
+
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
+
+  function setFile(f) {
+    if (!f || f.type !== 'application/pdf') return;
+    file = f;
+    fileList.innerHTML = `<div class="file-row">
+      <span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M13 3v5h5"/></svg></span>
+      <span class="fname">${f.name}</span><span class="fsize">${fmtSize(f.size)}</span>
+      <button class="fremove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`;
+    convertBtn.disabled = false;
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; fileList.innerHTML=''; convertBtn.disabled=true; } });
+  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; convertBtn.disabled=true; resultBox.classList.remove('show'); });
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Build a minimal, valid .docx (OOXML) from plain paragraphs using JSZip.
+  async function buildDocx(paragraphs) {
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml',
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+    zip.folder('_rels').file('.rels',
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+    const word = zip.folder('word');
+    word.folder('_rels').file('document.xml.rels',
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
+    const body = paragraphs.map(p => {
+      if (!p.trim()) return '<w:p/>';
+      return `<w:p><w:r><w:t xml:space="preserve">${esc(p)}</w:t></w:r></w:p>`;
+    }).join('\n');
+    word.file('document.xml',
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>
+${body}
+<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>
+</w:body>
+</w:document>`);
+    return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  }
+
+  convertBtn.addEventListener('click', async () => {
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '10%';
+    convertBtn.disabled = true;
+    try {
+      const bytes = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+      const paragraphs = [];
+      let totalChars = 0;
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        let line = '';
+        let lastY = null;
+        content.items.forEach(item => {
+          const y = item.transform[5];
+          if (lastY !== null && Math.abs(y - lastY) > 2) {
+            if (line.trim()) paragraphs.push(line.trim());
+            line = '';
+          }
+          line += item.str + (item.hasEOL ? '' : ' ');
+          lastY = y;
+        });
+        if (line.trim()) paragraphs.push(line.trim());
+        paragraphs.push('');
+        totalChars += content.items.reduce((s, it) => s + it.str.length, 0);
+        progressFill.style.width = `${10 + (i/pdf.numPages)*80}%`;
+      }
+      if (totalChars < 5) throw new Error('no-text');
+      const blob = await buildDocx(paragraphs);
+      const baseName = file.name.replace(/\.pdf$/i, '');
+      downloadBtn.href = URL.createObjectURL(blob);
+      downloadBtn.setAttribute('download', `${baseName}.docx`);
+      resultTitle.textContent = `${baseName}.docx is ready`;
+      resultMeta.textContent = `${pdf.numPages} page${pdf.numPages>1?'s':''} of text \u00b7 ${fmtSize(blob.size)}`;
+      progressFill.style.width = '100%';
+      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = err.message === 'no-text'
+        ? 'No selectable text was found in this PDF \u2014 it\u2019s likely a scanned image. Try the Image to Text tool instead.'
+        : 'Couldn\u2019t process this PDF. Make sure it isn\u2019t password-protected, then try again.';
+      errBox.classList.add('show');
+    }
+    convertBtn.disabled = false;
+  });
+
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

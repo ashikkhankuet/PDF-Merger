@@ -29,7 +29,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="favicon.ico" sizes="any" />
 <link rel="icon" type="image/svg+xml" href="logo.svg" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body data-page="home">
@@ -40,12 +42,23 @@
   <section class="hero-split container">
     <div>
       <span class="eyebrow"><span class="dot"></span> Runs on your device &mdash; nothing is uploaded</span>
-      <h1>All your file tools. <span class="accent">Fast. Private. Free.</span></h1>
+      <h1><span class="brand-mark" style="width:44px;height:44px;vertical-align:-9px;margin-right:6px;">
+        <svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#181A14"/><path d="M13 11h10l6 6v11a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#F4F5F2"/><path d="M23 11l6 6h-6z" fill="#E5470B"/><rect x="14" y="22.5" width="10" height="2" rx="1" fill="#ADB19F"/><rect x="14" y="26.5" width="7" height="2" rx="1" fill="#ADB19F"/></svg>
+      </span>All your file tools. <span class="accent">Fast. Private. Free.</span></h1>
       <p class="lead">Merge, compress, split, and convert PDFs and images in seconds. No account, no watermark, no server ever touching your documents.</p>
       <div class="hero-trust-inline">
-        <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Private &mdash; files stay on your device</span>
-        <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>Fast &mdash; no upload queue</span>
-        <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Free &mdash; every tool, always</span>
+        <span class="item">
+          <span class="circle" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          <span class="txt"><strong>Private</strong><span>Files stay on your device</span></span>
+        </span>
+        <span class="item">
+          <span class="circle" style="background:var(--accent-blue-tint);color:var(--accent-blue);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+          <span class="txt"><strong>Fast</strong><span>No upload queue</span></span>
+        </span>
+        <span class="item">
+          <span class="circle" style="background:var(--ok-tint);color:var(--ok);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="txt"><strong>Free</strong><span>Every tool, always</span></span>
+        </span>
       </div>
     </div>
 
@@ -64,7 +77,7 @@
         </select>
         <button class="btn btn-primary btn-block" id="qsGo">Open tool</button>
       </div>
-      <div class="qs-hint">8 tools &middot; nothing uploaded &middot; no account</div>
+      <div class="qs-hint">9 tools &middot; nothing uploaded &middot; no account</div>
     </div>
   </section>
 
@@ -125,7 +138,7 @@
         <div class="hiw-step">
           <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
           <h3>Add your file</h3>
-          <p>Drop it in or click browse &mdash; any of the 8 tools accepts what it needs.</p>
+          <p>Drop it in or click browse &mdash; any of the 9 tools accepts what it needs.</p>
         </div>
         <div class="hiw-connector"><svg viewBox="0 0 60 14"><path d="M0 7h54M48 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
         <div class="hiw-step">
@@ -146,7 +159,7 @@
   <section class="section" style="padding-top:0;">
     <div class="container">
       <div class="stats-bar">
-        <div class="stat"><strong>8</strong><span>Tools available</span></div>
+        <div class="stat"><strong>9</strong><span>Tools available</span></div>
         <div class="stat"><strong>$0</strong><span>Cost, always</span></div>
         <div class="stat"><strong>0</strong><span>Files uploaded to us</span></div>
         <div class="stat"><strong>100%</strong><span>Runs in your browser</span></div>
@@ -175,7 +188,7 @@
         <p>Every conversion happens right here, right now, on your own device.</p>
         <div class="actions-row">
           <a href="merge.html" class="btn btn-primary btn-lg">Start with PDF Merger</a>
-          <a href="#tools" class="btn btn-ghost btn-lg">See all 8 tools</a>
+          <a href="#tools" class="btn btn-ghost btn-lg">See all 9 tools</a>
         </div>
       </div>
     </div>
