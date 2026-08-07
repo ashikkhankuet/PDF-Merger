@@ -15,23 +15,23 @@ const ICONS = {
 };
 
 const TOOLS = [
-  { id: 'merge',    name: 'PDF Merger',       url: 'merge.html',        icon: 'merge',
+  { id: 'merge',    name: 'PDF Merger',       url: '/merge',        icon: 'merge',
     tag: 'PDF',   short: 'Combine multiple PDFs into one, in your chosen order.' },
-  { id: 'compress', name: 'PDF Compressor',   url: 'compress.html',     icon: 'compress',
+  { id: 'compress', name: 'PDF Compressor',   url: '/compress',     icon: 'compress',
     tag: 'PDF',   short: 'Shrink PDF file size for email and uploads.' },
-  { id: 'img2pdf',  name: 'Image to PDF',     url: 'image-to-pdf.html', icon: 'img2pdf',
+  { id: 'img2pdf',  name: 'Image to PDF',     url: '/image-to-pdf', icon: 'img2pdf',
     tag: 'IMAGE', short: 'Turn JPG, PNG, or WEBP photos into a PDF.' },
-  { id: 'pdf2img',  name: 'PDF to Image',     url: 'pdf-to-image.html', icon: 'pdf2img',
+  { id: 'pdf2img',  name: 'PDF to Image',     url: '/pdf-to-image', icon: 'pdf2img',
     tag: 'PDF',   short: 'Export every PDF page as a PNG or JPG.' },
-  { id: 'jpg2pdf',  name: 'JPG to PDF',       url: 'jpg-to-pdf.html',   icon: 'jpg2pdf',
+  { id: 'jpg2pdf',  name: 'JPG to PDF',       url: '/jpg-to-pdf',   icon: 'jpg2pdf',
     tag: 'IMAGE', short: 'Batch-convert JPG photos into a single PDF.' },
-  { id: 'pdf2word', name: 'PDF to Word',      url: 'pdf-to-word.html',  icon: 'pdf2word',
+  { id: 'pdf2word', name: 'PDF to Word',      url: '/pdf-to-word',  icon: 'pdf2word',
     tag: 'PDF',   short: 'Extract PDF text into an editable .docx file.' },
-  { id: 'split',    name: 'PDF Splitter',     url: 'split.html',        icon: 'split',
+  { id: 'split',    name: 'PDF Splitter',     url: '/split',        icon: 'split',
     tag: 'PDF',   short: 'Pull out pages or split one PDF into many.' },
-  { id: 'qr',       name: 'QR Code Generator',url: 'qr-generator.html', icon: 'qr',
+  { id: 'qr',       name: 'QR Code Generator',url: '/qr-generator', icon: 'qr',
     tag: 'CREATE',short: 'Make a scannable QR code for a link or text.' },
-  { id: 'img2text', name: 'Image to Text',    url: 'image-to-text.html',icon: 'img2text',
+  { id: 'img2text', name: 'Image to Text',    url: '/image-to-text',icon: 'img2text',
     tag: 'OCR',   short: 'Pull editable text out of a photo or screenshot.' },
 ];
 
@@ -65,9 +65,9 @@ function renderHeader(active) {
   <header class="site-header">
     <div class="container">
       <div class="nav-row">
-        <a class="wordmark" href="index.html">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
+        <a class="wordmark" href="/">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
         <nav class="nav-main">
-          <a class="nav-link ${active==='home'?'active':''}" href="index.html">Home</a>
+          <a class="nav-link ${active==='home'?'active':''}" href="/">Home</a>
           <div class="nav-dd" id="toolsDD">
             <button type="button" aria-expanded="false">Tools
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -81,8 +81,8 @@ function renderHeader(active) {
               <div class="dd-empty" id="ddEmpty">No tools match that search.</div>
             </div>
           </div>
-          <a class="nav-link ${active==='about'?'active':''}" href="about.html">About</a>
-          <a class="nav-link ${active==='faq'?'active':''}" href="faq.html">FAQ</a>
+          <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
+          <a class="nav-link ${active==='faq'?'active':''}" href="/faq">FAQ</a>
         </nav>
         <a class="nav-cta" href="index.html#tools">All tools &rarr;</a>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
@@ -94,14 +94,14 @@ function renderHeader(active) {
         </button>
       </div>
       <div class="mobile-panel" id="mobPanel">
-        <a href="index.html">Home</a>
+        <a href="/">Home</a>
         <div class="grp-label">Tools</div>
         ${mobileToolLinks}
         <div class="grp-label">More</div>
-        <a href="about.html">About</a>
-        <a href="faq.html">FAQ</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
+        <a href="/about">About</a>
+        <a href="/faq">FAQ</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
       </div>
     </div>
   </header>`;
@@ -160,16 +160,16 @@ function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-about">
-          <a class="wordmark" href="index.html">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
+          <a class="wordmark" href="/">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
           <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
         </div>
         <div><h4>Tools</h4><ul>${toolLinksA}</ul></div>
         <div><h4>More tools</h4><ul>${toolLinksB}</ul></div>
         <div><h4>Company</h4><ul>
-          <li><a href="about.html">About</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-          <li><a href="privacy.html">Privacy Policy</a></li>
-          <li><a href="terms.html">Terms of Service</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/faq">FAQ</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
         </ul></div>
         <div>
           <h4>Stay updated</h4>

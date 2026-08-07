@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -24,7 +24,7 @@
 <main>
   <section class="tool-hero">
     <div class="container">
-      <div class="crumb"><a href="index.html">Home</a> <span>/</span> <span>PDF to Word</span></div>
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>PDF to Word</span></div>
       <div class="tool-hero-top">
         <span class="ico" id="toolIco" style="background:var(--accent-blue-tint);color:var(--accent-blue);"></span>
         <div>
@@ -86,7 +86,7 @@
         <h3>Good to know</h3>
         <ul>
           <li>Best for reports, articles, and text-heavy documents</li>
-          <li>Scanned PDFs (photos of pages) won't extract text — try <a href="image-to-text.html" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> instead</li>
+          <li>Scanned PDFs (photos of pages) won't extract text — try <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> instead</li>
           <li>Tables, columns, and images are not preserved</li>
           <li>Output is a standard .docx, fully editable in any word processor</li>
         </ul>
@@ -97,7 +97,7 @@
       <div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
         <details class="faq-item"><summary>Why doesn't this keep my original formatting?</summary><p>True layout-preserving PDF-to-Word conversion needs specialized software that rebuilds fonts, positioning, and tables — something that isn't reliably possible in browser JavaScript. This tool focuses on getting your text out cleanly and editably instead.</p></details>
-        <details class="faq-item"><summary>My PDF is a scan — why did nothing come out?</summary><p>Scanned PDFs are actually images of text, not real text characters, so there's nothing for this tool to extract. Use <a href="image-to-text.html" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for scanned pages instead.</p></details>
+        <details class="faq-item"><summary>My PDF is a scan — why did nothing come out?</summary><p>Scanned PDFs are actually images of text, not real text characters, so there's nothing for this tool to extract. Use <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for scanned pages instead.</p></details>
         <details class="faq-item"><summary>Can I edit the result in Word?</summary><p>Yes — the output is a standard .docx file, fully editable in Microsoft Word, Google Docs, or LibreOffice.</p></details>
       </div>
     </section>
