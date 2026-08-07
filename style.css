@@ -78,8 +78,8 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
   display: inline-flex; align-items: center; gap: 10px;
 }
 .wordmark .slash { color: var(--signal); }
-.brand-mark { display: inline-flex; width: 30px; height: 30px; flex: none; }
-.brand-mark svg { width: 100%; height: 100%; }
+.brand-mark { display: inline-flex; width: 32px; height: 32px; flex: none; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+.brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .footer-about .wordmark { margin-bottom: 4px; }
 
 .nav-main { display: flex; align-items: center; gap: 4px; }

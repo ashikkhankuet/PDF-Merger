@@ -39,6 +39,8 @@ function svgIcon(key, extra) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra||''}>${ICONS[key]}</svg>`;
 }
 
+const BRAND_IMG = '<span class="brand-mark"><img src="logo-mark.png" alt="ConvertKoro" /></span>';
+
 const TAG_TINT = {
   PDF:    { bg: 'var(--signal-tint)',      fg: 'var(--signal-dk)' },
   IMAGE:  { bg: 'var(--accent-blue-tint)', fg: 'var(--accent-blue)' },
@@ -63,7 +65,7 @@ function renderHeader(active) {
   <header class="site-header">
     <div class="container">
       <div class="nav-row">
-        <a class="wordmark" href="index.html"><span class="brand-mark"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#181A14"/><path d="M13 11h10l6 6v11a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#F4F5F2"/><path d="M23 11l6 6h-6z" fill="#E5470B"/><rect x="14" y="22.5" width="10" height="2" rx="1" fill="#ADB19F"/><rect x="14" y="26.5" width="7" height="2" rx="1" fill="#ADB19F"/></svg></span>CONVERT<span class="slash">/</span>KORO</a>
+        <a class="wordmark" href="index.html">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
         <nav class="nav-main">
           <a class="nav-link ${active==='home'?'active':''}" href="index.html">Home</a>
           <div class="nav-dd" id="toolsDD">
@@ -158,7 +160,7 @@ function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-about">
-          <a class="wordmark" href="index.html"><span class="brand-mark"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#181A14"/><path d="M13 11h10l6 6v11a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#F4F5F2"/><path d="M23 11l6 6h-6z" fill="#E5470B"/><rect x="14" y="22.5" width="10" height="2" rx="1" fill="#ADB19F"/><rect x="14" y="26.5" width="7" height="2" rx="1" fill="#ADB19F"/></svg></span>CONVERT<span class="slash">/</span>KORO</a>
+          <a class="wordmark" href="index.html">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
           <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
         </div>
         <div><h4>Tools</h4><ul>${toolLinksA}</ul></div>
