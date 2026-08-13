@@ -239,8 +239,7 @@
 
   document.getElementById('catGrid').innerHTML = CATEGORIES.filter(c => !c.soon).map(c => {
     const count = TOOLS.filter(t => t.tag === c.key).length;
-    const first = TOOLS.find(t => t.tag === c.key);
-    return `<a class="cat-card" href="${first.url}">
+    return `<a class="cat-card" href="#" data-open-cat="${c.key}">
       <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
       <strong>${c.label}</strong>
       <span>${count} tool${count>1?'s':''}</span>

@@ -166,7 +166,7 @@ function renderHeader(active) {
         <nav class="nav-main">
           <a class="nav-link ${active==='home'?'active':''}" href="/">Home</a>
           <div class="nav-dd" id="toolsDD">
-            <button type="button" aria-expanded="false">Tools
+            <button type="button" aria-expanded="false">All Tools
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="dd-panel">
@@ -182,10 +182,18 @@ function renderHeader(active) {
               </div>
             </div>
           </div>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="PDF">PDF</button>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="IMAGE">Image</button>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="VIDEO">Video</button>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="CREATE">Convert</button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="PDF">PDF
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="IMAGE">Image
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="VIDEO">Video
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="DEV">Developer
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
         </nav>
         <a class="nav-cta" href="/#tools">All tools &rarr;</a>
@@ -274,26 +282,46 @@ function renderHeader(active) {
     applyFilter();
     ddSearch.addEventListener('click', (e) => e.stopPropagation());
 
+    window.openToolCategory = function(key) {
+      if (key && key !== 'ALL') {
+        for (var p = 0; p < ddCats.length; p++) {
+          var isMatch = ddCats[p].getAttribute('data-cat') === key;
+          ddCats[p].classList.toggle('active', isMatch);
+          if (isMatch) activeCat = key;
+        }
+      }
+      ddSearch.value = '';
+      applyFilter();
+      dd.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      dd.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => ddSearch.focus(), 300);
+    };
+
     var catLinks = document.querySelectorAll('.nav-cat-link');
     for (var n = 0; n < catLinks.length; n++) {
       (function(link) {
         link.addEventListener('click', function(e) {
+          e.preventDefault();
           e.stopPropagation();
-          var key = link.getAttribute('data-open-cat');
-          for (var p = 0; p < ddCats.length; p++) {
-            var isMatch = ddCats[p].getAttribute('data-cat') === key;
-            ddCats[p].classList.toggle('active', isMatch);
-            if (isMatch) activeCat = key;
-          }
-          ddSearch.value = '';
-          applyFilter();
-          dd.classList.add('open');
-          btn.setAttribute('aria-expanded', 'true');
+          window.openToolCategory(link.getAttribute('data-open-cat'));
         });
       })(catLinks[n]);
     }
   }
-  const mobToggle = document.getElementById('mobToggle');
+  // Delegated so it also catches [data-open-cat] elements rendered later
+  // (homepage category cards, footer links) regardless of render order.
+  if (!window.__ckCatDelegated) {
+    window.__ckCatDelegated = true;
+    document.addEventListener('click', function(e) {
+      var el = e.target.closest && e.target.closest('[data-open-cat]');
+      if (!el || el.classList.contains('nav-cat-link')) return;
+      e.preventDefault();
+      if (typeof window.openToolCategory === 'function') {
+        window.openToolCategory(el.getAttribute('data-open-cat'));
+      }
+    });
+  }  const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');
   if (mobToggle) mobToggle.addEventListener('click', () => mobPanel.classList.toggle('open'));
 
@@ -315,10 +343,12 @@ applyStoredTheme();
 
 function renderFooter() {
   const liveTools = TOOLS.filter(t => !t.soon);
-  const half = Math.ceil(liveTools.length / 2);
-  const toolLinksA = liveTools.slice(0, half).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('');
-  const toolLinksB = liveTools.slice(half).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('')
-    + `<li><a href="/#tools">See all ${TOOLS.length} tools &rarr;</a></li>`;
+  const pdfTools = liveTools.filter(t => t.tag === 'PDF').slice(0, 4);
+  const otherTools = liveTools.filter(t => t.tag !== 'PDF').slice(0, 4);
+  const toolLinksA = pdfTools.map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('')
+    + `<li><a href="#" data-open-cat="PDF">All PDF tools &rarr;</a></li>`;
+  const toolLinksB = otherTools.map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('')
+    + `<li><a href="#" data-open-cat="ALL">All ${liveTools.length} tools &rarr;</a></li>`;
   document.getElementById('site-footer').outerHTML = `
   <footer class="site-footer">
     <div class="container">
@@ -327,8 +357,8 @@ function renderFooter() {
           <a class="wordmark" href="/">`+BRAND_IMG+`<span class="wordmark-text">Convert<span class="koro">Koro</span></span></a>
           <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
         </div>
-        <div><h4>Tools</h4><ul>${toolLinksA}</ul></div>
-        <div><h4>More tools</h4><ul>${toolLinksB}</ul></div>
+        <div><h4>PDF Tools</h4><ul>${toolLinksA}</ul></div>
+        <div><h4>More Tools</h4><ul>${toolLinksB}</ul></div>
         <div><h4>Company</h4><ul>
           <li><a href="/about">About</a></li>
           <li><a href="/faq">FAQ</a></li>

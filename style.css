@@ -95,7 +95,8 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
   transition: color .15s ease, background .15s ease;
   background: none; border: none; font-family: inherit; cursor: pointer;
 }
-.nav-cat-link { padding: 9px 11px; }
+.nav-cat-link { padding: 9px 11px; display: inline-flex; align-items: center; gap: 5px; }
+.nav-cat-link .chev { width: 11px; height: 11px; opacity: .6; }
 .nav-link:hover { color: var(--ink); background: var(--line); }
 .nav-link.active { color: var(--signal-dk); }
 
