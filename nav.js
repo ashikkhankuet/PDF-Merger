@@ -111,8 +111,11 @@ function renderHeader(active) {
               </div>
             </div>
           </div>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="PDF">PDF</button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="IMAGE">Image</button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="VIDEO">Video</button>
+          <button type="button" class="nav-link nav-cat-link" data-open-cat="CREATE">Convert</button>
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
-          <a class="nav-link ${active==='faq'?'active':''}" href="/faq">FAQ</a>
         </nav>
         <a class="nav-cta" href="/#tools">All tools &rarr;</a>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
@@ -199,6 +202,25 @@ function renderHeader(active) {
     ddSearch.addEventListener('input', applyFilter);
     applyFilter();
     ddSearch.addEventListener('click', (e) => e.stopPropagation());
+
+    var catLinks = document.querySelectorAll('.nav-cat-link');
+    for (var n = 0; n < catLinks.length; n++) {
+      (function(link) {
+        link.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var key = link.getAttribute('data-open-cat');
+          for (var p = 0; p < ddCats.length; p++) {
+            var isMatch = ddCats[p].getAttribute('data-cat') === key;
+            ddCats[p].classList.toggle('active', isMatch);
+            if (isMatch) activeCat = key;
+          }
+          ddSearch.value = '';
+          applyFilter();
+          dd.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+        });
+      })(catLinks[n]);
+    }
   }
   const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');
