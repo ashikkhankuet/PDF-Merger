@@ -245,7 +245,7 @@
   // PDF, Image, and Developer each get their own full row, in that specific order.
   // The remaining smaller categories (Text & OCR, Document, Create) share one
   // combined "More Tools" row instead of three separate thin rows.
-  const mainRows = ['PDF', 'IMAGE', 'DEV'].map(key => {
+  const mainRows = ['PDF', 'IMAGE', 'DEV', 'CALC'].map(key => {
     const c = CATEGORIES.find(cat => cat.key === key);
     const catTools = liveTools.filter(t => t.tag === key);
     const preview = catTools.slice(0, 5);

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Calculate exact age in years, months, and days from a date of birth." />
+<meta property="og:title" content="Age Calculator | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Age Calculator | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Age Calculator</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>Age Calculator</h1><p class="lead">Exact age in years, months, and days &mdash; from any date of birth.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Date of birth</label>
+      <input type="date" id="dobIn" style="padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;background:var(--card);color:var(--ink);" />
+      <label style="font-size:13px;font-weight:600;display:block;margin:14px 0 8px;">Calculate age as of</label>
+      <input type="date" id="asOfIn" style="padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;background:var(--card);color:var(--ink);" />
+      <button class="btn btn-ghost" id="todayBtn" style="margin-left:10px;">Use today</button>
+
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+
+      <div class="side-card" id="resultCard" style="display:none;margin-top:20px;">
+        <h3>Result</h3>
+        <p class="mono" id="mainResult" style="font-size:18px;margin-top:8px;"></p>
+        <p class="mono" id="subResult" style="font-size:13px;color:var(--ink-faint);margin-top:6px;"></p>
+      </div>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Enter the date of birth</strong><span>Pick it from the calendar or type it in.</span></li>
+          <li><strong>Choose the "as of" date</strong><span>Defaults to today, or pick any date to calculate age at that point.</span></li>
+          <li><strong>Read the exact age</strong><span>Shown in years, months, and days, plus total days lived.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('clock');</script>
+<script>
+(() => {
+  const dobIn = document.getElementById('dobIn');
+  const asOfIn = document.getElementById('asOfIn');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultCard = document.getElementById('resultCard');
+  const mainResult = document.getElementById('mainResult');
+  const subResult = document.getElementById('subResult');
+
+  document.getElementById('todayBtn').addEventListener('click', () => {
+    asOfIn.value = new Date().toISOString().slice(0,10);
+    compute();
+  });
+  asOfIn.value = new Date().toISOString().slice(0,10);
+
+  function compute() {
+    errBox.classList.remove('show'); resultCard.style.display = 'none';
+    if (!dobIn.value) return;
+    const dob = new Date(dobIn.value + 'T00:00:00');
+    const asOf = new Date((asOfIn.value || new Date().toISOString().slice(0,10)) + 'T00:00:00');
+    if (asOf < dob) {
+      errText.textContent = 'The "as of" date is before the date of birth.';
+      errBox.classList.add('show');
+      return;
+    }
+    let years = asOf.getFullYear() - dob.getFullYear();
+    let months = asOf.getMonth() - dob.getMonth();
+    let days = asOf.getDate() - dob.getDate();
+    if (days < 0) {
+      months -= 1;
+      const prevMonth = new Date(asOf.getFullYear(), asOf.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+    if (months < 0) { years -= 1; months += 12; }
+    const totalDays = Math.round((asOf - dob) / 86400000);
+    mainResult.textContent = `${years} years, ${months} months, ${days} days`;
+    subResult.textContent = `Total: ${totalDays.toLocaleString()} days \u00b7 ${Math.floor(totalDays/7).toLocaleString()} weeks`;
+    resultCard.style.display = 'block';
+  }
+  dobIn.addEventListener('input', compute);
+  asOfIn.addEventListener('input', compute);
+})();
+</script>
+</body>
+</html>

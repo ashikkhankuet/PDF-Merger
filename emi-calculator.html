@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Calculate your monthly EMI, total interest, and total payment on a loan." />
+<meta property="og:title" content="EMI / Loan Calculator | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>EMI / Loan Calculator | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>EMI / Loan Calculator</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>EMI / Loan Calculator</h1><p class="lead">Monthly payment, total interest, and total repayment.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Loan amount</label>
+          <input type="number" id="principal" value="500000" style="width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Annual interest rate (%)</label>
+          <input type="number" id="rate" value="9" step="0.1" style="width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Loan term (years)</label>
+          <input type="number" id="years" value="5" style="width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+        </div>
+      </div>
+      <div class="side-card" id="resultCard" style="margin-top:20px;">
+        <h3>Monthly EMI</h3>
+        <p class="mono" id="emiOut" style="font-size:26px;margin-top:6px;"></p>
+        <div style="display:flex;gap:24px;margin-top:14px;flex-wrap:wrap;">
+          <div><span style="font-size:12px;color:var(--ink-faint);display:block;">Total interest</span><strong class="mono" id="interestOut"></strong></div>
+          <div><span style="font-size:12px;color:var(--ink-faint);display:block;">Total repayment</span><strong class="mono" id="totalOut"></strong></div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>This is a standard reducing-balance EMI estimate. Your actual bank may apply fees, insurance, or a different calculation method &mdash; use this as a planning estimate, not a final quote.</span>
+      </div>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Enter the loan details</strong><span>Amount, annual interest rate, and term in years.</span></li>
+          <li><strong>It calculates live</strong><span>Uses the standard reducing-balance EMI formula as you type.</span></li>
+          <li><strong>Read your monthly payment</strong><span>Along with total interest and total amount repaid over the loan term.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('bank');</script>
+<script>
+(() => {
+  const principal = document.getElementById('principal');
+  const rate = document.getElementById('rate');
+  const years = document.getElementById('years');
+  const emiOut = document.getElementById('emiOut');
+  const interestOut = document.getElementById('interestOut');
+  const totalOut = document.getElementById('totalOut');
+
+  function fmt(n) { return n.toLocaleString(undefined,{maximumFractionDigits:2}); }
+
+  function compute() {
+    const P = parseFloat(principal.value);
+    const annualRate = parseFloat(rate.value);
+    const n = parseFloat(years.value) * 12;
+    if (!P || !n || P <= 0 || n <= 0) { emiOut.textContent = '\u2014'; interestOut.textContent = ''; totalOut.textContent = ''; return; }
+    let emi;
+    if (!annualRate || annualRate <= 0) {
+      emi = P / n;
+    } else {
+      const r = annualRate / 12 / 100;
+      emi = (P * r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+    }
+    const total = emi * n;
+    const interest = total - P;
+    emiOut.textContent = fmt(emi);
+    interestOut.textContent = fmt(interest);
+    totalOut.textContent = fmt(total);
+  }
+  [principal, rate, years].forEach(el => el.addEventListener('input', compute));
+  compute();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert between currencies including BDT, USD, and EUR with live exchange rates." />
+<meta property="og:title" content="Currency Converter | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Currency Converter | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Currency Converter</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>Currency Converter</h1><p class="lead">Live exchange rates, including BDT.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="callout" id="rateStatus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span id="rateStatusText">Loading current exchange rates&hellip;</span>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:16px;">
+        <div style="flex:1;min-width:180px;">
+          <input type="number" id="fromVal" value="1" style="width:100%;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--card);color:var(--ink);" />
+          <select id="fromCur" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;"></select>
+        </div>
+        <button class="btn btn-ghost" id="swapBtn" style="align-self:center;">&#8646;</button>
+        <div style="flex:1;min-width:180px;">
+          <input type="text" id="toVal" readonly style="width:100%;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--paper);color:var(--ink);" />
+          <select id="toCur" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;"></select>
+        </div>
+      </div>
+      <p class="mono" id="rateLine" style="font-size:12.5px;color:var(--ink-faint);margin-top:14px;"></p>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Rates load automatically</strong><span>Fetched from a live, free exchange-rate service when the page opens.</span></li>
+          <li><strong>Pick your currencies</strong><span>Choose what you're converting from and to &mdash; BDT included.</span></li>
+          <li><strong>Type an amount</strong><span>The converted value updates instantly.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('money');</script>
+<script>
+(() => {
+  const CUR = { USD:'US Dollar', EUR:'Euro', GBP:'British Pound', BDT:'Bangladeshi Taka', INR:'Indian Rupee', SAR:'Saudi Riyal', AED:'UAE Dirham', JPY:'Japanese Yen', CAD:'Canadian Dollar', AUD:'Australian Dollar' };
+  const fromVal = document.getElementById('fromVal');
+  const toVal = document.getElementById('toVal');
+  const fromCur = document.getElementById('fromCur');
+  const toCur = document.getElementById('toCur');
+  const rateStatus = document.getElementById('rateStatus');
+  const rateStatusText = document.getElementById('rateStatusText');
+  const rateLine = document.getElementById('rateLine');
+  let rates = null;
+
+  Object.keys(CUR).forEach(code => {
+    fromCur.innerHTML += `<option value="${code}" ${code==='USD'?'selected':''}>${code} \u2014 ${CUR[code]}</option>`;
+    toCur.innerHTML += `<option value="${code}" ${code==='BDT'?'selected':''}>${code} \u2014 ${CUR[code]}</option>`;
+  });
+
+  function compute() {
+    if (!rates) return;
+    const v = parseFloat(fromVal.value);
+    if (isNaN(v)) { toVal.value = ''; return; }
+    const from = fromCur.value, to = toCur.value;
+    const usdAmount = v / rates[from];
+    const result = usdAmount * rates[to];
+    toVal.value = result.toLocaleString(undefined,{maximumFractionDigits:4});
+    rateLine.textContent = `1 ${from} = ${(rates[to]/rates[from]).toLocaleString(undefined,{maximumFractionDigits:4})} ${to}`;
+  }
+
+  fetch('https://open.er-api.com/v6/latest/USD')
+    .then(r => r.json())
+    .then(data => {
+      if (data.result !== 'success' && !data.rates) throw new Error('bad data');
+      rates = data.rates;
+      rateStatusText.textContent = `Live rates loaded (base USD). Last updated: ${data.time_last_update_utc || 'recently'}.`;
+      compute();
+    })
+    .catch(() => {
+      rateStatus.classList.add('show');
+      rateStatusText.textContent = 'Couldn\u2019t load live rates right now \u2014 try refreshing the page in a moment.';
+    });
+
+  [fromVal, fromCur, toCur].forEach(el => el.addEventListener('input', compute));
+  document.getElementById('swapBtn').addEventListener('click', () => {
+    const tmp = fromCur.value; fromCur.value = toCur.value; toCur.value = tmp;
+    compute();
+  });
+})();
+</script>
+</body>
+</html>

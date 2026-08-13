@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Calculate your Body Mass Index (BMI) from height and weight, in metric or imperial." />
+<meta property="og:title" content="BMI Calculator | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>BMI Calculator | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>BMI Calculator</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>BMI Calculator</h1><p class="lead">Body Mass Index from your height and weight.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="radio" name="unit" value="metric" checked /> Metric (cm, kg)</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="radio" name="unit" value="imperial" /> Imperial (ft/in, lb)</label>
+      </div>
+      <div id="metricInputs" style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height (cm)</label>
+          <input type="number" id="heightCm" placeholder="170" style="width:130px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+        <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Weight (kg)</label>
+          <input type="number" id="weightKg" placeholder="65" style="width:130px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+      </div>
+      <div id="imperialInputs" style="display:none;gap:16px;flex-wrap:wrap;">
+        <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height (ft)</label>
+          <input type="number" id="heightFt" placeholder="5" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+        <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height (in)</label>
+          <input type="number" id="heightIn" placeholder="7" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+        <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Weight (lb)</label>
+          <input type="number" id="weightLb" placeholder="143" style="width:120px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+      </div>
+      <div class="side-card" id="resultCard" style="display:none;margin-top:20px;">
+        <h3>Your BMI</h3>
+        <p class="mono" id="bmiOut" style="font-size:24px;margin-top:8px;"></p>
+        <p class="mono" id="bmiCategory" style="font-size:14px;color:var(--ink-soft);margin-top:4px;"></p>
+      </div>
+      <div class="callout" style="margin-top:20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>BMI is a general screening measure, not a diagnosis. It doesn't account for muscle mass, bone density, or body composition. Talk to a healthcare provider for a full picture.</span>
+      </div>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Choose your unit system</strong><span>Metric (cm/kg) or Imperial (ft-in/lb).</span></li>
+          <li><strong>Enter height and weight</strong><span>The result updates live as you type.</span></li>
+          <li><strong>Read your BMI and category</strong><span>Underweight, normal, overweight, or obese, per the standard WHO ranges.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('scale');</script>
+<script>
+(() => {
+  const metricInputs = document.getElementById('metricInputs');
+  const imperialInputs = document.getElementById('imperialInputs');
+  const resultCard = document.getElementById('resultCard');
+  const bmiOut = document.getElementById('bmiOut');
+  const bmiCategory = document.getElementById('bmiCategory');
+
+  document.querySelectorAll('input[name="unit"]').forEach(r => r.addEventListener('change', () => {
+    const isMetric = document.querySelector('input[name="unit"]:checked').value === 'metric';
+    metricInputs.style.display = isMetric ? 'flex' : 'none';
+    imperialInputs.style.display = isMetric ? 'none' : 'flex';
+    compute();
+  }));
+
+  function category(bmi) {
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 25) return 'Normal weight';
+    if (bmi < 30) return 'Overweight';
+    return 'Obese';
+  }
+
+  function compute() {
+    const isMetric = document.querySelector('input[name="unit"]:checked').value === 'metric';
+    let bmi = null;
+    if (isMetric) {
+      const h = parseFloat(document.getElementById('heightCm').value) / 100;
+      const w = parseFloat(document.getElementById('weightKg').value);
+      if (h > 0 && w > 0) bmi = w / (h*h);
+    } else {
+      const ft = parseFloat(document.getElementById('heightFt').value) || 0;
+      const inch = parseFloat(document.getElementById('heightIn').value) || 0;
+      const totalIn = ft*12 + inch;
+      const w = parseFloat(document.getElementById('weightLb').value);
+      if (totalIn > 0 && w > 0) bmi = (w / (totalIn*totalIn)) * 703;
+    }
+    if (bmi) {
+      bmiOut.textContent = bmi.toFixed(1);
+      bmiCategory.textContent = category(bmi);
+      resultCard.style.display = 'block';
+    } else {
+      resultCard.style.display = 'none';
+    }
+  }
+  ['heightCm','weightKg','heightFt','heightIn','weightLb'].forEach(id => document.getElementById(id).addEventListener('input', compute));
+})();
+</script>
+</body>
+</html>

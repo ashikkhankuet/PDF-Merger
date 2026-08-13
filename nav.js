@@ -35,7 +35,12 @@ const ICONS = {
   regexicon: '<path d="M6 4l4 16M14 4l4 16"/><circle cx="20" cy="19" r="1.3"/>',
   xmltag: '<path d="M8 8L4 12l4 4"/><path d="M13 4l-2 16"/><path d="M16 8l4 4-4 4"/>',
   convertdoc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M9 14l3-3 3 3M12 11v7"/>',
-  trim: '<path d="M2 12h4l2-7 3 14 2-7h4"/><path d="M18 5l4 4M22 5l-4 4"/>'
+  trim: '<path d="M2 12h4l2-7 3 14 2-7h4"/><path d="M18 5l4 4M22 5l-4 4"/>',
+  percent: '<circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M19 5L5 19"/>',
+  ruler: '<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v3M15 8v3M19 8v3"/>',
+  money: '<circle cx="12" cy="12" r="9"/><path d="M9 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><path d="M8 12h8"/><line x1="12" y1="15" x2="12" y2="15"/>',
+  bank: '<path d="M3 21h18"/><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M4 9h16"/>',
+  scale: '<path d="M12 3v18"/><path d="M6 8h12"/><path d="M4 8l2-4 2 4"/><path d="M16 8l2-4 2 4"/><path d="M3 8a3 3 0 0 0 6 0"/><path d="M15 8a3 3 0 0 0 6 0"/><path d="M8 21h8"/>'
 };
 
 const CATEGORIES = [
@@ -45,6 +50,7 @@ const CATEGORIES = [
   { key: 'DEV',      label: 'Developer Tools',icon: 'code',   pageUrl: '/developer-tools' },
   { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc',    pageUrl: '/document-tools' },
   { key: 'CREATE',   label: 'Create',         icon: 'qr',     pageUrl: '/create-tools' },
+  { key: 'CALC',     label: 'Calculators',    icon: 'percent', pageUrl: '/calculators' },
   { key: 'AUDIO',    label: 'Audio Tools',    icon: 'audio',  pageUrl: '/audio-tools' },
   { key: 'VIDEO',    label: 'Video Tools',    icon: 'video',  pageUrl: '/video-tools' },
 ];
@@ -142,6 +148,19 @@ const TOOLS = [
     short: 'Resize a video to exact pixel dimensions.' },
   { id: 'video-trim',  name: 'Video Trimmer',    url: '/video-trimmer',    icon: 'trim', tag: 'VIDEO',
     short: 'Cut a video down to the clip you need.' },
+
+  { id: 'pct-calc',  name: 'Percentage Calculator', url: '/percentage-calculator', icon: 'percent', tag: 'CALC',
+    short: 'Percent of a number, percent change, and more.' },
+  { id: 'age-calc',  name: 'Age Calculator',    url: '/age-calculator',    icon: 'clock',   tag: 'CALC',
+    short: 'Exact age in years, months, and days.' },
+  { id: 'bmi-calc',  name: 'BMI Calculator',    url: '/bmi-calculator',    icon: 'scale', tag: 'CALC',
+    short: 'Body Mass Index from height and weight.' },
+  { id: 'unit-conv', name: 'Unit Converter',    url: '/unit-converter',    icon: 'ruler',   tag: 'CALC',
+    short: 'Convert length, weight, and temperature.' },
+  { id: 'currency-conv', name: 'Currency Converter', url: '/currency-converter', icon: 'money', tag: 'CALC',
+    short: 'Live exchange rates, including BDT.' },
+  { id: 'emi-calc',  name: 'EMI / Loan Calculator', url: '/emi-calculator', icon: 'bank',   tag: 'CALC',
+    short: 'Monthly payment, interest, and total repayment.' },
 ];
 
 function svgIcon(key, extra) {
@@ -157,6 +176,9 @@ const TAG_GRADIENT = {
   DEV:      'var(--grad-dev)',
   DOCUMENT: 'var(--grad-document)',
   CREATE:   'var(--grad-create)',
+  AUDIO:    'var(--grad-create)',
+  VIDEO:    'var(--grad-image)',
+  CALC:     'var(--grad-calc)',
 };
 function tintStyle(tag) {
   const grad = TAG_GRADIENT[tag] || TAG_GRADIENT.PDF;

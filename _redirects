@@ -57,3 +57,10 @@
 /video-resizer          /video-resizer.html          200
 /video-trimmer          /video-trimmer.html          200
 /audio-compressor       /audio-compressor.html       200
+/calculators             /calculators.html             200
+/percentage-calculator   /percentage-calculator.html   200
+/age-calculator          /age-calculator.html          200
+/bmi-calculator          /bmi-calculator.html          200
+/unit-converter          /unit-converter.html          200
+/currency-converter      /currency-converter.html      200
+/emi-calculator          /emi-calculator.html          200

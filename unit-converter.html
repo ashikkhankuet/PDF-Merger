@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert between units of length, weight, and temperature, instantly." />
+<meta property="og:title" content="Unit Converter | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Unit Converter | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Unit Converter</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>Unit Converter</h1><p class="lead">Length, weight, and temperature &mdash; converted instantly.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+        <button class="btn btn-ghost cat-btn active" data-cat="length">Length</button>
+        <button class="btn btn-ghost cat-btn" data-cat="weight">Weight</button>
+        <button class="btn btn-ghost cat-btn" data-cat="temp">Temperature</button>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;">
+          <input type="number" id="fromVal" value="1" style="width:100%;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--card);color:var(--ink);" />
+          <select id="fromUnit" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;"></select>
+        </div>
+        <div style="padding-top:8px;color:var(--ink-faint);font-size:20px;">=</div>
+        <div style="flex:1;min-width:180px;">
+          <input type="text" id="toVal" readonly style="width:100%;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--paper);color:var(--ink);" />
+          <select id="toUnit" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;"></select>
+        </div>
+      </div>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Pick a category</strong><span>Length, weight, or temperature.</span></li>
+          <li><strong>Choose your units</strong><span>Select what you're converting from and to.</span></li>
+          <li><strong>Type a value</strong><span>The converted result updates live.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('ruler');</script>
+<script>
+(() => {
+  const UNITS = {
+    length: { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.34, yd: 0.9144, ft: 0.3048, in: 0.0254 },
+    weight: { kg: 1, g: 0.001, mg: 0.000001, lb: 0.453592, oz: 0.0283495, ton: 1000 },
+  };
+  const LABELS = {
+    m:'Meters', km:'Kilometers', cm:'Centimeters', mm:'Millimeters', mi:'Miles', yd:'Yards', ft:'Feet', in:'Inches',
+    kg:'Kilograms', g:'Grams', mg:'Milligrams', lb:'Pounds', oz:'Ounces', ton:'Metric tons',
+    c:'Celsius', f:'Fahrenheit', k:'Kelvin'
+  };
+  const fromVal = document.getElementById('fromVal');
+  const toVal = document.getElementById('toVal');
+  const fromUnit = document.getElementById('fromUnit');
+  const toUnit = document.getElementById('toUnit');
+  let cat = 'length';
+
+  function populate() {
+    let keys = cat === 'temp' ? ['c','f','k'] : Object.keys(UNITS[cat]);
+    fromUnit.innerHTML = keys.map(k => `<option value="${k}">${LABELS[k]}</option>`).join('');
+    toUnit.innerHTML = keys.map(k => `<option value="${k}">${LABELS[k]}</option>`).join('');
+    toUnit.selectedIndex = Math.min(1, keys.length - 1);
+    compute();
+  }
+  function tempToCelsius(v, u) { return u === 'c' ? v : u === 'f' ? (v-32)*5/9 : v - 273.15; }
+  function celsiusTo(v, u) { return u === 'c' ? v : u === 'f' ? v*9/5+32 : v + 273.15; }
+
+  function compute() {
+    const v = parseFloat(fromVal.value);
+    if (isNaN(v)) { toVal.value = ''; return; }
+    if (cat === 'temp') {
+      const c = tempToCelsius(v, fromUnit.value);
+      toVal.value = celsiusTo(c, toUnit.value).toLocaleString(undefined,{maximumFractionDigits:4});
+    } else {
+      const base = v * UNITS[cat][fromUnit.value];
+      const result = base / UNITS[cat][toUnit.value];
+      toVal.value = result.toLocaleString(undefined,{maximumFractionDigits:6});
+    }
+  }
+  document.querySelectorAll('.cat-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cat = btn.dataset.cat;
+    populate();
+  }));
+  [fromVal, fromUnit, toUnit].forEach(el => el.addEventListener('input', compute));
+  populate();
+})();
+</script>
+</body>
+</html>

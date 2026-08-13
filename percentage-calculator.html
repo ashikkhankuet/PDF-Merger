@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Calculate percentages instantly — of a number, percentage change, and more." />
+<meta property="og:title" content="Percentage Calculator | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Percentage Calculator | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Percentage Calculator</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>Percentage Calculator</h1><p class="lead">Three common percentage problems, solved instantly.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="side-card" style="margin-bottom:16px;">
+        <h3>What is X% of Y?</h3>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+          <input type="number" id="p1a" placeholder="20" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          <span>% of</span>
+          <input type="number" id="p1b" placeholder="150" style="width:120px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          <span>=</span>
+          <strong class="mono" id="p1out" style="font-size:16px;">&mdash;</strong>
+        </div>
+      </div>
+      <div class="side-card" style="margin-bottom:16px;">
+        <h3>X is what percent of Y?</h3>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+          <input type="number" id="p2a" placeholder="30" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          <span>is what % of</span>
+          <input type="number" id="p2b" placeholder="150" style="width:120px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          <span>=</span>
+          <strong class="mono" id="p2out" style="font-size:16px;">&mdash;</strong>
+        </div>
+      </div>
+      <div class="side-card">
+        <h3>Percentage change from X to Y</h3>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+          <input type="number" id="p3a" placeholder="150" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          <span>&rarr;</span>
+          <input type="number" id="p3b" placeholder="180" style="width:120px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          <span>=</span>
+          <strong class="mono" id="p3out" style="font-size:16px;">&mdash;</strong>
+        </div>
+      </div>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Pick the calculation you need</strong><span>Finding a percentage, working out what percent one number is of another, or measuring a change.</span></li>
+          <li><strong>Type in your numbers</strong><span>All three calculators update live as you type &mdash; no button to click.</span></li>
+          <li><strong>Read the result</strong><span>Shown instantly next to the fields you filled in.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('percent');</script>
+<script>
+(() => {
+  function num(id) { return parseFloat(document.getElementById(id).value); }
+  function update() {
+    const a1 = num('p1a'), b1 = num('p1b');
+    document.getElementById('p1out').textContent = (!isNaN(a1) && !isNaN(b1)) ? ((a1/100)*b1).toLocaleString(undefined,{maximumFractionDigits:4}) : '\u2014';
+    const a2 = num('p2a'), b2 = num('p2b');
+    document.getElementById('p2out').textContent = (!isNaN(a2) && !isNaN(b2) && b2 !== 0) ? ((a2/b2)*100).toLocaleString(undefined,{maximumFractionDigits:2}) + '%' : '\u2014';
+    const a3 = num('p3a'), b3 = num('p3b');
+    if (!isNaN(a3) && !isNaN(b3) && a3 !== 0) {
+      const change = ((b3-a3)/a3)*100;
+      document.getElementById('p3out').textContent = (change >= 0 ? '+' : '') + change.toLocaleString(undefined,{maximumFractionDigits:2}) + '%';
+    } else {
+      document.getElementById('p3out').textContent = '\u2014';
+    }
+  }
+  ['p1a','p1b','p2a','p2b','p3a','p3b'].forEach(id => document.getElementById(id).addEventListener('input', update));
+})();
+</script>
+</body>
+</html>

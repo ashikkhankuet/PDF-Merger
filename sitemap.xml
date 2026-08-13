@@ -58,4 +58,11 @@
   <url><loc>https://convertkoro.netlify.app/video-resizer</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/video-trimmer</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/audio-compressor</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/calculators</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/percentage-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/age-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/bmi-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/unit-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/currency-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/emi-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
 </urlset>
