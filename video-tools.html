@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
-<meta name="description" content="Pull editable text out of images and scanned PDFs, right in your browser." />
-<meta property="og:title" content="Text & OCR Tools | ConvertKoro" />
+<meta name="description" content="Convert, compress, trim, and resize videos, free and private, right in your browser." />
+<meta property="og:title" content="Video Tools | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
-<title>Text & OCR Tools | ConvertKoro</title>
+<title>Video Tools | ConvertKoro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -19,15 +19,15 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
 </head>
-<body data-page="ocr-tools">
+<body data-page="video-tools">
 <div id="site-header"></div>
 <main>
   <section class="tool-hero">
     <div class="container">
-      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Text & OCR Tools</span></div>
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Video Tools</span></div>
       <div class="tool-hero-top">
         <span class="ico" id="catIco" style="background:var(--line);color:var(--ink-faint);"></span>
-        <div><h1>Text & OCR Tools</h1><p class="lead" id="catCount"></p></div>
+        <div><h1>Video Tools</h1><p class="lead" id="catCount"></p></div>
       </div>
     </div>
   </section>
@@ -43,7 +43,7 @@
 <script src="nav.js"></script>
 <script>
 (() => {
-  const key = 'OCR';
+  const key = 'VIDEO';
   const cat = CATEGORIES.find(c => c.key === key);
   document.getElementById('catIco').innerHTML = svgIcon(cat.icon);
   document.getElementById('catIco').setAttribute('style', tintStyle(cat.key));

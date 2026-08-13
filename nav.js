@@ -34,7 +34,8 @@ const ICONS = {
   textlines: '<path d="M4 5h16M4 10h16M4 15h11M4 20h14"/>',
   regexicon: '<path d="M6 4l4 16M14 4l4 16"/><circle cx="20" cy="19" r="1.3"/>',
   xmltag: '<path d="M8 8L4 12l4 4"/><path d="M13 4l-2 16"/><path d="M16 8l4 4-4 4"/>',
-  convertdoc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M9 14l3-3 3 3M12 11v7"/>'
+  convertdoc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M9 14l3-3 3 3M12 11v7"/>',
+  trim: '<path d="M2 12h4l2-7 3 14 2-7h4"/><path d="M18 5l4 4M22 5l-4 4"/>'
 };
 
 const CATEGORIES = [
@@ -44,8 +45,8 @@ const CATEGORIES = [
   { key: 'DEV',      label: 'Developer Tools',icon: 'code',   pageUrl: '/developer-tools' },
   { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc',    pageUrl: '/document-tools' },
   { key: 'CREATE',   label: 'Create',         icon: 'qr',     pageUrl: '/create-tools' },
-  { key: 'VIDEO',    label: 'Video Tools',    icon: 'video',  soon: true },
-  { key: 'AUDIO',    label: 'Audio Tools',    icon: 'audio',  soon: true },
+  { key: 'AUDIO',    label: 'Audio Tools',    icon: 'audio',  pageUrl: '/audio-tools' },
+  { key: 'VIDEO',    label: 'Video Tools',    icon: 'video',  pageUrl: '/video-tools' },
 ];
 
 const TOOLS = [
@@ -121,6 +122,26 @@ const TOOLS = [
     short: 'Render Markdown into clean HTML.' },
   { id: 'md2pdf',    name: 'Markdown to PDF', url: '/markdown-to-pdf', icon: 'doc', tag: 'DOCUMENT',
     short: 'Turn a Markdown file into a formatted PDF.' },
+
+  { id: 'audio-conv', name: 'Audio Converter', url: '/audio-converter', icon: 'audio', tag: 'AUDIO',
+    short: 'Convert audio between MP3 and WAV.' },
+  { id: 'audio-trim', name: 'Audio Trimmer',   url: '/audio-trimmer',   icon: 'trim',  tag: 'AUDIO',
+    short: 'Cut an audio file down to the section you need.' },
+  { id: 'audio-compress', name: 'Audio Compressor', url: '/audio-compressor', icon: 'compress', tag: 'AUDIO',
+    short: 'Re-encode audio at a lower bitrate to shrink file size.' },
+
+  { id: 'video-conv',  name: 'Video Converter',  url: '/video-converter',  icon: 'refresh', tag: 'VIDEO',
+    short: 'Convert between MP4, WebM, and MOV.' },
+  { id: 'video-compress', name: 'Video Compressor', url: '/video-compressor', icon: 'compress', tag: 'VIDEO',
+    short: "Shrink a video's file size with a quality slider." },
+  { id: 'video2mp3',   name: 'Video to MP3',     url: '/video-to-mp3',     icon: 'swap', tag: 'VIDEO',
+    short: 'Extract the audio track from a video as MP3.' },
+  { id: 'video2gif',   name: 'Video to GIF',     url: '/video-to-gif',     icon: 'layers', tag: 'VIDEO',
+    short: 'Turn a short video clip into a looping GIF.' },
+  { id: 'video-resize',name: 'Video Resizer',    url: '/video-resizer',    icon: 'resize', tag: 'VIDEO',
+    short: 'Resize a video to exact pixel dimensions.' },
+  { id: 'video-trim',  name: 'Video Trimmer',    url: '/video-trimmer',    icon: 'trim', tag: 'VIDEO',
+    short: 'Cut a video down to the clip you need.' },
 ];
 
 function svgIcon(key, extra) {
@@ -196,9 +217,16 @@ function renderHeader(active) {
           </div>
           <a class="nav-link ${active==='pdf-tools'?'active':''}" href="/pdf-tools">PDF</a>
           <a class="nav-link ${active==='image-tools'?'active':''}" href="/image-tools">Image</a>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="VIDEO">Video
-            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
+          <div class="nav-dd nav-dd-media" id="mediaDD">
+            <button type="button" aria-expanded="false">Media
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dd-panel-small">
+              <a href="/media-tools"><strong>All Media Tools</strong><span>Audio + video, everything in one place</span></a>
+              <a href="/audio-tools"><strong>Audio Tools</strong><span>Convert, trim, compress audio</span></a>
+              <a href="/video-tools"><strong>Video Tools</strong><span>Convert, trim, compress video</span></a>
+            </div>
+          </div>
           <a class="nav-link ${active==='dev-tools'?'active':''}" href="/developer-tools">Developer</a>
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
         </nav>
@@ -352,7 +380,33 @@ function renderHeader(active) {
         window.openToolCategory(el.getAttribute('data-open-cat'));
       }
     });
-  }  const mobToggle = document.getElementById('mobToggle');
+  }
+
+  const mediaDD = document.getElementById('mediaDD');
+  if (mediaDD) {
+    const mBtn = mediaDD.querySelector('button');
+    let mHoverTimer = null;
+    mBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mediaDD.classList.toggle('open');
+      mBtn.setAttribute('aria-expanded', mediaDD.classList.contains('open'));
+    });
+    mediaDD.addEventListener('mouseenter', () => {
+      clearTimeout(mHoverTimer);
+      mediaDD.classList.add('open');
+      mBtn.setAttribute('aria-expanded', 'true');
+    });
+    mediaDD.addEventListener('mouseleave', () => {
+      mHoverTimer = setTimeout(() => {
+        mediaDD.classList.remove('open');
+        mBtn.setAttribute('aria-expanded', 'false');
+      }, 250);
+    });
+    document.addEventListener('click', (e) => { if (!mediaDD.contains(e.target)) mediaDD.classList.remove('open'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') mediaDD.classList.remove('open'); });
+  }
+
+  const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');
   if (mobToggle) mobToggle.addEventListener('click', () => mobPanel.classList.toggle('open'));
 

@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
-<meta name="description" content="Pull editable text out of images and scanned PDFs, right in your browser." />
-<meta property="og:title" content="Text & OCR Tools | ConvertKoro" />
+<meta name="description" content="Audio and video tools — convert, compress, trim, and more, free and private in your browser." />
+<meta property="og:title" content="Media Tools | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
-<title>Text & OCR Tools | ConvertKoro</title>
+<title>Media Tools | ConvertKoro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -19,20 +19,23 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
 </head>
-<body data-page="ocr-tools">
+<body data-page="media-tools">
 <div id="site-header"></div>
 <main>
   <section class="tool-hero">
     <div class="container">
-      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Text & OCR Tools</span></div>
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Media Tools</span></div>
       <div class="tool-hero-top">
-        <span class="ico" id="catIco" style="background:var(--line);color:var(--ink-faint);"></span>
-        <div><h1>Text & OCR Tools</h1><p class="lead" id="catCount"></p></div>
+        <span class="ico" id="catIco" style="background:var(--grad-image);color:#fff;"></span>
+        <div><h1>Media Tools</h1><p class="lead" id="catCount"></p></div>
       </div>
     </div>
   </section>
   <section class="container">
-    <div class="tool-grid" id="catToolGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+    <div class="section-head"><h2>Audio Tools</h2></div>
+    <div class="tool-grid" id="audioGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:34px;"></div>
+    <div class="section-head"><h2>Video Tools</h2></div>
+    <div class="tool-grid" id="videoGrid" style="grid-template-columns:repeat(4,1fr);"></div>
   </section>
   <section class="container">
     <div class="section-head"><h2>Browse other categories</h2></div>
@@ -43,20 +46,21 @@
 <script src="nav.js"></script>
 <script>
 (() => {
-  const key = 'OCR';
-  const cat = CATEGORIES.find(c => c.key === key);
-  document.getElementById('catIco').innerHTML = svgIcon(cat.icon);
-  document.getElementById('catIco').setAttribute('style', tintStyle(cat.key));
-  const tools = TOOLS.filter(t => t.tag === key);
-  document.getElementById('catCount').textContent = `${tools.length} tool${tools.length>1?'s':''} \u2014 all free, all processed on your device.`;
-  document.getElementById('catToolGrid').innerHTML = tools.map(t => `
-    <a class="tool-card" href="${t.url}">
+  const audioTools = TOOLS.filter(t => t.tag === 'AUDIO');
+  const videoTools = TOOLS.filter(t => t.tag === 'VIDEO');
+  document.getElementById('catIco').innerHTML = svgIcon('video');
+  document.getElementById('catCount').textContent = `${audioTools.length + videoTools.length} tools \u2014 all free, all processed on your device.`;
+
+  function card(t) {
+    return `<a class="tool-card" href="${t.url}">
       <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
-      <h3>${t.name}</h3>
-      <p>${t.short}</p>
-      <span class="tag">${t.tag}</span>
-    </a>`).join('');
-  document.getElementById('otherCats').innerHTML = CATEGORIES.filter(c => !c.soon && c.key !== key).map(c => {
+      <h3>${t.name}</h3><p>${t.short}</p><span class="tag">${t.tag}</span>
+    </a>`;
+  }
+  document.getElementById('audioGrid').innerHTML = audioTools.map(card).join('');
+  document.getElementById('videoGrid').innerHTML = videoTools.map(card).join('');
+
+  document.getElementById('otherCats').innerHTML = CATEGORIES.filter(c => !c.soon && c.key !== 'AUDIO' && c.key !== 'VIDEO').map(c => {
     const count = TOOLS.filter(t => t.tag === c.key).length;
     return `<a class="cat-card" href="${c.pageUrl}">
       <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>

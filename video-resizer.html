@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Resize a video to exact pixel dimensions, entirely in your browser." />
+<meta property="og:title" content="Video Resizer | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Video Resizer | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="ffmpeg-tools.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Video Resizer</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-image);color:#fff;"></span>
+        <div><h1>Video Resizer</h1><p class="lead">Resize a video to exact pixel dimensions.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads a ~25MB video engine</strong> to your browser (one-time, cached after). Re-encoding takes real time &mdash; the larger the video, the longer it takes.</span>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop a video file here, or <span class="browse">browse</span></strong>
+        <div class="hint">MP4, WebM, MOV &middot; nothing uploaded</div>
+        <input type="file" id="fileInput" accept="video/*" hidden />
+      </div>
+      <div id="editWrap" style="display:none;margin-top:18px;">
+        <video id="preview" controls style="width:100%;max-height:320px;border-radius:12px;margin-bottom:16px;background:#000;"></video>
+        <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
+          <div>
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Width</label>
+            <input type="number" id="wIn" value="1280" min="16" step="2" style="width:130px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          </div>
+          <div style="padding-bottom:10px;color:var(--ink-faint);">&times;</div>
+          <div>
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height</label>
+            <input type="number" id="hIn" value="720" min="16" step="2" style="width:130px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          </div>
+          <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;padding-bottom:12px;">
+            <input type="checkbox" id="lockRatio" checked /> Keep aspect ratio
+          </label>
+        </div>
+      </div>
+      <div class="progress-wrap" id="progressWrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div class="progress-label" id="progressLabel">Loading video engine&hellip;</div></div>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">Video resized</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="resized.mp4">Download</a>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="resizeBtn" disabled>Resize</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('resize');</script>
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const editWrap = document.getElementById('editWrap');
+  const preview = document.getElementById('preview');
+  const wIn = document.getElementById('wIn');
+  const hIn = document.getElementById('hIn');
+  const lockRatio = document.getElementById('lockRatio');
+  const resizeBtn = document.getElementById('resizeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  let file = null, ratio = 16/9, syncing = false;
+
+  function setFile(f) {
+    if (!f || !f.type.startsWith('video/')) return;
+    file = f;
+    preview.src = URL.createObjectURL(f);
+    preview.onloadedmetadata = () => {
+      if (preview.videoWidth && preview.videoHeight) {
+        ratio = preview.videoWidth / preview.videoHeight;
+        wIn.value = preview.videoWidth; hIn.value = preview.videoHeight;
+      }
+    };
+    editWrap.style.display = 'block';
+    resizeBtn.disabled = false;
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+  }
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  clearBtn.addEventListener('click', () => { file=null; editWrap.style.display='none'; resizeBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  wIn.addEventListener('input', () => { if (lockRatio.checked && !syncing) { syncing=true; hIn.value = Math.round(wIn.value / ratio / 2) * 2; syncing=false; } });
+  hIn.addEventListener('input', () => { if (lockRatio.checked && !syncing) { syncing=true; wIn.value = Math.round(hIn.value * ratio / 2) * 2; syncing=false; } });
+
+  resizeBtn.addEventListener('click', async () => {
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '5%';
+    progressLabel.textContent = 'Loading video engine\u2026';
+    resizeBtn.disabled = true;
+    try {
+      const ffmpeg = await ckGetFFmpeg((r) => {
+        progressFill.style.width = `${20 + r*75}%`;
+        progressLabel.textContent = 'Resizing\u2026';
+      });
+      progressFill.style.width = '20%';
+      progressLabel.textContent = 'Resizing\u2026';
+      const { fetchFile } = FFmpeg;
+      const ext = ckExt(file.name);
+      const inName = 'input.' + ext;
+      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+      let w = Math.max(16, Math.round((parseInt(wIn.value) || 1280) / 2) * 2);
+      let h = Math.max(16, Math.round((parseInt(hIn.value) || 720) / 2) * 2);
+      await ffmpeg.run('-i', inName, '-vf', `scale=${w}:${h}`, '-c:a', 'copy', 'output.mp4');
+      const data = ffmpeg.FS('readFile', 'output.mp4');
+      const blob = new Blob([data.buffer], { type: 'video/mp4' });
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      downloadBtn.href = URL.createObjectURL(blob);
+      downloadBtn.setAttribute('download', `${baseName}-${w}x${h}.mp4`);
+      resultMeta.textContent = `${w}\u00d7${h}px \u00b7 ${ckFmtSize(blob.size)}`;
+      progressFill.style.width = '100%';
+      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = 'Couldn\u2019t resize this video \u2014 try a smaller file.';
+      errBox.classList.add('show');
+    }
+    resizeBtn.disabled = false;
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

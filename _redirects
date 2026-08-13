@@ -45,3 +45,15 @@
 /developer-tools        /developer-tools.html        200
 /document-tools         /document-tools.html         200
 /create-tools           /create-tools.html           200
+/audio-tools            /audio-tools.html            200
+/audio-converter        /audio-converter.html        200
+/audio-trimmer          /audio-trimmer.html          200
+/video-tools            /video-tools.html            200
+/media-tools            /media-tools.html            200
+/video-converter        /video-converter.html        200
+/video-compressor       /video-compressor.html       200
+/video-to-mp3           /video-to-mp3.html           200
+/video-to-gif           /video-to-gif.html           200
+/video-resizer          /video-resizer.html          200
+/video-trimmer          /video-trimmer.html          200
+/audio-compressor       /audio-compressor.html       200

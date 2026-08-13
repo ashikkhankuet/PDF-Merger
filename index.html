@@ -271,7 +271,19 @@
       <div class="tool-grid">${moreTools.map(renderToolCard).join('')}</div>
     </div>`;
 
-  document.getElementById('toolsByCategory').innerHTML = mainRows + moreRow;
+  const mediaTools = liveTools.filter(t => t.tag === 'AUDIO' || t.tag === 'VIDEO');
+  const mediaPreview = mediaTools.slice(0, 5);
+  const mediaMoreCard = mediaTools.length > mediaPreview.length ? renderMoreCard('Media Tools', mediaTools.length, '/media-tools', 'AUDIO') : '';
+  const mediaRow = `
+    <div class="tool-category-row">
+      <div class="tool-category-row-head">
+        <h3>Media Tools</h3>
+        <a href="/media-tools">View all &rarr;</a>
+      </div>
+      <div class="tool-grid">${mediaPreview.map(renderToolCard).join('')}${mediaMoreCard}</div>
+    </div>`;
+
+  document.getElementById('toolsByCategory').innerHTML = mainRows + mediaRow + moreRow;
 
   document.getElementById('catGrid').innerHTML = CATEGORIES.filter(c => !c.soon).map(c => {
     const count = TOOLS.filter(t => t.tag === c.key).length;

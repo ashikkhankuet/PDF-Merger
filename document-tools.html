@@ -46,6 +46,7 @@
   const key = 'DOCUMENT';
   const cat = CATEGORIES.find(c => c.key === key);
   document.getElementById('catIco').innerHTML = svgIcon(cat.icon);
+  document.getElementById('catIco').setAttribute('style', tintStyle(cat.key));
   const tools = TOOLS.filter(t => t.tag === key);
   document.getElementById('catCount').textContent = `${tools.length} tool${tools.length>1?'s':''} \u2014 all free, all processed on your device.`;
   document.getElementById('catToolGrid').innerHTML = tools.map(t => `

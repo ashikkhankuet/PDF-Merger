@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Trim an audio file to the section you need, entirely in your browser." />
+<meta property="og:title" content="Audio Trimmer | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Audio Trimmer | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Audio Trimmer</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-create);color:#fff;"></span>
+        <div><h1>Audio Trimmer</h1><p class="lead">Cut an audio file down to the section you need.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop an audio file here, or <span class="browse">browse</span></strong>
+        <div class="hint">MP3, WAV, M4A, OGG &middot; nothing uploaded</div>
+        <input type="file" id="fileInput" accept="audio/*" hidden />
+      </div>
+      <div id="editWrap" style="display:none;margin-top:18px;">
+        <audio id="preview" controls style="width:100%;margin-bottom:16px;"></audio>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Start (seconds)</label>
+            <input type="number" id="startIn" value="0" min="0" step="0.1" style="width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          </div>
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">End (seconds)</label>
+            <input type="number" id="endIn" value="0" min="0" step="0.1" style="width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+          </div>
+        </div>
+        <p class="mono" id="durInfo" style="font-size:12.5px;color:var(--ink-faint);margin-top:10px;"></p>
+      </div>
+      <div class="progress-wrap" id="progressWrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div class="progress-label">Trimming&hellip;</div></div>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">Trimmed clip ready</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="trimmed.wav">Download .wav</a>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="trimBtn" disabled>Trim</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Why is the output always WAV?</summary><p>WAV keeps this tool fast and dependency-free. Run the result through the Audio Converter afterward if you need MP3.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('trim');</script>
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const editWrap = document.getElementById('editWrap');
+  const preview = document.getElementById('preview');
+  const startIn = document.getElementById('startIn');
+  const endIn = document.getElementById('endIn');
+  const durInfo = document.getElementById('durInfo');
+  const trimBtn = document.getElementById('trimBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  let file = null, audioBuffer = null;
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(2)+' MB'; }
+
+  async function setFile(f) {
+    if (!f || !f.type.startsWith('audio/')) return;
+    file = f;
+    preview.src = URL.createObjectURL(f);
+    editWrap.style.display = 'block';
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+    try {
+      const arrayBuffer = await f.arrayBuffer();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      endIn.value = audioBuffer.duration.toFixed(1);
+      durInfo.textContent = `Full length: ${audioBuffer.duration.toFixed(1)}s`;
+      trimBtn.disabled = false;
+    } catch (e) {
+      errText.textContent = 'Couldn\u2019t read this audio file.';
+      errBox.classList.add('show');
+    }
+  }
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  clearBtn.addEventListener('click', () => { file=null; audioBuffer=null; editWrap.style.display='none'; trimBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+
+  function bufferToWav(abuffer) {
+    const numOfChan = abuffer.numberOfChannels;
+    const length = abuffer.length * numOfChan * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+    const channels = [];
+    let pos = 0;
+    function setUint16(d) { view.setUint16(pos, d, true); pos += 2; }
+    function setUint32(d) { view.setUint32(pos, d, true); pos += 4; }
+    setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
+    setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
+    setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
+    setUint16(numOfChan * 2); setUint16(16);
+    setUint32(0x61746164); setUint32(length - pos - 4);
+    for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
+    let offset = 0;
+    while (pos < length) {
+      for (let i = 0; i < numOfChan; i++) {
+        let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        sample = (sample < 0 ? sample * 32768 : sample * 32767) | 0;
+        view.setInt16(pos, sample, true); pos += 2;
+      }
+      offset++;
+    }
+    return buffer;
+  }
+
+  trimBtn.addEventListener('click', () => {
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '30%';
+    trimBtn.disabled = true;
+    try {
+      const start = Math.max(0, parseFloat(startIn.value) || 0);
+      const end = Math.min(audioBuffer.duration, parseFloat(endIn.value) || audioBuffer.duration);
+      if (end <= start) throw new Error('End must be after start.');
+      const sr = audioBuffer.sampleRate;
+      const startSample = Math.floor(start * sr);
+      const endSample = Math.floor(end * sr);
+      const frameCount = endSample - startSample;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const trimmed = ctx.createBuffer(audioBuffer.numberOfChannels, frameCount, sr);
+      for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+        trimmed.copyToChannel(audioBuffer.getChannelData(ch).subarray(startSample, endSample), ch);
+      }
+      progressFill.style.width = '80%';
+      const blob = new Blob([bufferToWav(trimmed)], { type: 'audio/wav' });
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      downloadBtn.href = URL.createObjectURL(blob);
+      downloadBtn.setAttribute('download', `${baseName}-trimmed.wav`);
+      resultMeta.textContent = `${(end-start).toFixed(1)}s \u00b7 ${fmtSize(blob.size)}`;
+      progressFill.style.width = '100%';
+      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = err.message || 'Couldn\u2019t trim this file.';
+      errBox.classList.add('show');
+    }
+    trimBtn.disabled = false;
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>
