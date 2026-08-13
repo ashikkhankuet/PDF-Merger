@@ -40,4 +40,10 @@
   <url><loc>https://convertkoro.netlify.app/pdf-to-excel</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/pdf-to-powerpoint</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/url-shortener</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/pdf-tools</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/image-tools</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/text-ocr-tools</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/developer-tools</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/document-tools</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/create-tools</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
 </urlset>

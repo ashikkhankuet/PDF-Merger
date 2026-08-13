@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert, compress, resize, and crop images — free, private, no uploads." />
+<meta property="og:title" content="Image Tools | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Image Tools | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="image-tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Image Tools</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="catIco" style="background:var(--line);color:var(--ink-faint);"></span>
+        <div><h1>Image Tools</h1><p class="lead" id="catCount"></p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="tool-grid" id="catToolGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+  </section>
+  <section class="container">
+    <div class="section-head"><h2>Browse other categories</h2></div>
+    <div class="cat-grid" id="otherCats"></div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>
+(() => {
+  const key = 'IMAGE';
+  const cat = CATEGORIES.find(c => c.key === key);
+  document.getElementById('catIco').innerHTML = svgIcon(cat.icon);
+  const tools = TOOLS.filter(t => t.tag === key);
+  document.getElementById('catCount').textContent = `${tools.length} tool${tools.length>1?'s':''} \u2014 all free, all processed on your device.`;
+  document.getElementById('catToolGrid').innerHTML = tools.map(t => `
+    <a class="tool-card" href="${t.url}">
+      <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
+      <h3>${t.name}</h3>
+      <p>${t.short}</p>
+      <span class="tag">${t.tag}</span>
+    </a>`).join('');
+  document.getElementById('otherCats').innerHTML = CATEGORIES.filter(c => !c.soon && c.key !== key).map(c => {
+    const count = TOOLS.filter(t => t.tag === c.key).length;
+    return `<a class="cat-card" href="${c.pageUrl}">
+      <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
+      <strong>${c.label}</strong>
+      <span>${count} tool${count>1?'s':''}</span>
+    </a>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>

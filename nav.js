@@ -28,12 +28,12 @@ const ICONS = {
 };
 
 const CATEGORIES = [
-  { key: 'PDF',      label: 'PDF Tools',      icon: 'merge' },
-  { key: 'IMAGE',    label: 'Image Tools',    icon: 'img2pdf' },
-  { key: 'OCR',      label: 'Text & OCR',     icon: 'img2text' },
-  { key: 'DEV',      label: 'Developer Tools',icon: 'code' },
-  { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc' },
-  { key: 'CREATE',   label: 'Create',         icon: 'qr' },
+  { key: 'PDF',      label: 'PDF Tools',      icon: 'merge',  pageUrl: '/pdf-tools' },
+  { key: 'IMAGE',    label: 'Image Tools',    icon: 'img2pdf', pageUrl: '/image-tools' },
+  { key: 'OCR',      label: 'Text & OCR',     icon: 'img2text', pageUrl: '/text-ocr-tools' },
+  { key: 'DEV',      label: 'Developer Tools',icon: 'code',   pageUrl: '/developer-tools' },
+  { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc',    pageUrl: '/document-tools' },
+  { key: 'CREATE',   label: 'Create',         icon: 'qr',     pageUrl: '/create-tools' },
   { key: 'VIDEO',    label: 'Video Tools',    icon: 'video',  soon: true },
   { key: 'AUDIO',    label: 'Audio Tools',    icon: 'audio',  soon: true },
 ];
@@ -119,15 +119,17 @@ function svgIcon(key, extra) {
 
 const BRAND_IMG = '<span class="brand-mark"><img src="logo-mark.png" alt="ConvertKoro" /></span>';
 
-const TAG_TINT = {
-  PDF:    { bg: 'var(--highlight-tint)',   fg: 'var(--highlight-dk)' },
-  IMAGE:  { bg: 'var(--ok-tint)',          fg: 'var(--ok)' },
-  OCR:    { bg: 'var(--accent-teal-tint)', fg: 'var(--accent-teal)' },
-  CREATE: { bg: 'var(--accent-plum-tint)', fg: 'var(--accent-plum)' },
+const TAG_GRADIENT = {
+  PDF:      'var(--grad-pdf)',
+  IMAGE:    'var(--grad-image)',
+  OCR:      'var(--grad-ocr)',
+  DEV:      'var(--grad-dev)',
+  DOCUMENT: 'var(--grad-document)',
+  CREATE:   'var(--grad-create)',
 };
 function tintStyle(tag) {
-  const t = TAG_TINT[tag] || TAG_TINT.PDF;
-  return `background:${t.bg};color:${t.fg};`;
+  const grad = TAG_GRADIENT[tag] || TAG_GRADIENT.PDF;
+  return `background:${grad};color:#fff;`;
 }
 
 function renderHeader(active) {
@@ -182,18 +184,12 @@ function renderHeader(active) {
               </div>
             </div>
           </div>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="PDF">PDF
-            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="IMAGE">Image
-            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
+          <a class="nav-link ${active==='pdf-tools'?'active':''}" href="/pdf-tools">PDF</a>
+          <a class="nav-link ${active==='image-tools'?'active':''}" href="/image-tools">Image</a>
           <button type="button" class="nav-link nav-cat-link" data-open-cat="VIDEO">Video
             <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <button type="button" class="nav-link nav-cat-link" data-open-cat="DEV">Developer
-            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
+          <a class="nav-link ${active==='dev-tools'?'active':''}" href="/developer-tools">Developer</a>
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
         </nav>
         <a class="nav-cta" href="/#tools">All tools &rarr;</a>
@@ -346,9 +342,9 @@ function renderFooter() {
   const pdfTools = liveTools.filter(t => t.tag === 'PDF').slice(0, 4);
   const otherTools = liveTools.filter(t => t.tag !== 'PDF').slice(0, 4);
   const toolLinksA = pdfTools.map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('')
-    + `<li><a href="#" data-open-cat="PDF">All PDF tools &rarr;</a></li>`;
+    + `<li><a href="/pdf-tools">All PDF tools &rarr;</a></li>`;
   const toolLinksB = otherTools.map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('')
-    + `<li><a href="#" data-open-cat="ALL">All ${liveTools.length} tools &rarr;</a></li>`;
+    + `<li><a href="/#tools">All ${liveTools.length} tools &rarr;</a></li>`;
   document.getElementById('site-footer').outerHTML = `
   <footer class="site-footer">
     <div class="container">
