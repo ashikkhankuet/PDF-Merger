@@ -11,8 +11,21 @@ const ICONS = {
   pdf2word: '<path d="M6 3h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M13 3v5h5"/><path d="M7.5 13l1.2 5 1.3-4 1.3 4 1.2-5"/>',
   split: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.5 15.5"/><path d="M14.5 14.5L20 20"/><path d="M8.5 8.5L11 11"/>',
   qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14h1v1h-1z"/><path d="M14 20h1v1h-1z"/><path d="M18 18h3v3h-3z"/>',
-  img2text: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="M4 16l4.5-4.5L12 15l3-3 5 5"/>'
+  img2text: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="M4 16l4.5-4.5L12 15l3-3 5 5"/>',
+  video: '<rect x="2.5" y="5" width="14" height="14" rx="2"/><path d="M16.5 10l5-3v10l-5-3z"/>',
+  audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+  doc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/>'
 };
+
+const CATEGORIES = [
+  { key: 'PDF',      label: 'PDF Tools',      icon: 'merge' },
+  { key: 'IMAGE',    label: 'Image Tools',    icon: 'img2pdf' },
+  { key: 'OCR',      label: 'Text & OCR',     icon: 'img2text' },
+  { key: 'CREATE',   label: 'Create',         icon: 'qr' },
+  { key: 'VIDEO',    label: 'Video Tools',    icon: 'video',  soon: true },
+  { key: 'AUDIO',    label: 'Audio Tools',    icon: 'audio',  soon: true },
+  { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc',    soon: true },
+];
 
 const TOOLS = [
   { id: 'merge',    name: 'PDF Merger',       url: '/merge',        icon: 'merge',
@@ -42,9 +55,9 @@ function svgIcon(key, extra) {
 const BRAND_IMG = '<span class="brand-mark"><img src="logo-mark.png" alt="ConvertKoro" /></span>';
 
 const TAG_TINT = {
-  PDF:    { bg: 'var(--signal-tint)',      fg: 'var(--signal-dk)' },
-  IMAGE:  { bg: 'var(--accent-blue-tint)', fg: 'var(--accent-blue)' },
-  OCR:    { bg: 'var(--ok-tint)',          fg: 'var(--ok)' },
+  PDF:    { bg: 'var(--highlight-tint)',   fg: 'var(--highlight-dk)' },
+  IMAGE:  { bg: 'var(--ok-tint)',          fg: 'var(--ok)' },
+  OCR:    { bg: 'var(--accent-teal-tint)', fg: 'var(--accent-teal)' },
   CREATE: { bg: 'var(--accent-plum-tint)', fg: 'var(--accent-plum)' },
 };
 function tintStyle(tag) {
@@ -53,11 +66,24 @@ function tintStyle(tag) {
 }
 
 function renderHeader(active) {
-  const ddItems = TOOLS.map(t => `
-    <a class="dd-item" href="${t.url}" data-name="${t.name.toLowerCase()}">
+  const ddItemsAll = TOOLS.map(t => `
+    <a class="dd-item" href="${t.url}" data-name="${t.name.toLowerCase()}" data-cat="${t.tag}">
       <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
       <span><strong>${t.name}</strong><span>${t.short}</span></span>
     </a>`).join('');
+
+  const catCounts = {};
+  TOOLS.forEach(t => { catCounts[t.tag] = (catCounts[t.tag] || 0) + 1; });
+
+  const catList = CATEGORIES.map((c, i) => {
+    const count = catCounts[c.key] || 0;
+    return `
+    <button type="button" class="dd-cat ${i===0?'active':''}" data-cat="${c.key}" data-soon="${c.soon?1:0}">
+      <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
+      <span class="dd-cat-label">${c.label}</span>
+      ${c.soon ? '<span class="dd-cat-soon">Soon</span>' : `<span class="dd-cat-count">${count}</span>`}
+    </button>`;
+  }).join('');
 
   const mobileToolLinks = TOOLS.map(t => `<a href="${t.url}">${t.name}</a>`).join('');
 
@@ -65,7 +91,7 @@ function renderHeader(active) {
   <header class="site-header">
     <div class="container">
       <div class="nav-row">
-        <a class="wordmark" href="/">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
+        <a class="wordmark" href="/">`+BRAND_IMG+`Convert<span class="koro">Koro</span></a>
         <nav class="nav-main">
           <a class="nav-link ${active==='home'?'active':''}" href="/">Home</a>
           <div class="nav-dd" id="toolsDD">
@@ -73,18 +99,22 @@ function renderHeader(active) {
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="dd-panel">
-              <div class="dd-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="ddSearch" placeholder="Search ${TOOLS.length} tools&hellip;" autocomplete="off" />
+              <div class="dd-sidebar">${catList}</div>
+              <div class="dd-main">
+                <div class="dd-search">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="ddSearch" placeholder="Search ${TOOLS.length} tools&hellip;" autocomplete="off" />
+                </div>
+                <div class="dd-items" id="ddItems">${ddItemsAll}</div>
+                <div class="dd-empty" id="ddEmpty">No tools match that search.</div>
+                <div class="dd-soon" id="ddSoon">More tools in this category are on the way.</div>
               </div>
-              <div class="dd-items" id="ddItems">${ddItems}</div>
-              <div class="dd-empty" id="ddEmpty">No tools match that search.</div>
             </div>
           </div>
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
           <a class="nav-link ${active==='faq'?'active':''}" href="/faq">FAQ</a>
         </nav>
-        <a class="nav-cta" href="index.html#tools">All tools &rarr;</a>
+        <a class="nav-cta" href="/#tools">All tools &rarr;</a>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
           <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
           <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
@@ -118,19 +148,56 @@ function renderHeader(active) {
     document.addEventListener('click', (e) => { if (!dd.contains(e.target)) dd.classList.remove('open'); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dd.classList.remove('open'); });
 
-    const ddSearch = document.getElementById('ddSearch');
-    const ddItemsEl = document.getElementById('ddItems');
-    const ddEmpty = document.getElementById('ddEmpty');
-    ddSearch.addEventListener('input', () => {
-      const q = ddSearch.value.trim().toLowerCase();
-      let visible = 0;
-      ddItemsEl.querySelectorAll('.dd-item').forEach(item => {
-        const match = item.dataset.name.includes(q);
-        item.style.display = match ? '' : 'none';
-        if (match) visible++;
-      });
+    var ddSearch = document.getElementById('ddSearch');
+    var ddItemsEl = document.getElementById('ddItems');
+    var ddEmpty = document.getElementById('ddEmpty');
+    var ddSoon = document.getElementById('ddSoon');
+    var ddCats = Array.prototype.slice.call(dd.querySelectorAll('.dd-cat'));
+    var activeCat = ddCats.length ? ddCats[0].getAttribute('data-cat') : null;
+
+    function applyFilter() {
+      var q = ddSearch.value.trim().toLowerCase();
+      var searching = q.length > 0;
+      var cat = null;
+      for (var i = 0; i < ddCats.length; i++) { if (ddCats[i].classList.contains('active')) { cat = ddCats[i]; break; } }
+      var isSoon = cat && cat.getAttribute('data-soon') === '1';
+
+      if (isSoon && !searching) {
+        ddItemsEl.style.display = 'none';
+        ddEmpty.style.display = 'none';
+        ddSoon.style.display = 'block';
+        return;
+      }
+      ddSoon.style.display = 'none';
+      ddItemsEl.style.display = 'grid';
+
+      var visible = 0;
+      var items = ddItemsEl.querySelectorAll('.dd-item');
+      for (var j = 0; j < items.length; j++) {
+        var item = items[j];
+        var nameMatch = item.getAttribute('data-name').indexOf(q) !== -1;
+        var catMatch = searching ? true : item.getAttribute('data-cat') === activeCat;
+        var show = nameMatch && catMatch;
+        item.style.display = show ? '' : 'none';
+        if (show) visible++;
+      }
       ddEmpty.style.display = visible === 0 ? 'block' : 'none';
-    });
+    }
+
+    for (var k = 0; k < ddCats.length; k++) {
+      (function(catBtn) {
+        catBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          for (var m = 0; m < ddCats.length; m++) { ddCats[m].classList.remove('active'); }
+          catBtn.classList.add('active');
+          activeCat = catBtn.getAttribute('data-cat');
+          ddSearch.value = '';
+          applyFilter();
+        });
+      })(ddCats[k]);
+    }
+    ddSearch.addEventListener('input', applyFilter);
+    applyFilter();
     ddSearch.addEventListener('click', (e) => e.stopPropagation());
   }
   const mobToggle = document.getElementById('mobToggle');
@@ -142,12 +209,13 @@ function renderHeader(active) {
     const root = document.documentElement;
     const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     root.setAttribute('data-theme', next);
-    localStorage.setItem('ck-theme', next);
+    try { localStorage.setItem('ck-theme', next); } catch (e) {}
   });
 }
 
 function applyStoredTheme() {
-  const stored = localStorage.getItem('ck-theme');
+  let stored = null;
+  try { stored = localStorage.getItem('ck-theme'); } catch (e) {}
   if (stored) document.documentElement.setAttribute('data-theme', stored);
 }
 applyStoredTheme();
@@ -160,7 +228,7 @@ function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-about">
-          <a class="wordmark" href="/">`+BRAND_IMG+`CONVERT<span class="slash">/</span>KORO</a>
+          <a class="wordmark" href="/">`+BRAND_IMG+`Convert<span class="koro">Koro</span></a>
           <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
         </div>
         <div><h4>Tools</h4><ul>${toolLinksA}</ul></div>
