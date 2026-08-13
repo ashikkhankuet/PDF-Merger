@@ -224,23 +224,33 @@
 <script>
   const liveTools = TOOLS.filter(t => !t.soon);
 
-  document.getElementById('toolsByCategory').innerHTML = CATEGORIES.filter(c => !c.soon).map(c => {
-    const catTools = liveTools.filter(t => t.tag === c.key);
-    const preview = catTools.slice(0, 5);
-    const cards = preview.map(t => `
+  function renderToolCard(t) {
+    return `
       <a class="tool-card" href="${t.url}">
         <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
         <h3>${t.name}</h3>
         <p>${t.short}</p>
         <span class="tag">${t.tag}</span>
-      </a>`).join('');
-    const moreCard = catTools.length > preview.length ? `
-      <a class="tool-card tool-card-more" href="${c.pageUrl}">
-        <span class="ico" style="${tintStyle(c.key)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
-        <h3>All ${catTools.length} ${c.label}</h3>
+      </a>`;
+  }
+  function renderMoreCard(label, count, pageUrl, gradKey) {
+    return `
+      <a class="tool-card tool-card-more" href="${pageUrl}">
+        <span class="ico" style="${tintStyle(gradKey)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <h3>All ${count} ${label}</h3>
         <p>See every tool in this category.</p>
-        <span class="tag">${c.key}</span>
-      </a>` : '';
+      </a>`;
+  }
+
+  // PDF, Image, and Developer each get their own full row, in that specific order.
+  // The remaining smaller categories (Text & OCR, Document, Create) share one
+  // combined "More Tools" row instead of three separate thin rows.
+  const mainRows = ['PDF', 'IMAGE', 'DEV'].map(key => {
+    const c = CATEGORIES.find(cat => cat.key === key);
+    const catTools = liveTools.filter(t => t.tag === key);
+    const preview = catTools.slice(0, 5);
+    const cards = preview.map(renderToolCard).join('');
+    const moreCard = catTools.length > preview.length ? renderMoreCard(c.label, catTools.length, c.pageUrl, c.key) : '';
     return `
     <div class="tool-category-row">
       <div class="tool-category-row-head">
@@ -250,6 +260,18 @@
       <div class="tool-grid">${cards}${moreCard}</div>
     </div>`;
   }).join('');
+
+  const moreKeys = ['OCR', 'DOCUMENT', 'CREATE'];
+  const moreTools = liveTools.filter(t => moreKeys.includes(t.tag));
+  const moreRow = `
+    <div class="tool-category-row">
+      <div class="tool-category-row-head">
+        <h3>More Tools</h3>
+      </div>
+      <div class="tool-grid">${moreTools.map(renderToolCard).join('')}</div>
+    </div>`;
+
+  document.getElementById('toolsByCategory').innerHTML = mainRows + moreRow;
 
   document.getElementById('catGrid').innerHTML = CATEGORIES.filter(c => !c.soon).map(c => {
     const count = TOOLS.filter(t => t.tag === c.key).length;

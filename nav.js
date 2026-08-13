@@ -24,7 +24,17 @@ const ICONS = {
   resize: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
   eraser: '<path d="M20 20H8l-6-6a2 2 0 0 1 0-2.8L13 2.4a2 2 0 0 1 2.8 0l5.8 5.8a2 2 0 0 1 0 2.8L14 18.5"/><path d="M8.5 13.5L15 20"/>',
   csv: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M4 15h16M9 4v16M15 4v16"/>',
-  markdown: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 15V9l3 3 3-3v6"/><path d="M16 9v6M13.5 12.5L16 15l2.5-2.5"/>'
+  markdown: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 15V9l3 3 3-3v6"/><path d="M16 9v6M13.5 12.5L16 15l2.5-2.5"/>',
+  svgpen: '<path d="M4 20L20 4"/><circle cx="4" cy="20" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="20" cy="4" r="2"/>',
+  camera: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><circle cx="12" cy="17.5" r="2"/><path d="M9.5 5.5h5"/>',
+  swap: '<path d="M17 3l4 4-4 4"/><path d="M21 7H9"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h12"/>',
+  layers: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
+  slides: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M9 8.5l4.5 2.5L9 13.5z"/>',
+  textlines: '<path d="M4 5h16M4 10h16M4 15h11M4 20h14"/>',
+  regexicon: '<path d="M6 4l4 16M14 4l4 16"/><circle cx="20" cy="19" r="1.3"/>',
+  xmltag: '<path d="M8 8L4 12l4 4"/><path d="M13 4l-2 16"/><path d="M16 8l4 4-4 4"/>',
+  convertdoc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M9 14l3-3 3 3M12 11v7"/>'
 };
 
 const CATEGORIES = [
@@ -58,17 +68,17 @@ const TOOLS = [
   { id: 'img2text', name: 'Image to Text',    url: '/image-to-text',icon: 'img2text',
     tag: 'OCR',   short: 'Pull editable text out of a photo or screenshot.' },
 
-  { id: 'pdf2text',    name: 'PDF to Text',        url: '/pdf-to-text',        icon: 'doc',
+  { id: 'pdf2text',    name: 'PDF to Text',        url: '/pdf-to-text',        icon: 'textlines',
     tag: 'PDF',   short: 'Extract every word of a PDF as plain .txt.' },
   { id: 'img-compress',name: 'Image Compressor',   url: '/image-compressor',   icon: 'compress',
     tag: 'IMAGE', short: 'Shrink JPG/PNG file size with a quality slider.' },
-  { id: 'svg2png',     name: 'SVG to PNG',         url: '/svg-to-png',         icon: 'img2pdf',
+  { id: 'svg2png',     name: 'SVG to PNG',         url: '/svg-to-png',         icon: 'svgpen',
     tag: 'IMAGE', short: 'Rasterize an SVG into a PNG at any size.' },
   { id: 'json-format', name: 'JSON Formatter',     url: '/json-formatter',     icon: 'code',
     tag: 'DEV',   short: 'Format, validate, and minify JSON.' },
   { id: 'base64',      name: 'Base64 Encoder',     url: '/base64-encoder',     icon: 'hash',
     tag: 'DEV',   short: 'Encode or decode text and files as Base64.' },
-  { id: 'regex',       name: 'Regex Tester',       url: '/regex-tester',       icon: 'code',
+  { id: 'regex',       name: 'Regex Tester',       url: '/regex-tester',       icon: 'regexicon',
     tag: 'DEV',   short: 'Test a regular expression against sample text live.' },
   { id: 'color',       name: 'Color Converter',    url: '/color-converter',    icon: 'palette',
     tag: 'DEV',   short: 'Convert between HEX, RGB, and HSL instantly.' },
@@ -79,17 +89,17 @@ const TOOLS = [
     short: 'Convert a .docx file into a PDF.' },
   { id: 'pdf2excel', name: 'PDF to Excel',  url: '/pdf-to-excel', icon: 'csv',    tag: 'PDF',
     short: 'Pull tables out of a PDF into .xlsx.' },
-  { id: 'pdf2ppt',   name: 'PDF to PowerPoint', url: '/pdf-to-powerpoint', icon: 'doc', tag: 'PDF',
+  { id: 'pdf2ppt',   name: 'PDF to PowerPoint', url: '/pdf-to-powerpoint', icon: 'slides', tag: 'PDF',
     short: 'Turn each PDF page into an image slide.' },
-  { id: 'heic2jpg',  name: 'HEIC to JPG',   url: '/heic-to-jpg', icon: 'img2pdf', tag: 'IMAGE',
+  { id: 'heic2jpg',  name: 'HEIC to JPG',   url: '/heic-to-jpg', icon: 'camera', tag: 'IMAGE',
     short: 'Convert iPhone HEIC photos to JPG.' },
-  { id: 'heic2png',  name: 'HEIC to PNG',   url: '/heic-to-png', icon: 'img2pdf', tag: 'IMAGE',
+  { id: 'heic2png',  name: 'HEIC to PNG',   url: '/heic-to-png', icon: 'camera', tag: 'IMAGE',
     short: 'Convert iPhone HEIC photos to PNG.' },
-  { id: 'jpg2webp',  name: 'JPG to WebP',   url: '/jpg-to-webp', icon: 'jpg2pdf', tag: 'IMAGE',
+  { id: 'jpg2webp',  name: 'JPG to WebP',   url: '/jpg-to-webp', icon: 'swap', tag: 'IMAGE',
     short: 'Convert JPG images to the smaller WebP format.' },
-  { id: 'png2webp',  name: 'PNG to WebP',   url: '/png-to-webp', icon: 'jpg2pdf', tag: 'IMAGE',
+  { id: 'png2webp',  name: 'PNG to WebP',   url: '/png-to-webp', icon: 'layers', tag: 'IMAGE',
     short: 'Convert PNG images to the smaller WebP format.' },
-  { id: 'webp2jpg',  name: 'WebP to JPG',   url: '/webp-to-jpg', icon: 'jpg2pdf', tag: 'IMAGE',
+  { id: 'webp2jpg',  name: 'WebP to JPG',   url: '/webp-to-jpg', icon: 'refresh', tag: 'IMAGE',
     short: 'Convert WebP images back to standard JPG.' },
   { id: 'pdf-ocr',   name: 'PDF OCR',       url: '/pdf-ocr', icon: 'img2text', tag: 'OCR',
     short: 'Extract text from a scanned (image-only) PDF.' },
@@ -101,15 +111,15 @@ const TOOLS = [
     short: 'Strip location and camera metadata from photos.' },
   { id: 'json2csv',  name: 'JSON to CSV',   url: '/json-to-csv', icon: 'csv',     tag: 'DEV',
     short: 'Convert a JSON array into a CSV spreadsheet.' },
-  { id: 'xml2json',  name: 'XML to JSON',   url: '/xml-to-json', icon: 'code',    tag: 'DEV',
+  { id: 'xml2json',  name: 'XML to JSON',   url: '/xml-to-json', icon: 'xmltag',    tag: 'DEV',
     short: 'Convert XML documents to JSON, and back.' },
   { id: 'url-short', name: 'URL Shortener', url: '/url-shortener', icon: 'link',    tag: 'DEV',
     short: 'Create a serverless short link — no backend needed.' },
-  { id: 'pdf2md',    name: 'PDF to Markdown', url: '/pdf-to-markdown', icon: 'markdown', tag: 'DOCUMENT',
+  { id: 'pdf2md',    name: 'PDF to Markdown', url: '/pdf-to-markdown', icon: 'convertdoc', tag: 'DOCUMENT',
     short: 'Convert PDF text into Markdown formatting.' },
   { id: 'md2html',   name: 'Markdown to HTML', url: '/markdown-to-html', icon: 'markdown', tag: 'DOCUMENT',
     short: 'Render Markdown into clean HTML.' },
-  { id: 'md2pdf',    name: 'Markdown to PDF', url: '/markdown-to-pdf', icon: 'markdown', tag: 'DOCUMENT',
+  { id: 'md2pdf',    name: 'Markdown to PDF', url: '/markdown-to-pdf', icon: 'doc', tag: 'DOCUMENT',
     short: 'Turn a Markdown file into a formatted PDF.' },
 ];
 
@@ -226,6 +236,19 @@ function renderHeader(active) {
     document.addEventListener('click', (e) => { if (!dd.contains(e.target)) dd.classList.remove('open'); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dd.classList.remove('open'); });
 
+    var ddHoverTimer = null;
+    dd.addEventListener('mouseenter', () => {
+      clearTimeout(ddHoverTimer);
+      dd.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    });
+    dd.addEventListener('mouseleave', () => {
+      ddHoverTimer = setTimeout(() => {
+        dd.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      }, 250);
+    });
+
     var ddSearch = document.getElementById('ddSearch');
     var ddItemsEl = document.getElementById('ddItems');
     var ddEmpty = document.getElementById('ddEmpty');
@@ -278,7 +301,7 @@ function renderHeader(active) {
     applyFilter();
     ddSearch.addEventListener('click', (e) => e.stopPropagation());
 
-    window.openToolCategory = function(key) {
+    window.openToolCategory = function(key, isHover) {
       if (key && key !== 'ALL') {
         for (var p = 0; p < ddCats.length; p++) {
           var isMatch = ddCats[p].getAttribute('data-cat') === key;
@@ -290,8 +313,10 @@ function renderHeader(active) {
       applyFilter();
       dd.classList.add('open');
       btn.setAttribute('aria-expanded', 'true');
-      dd.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => ddSearch.focus(), 300);
+      if (!isHover) {
+        dd.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => ddSearch.focus(), 300);
+      }
     };
 
     var catLinks = document.querySelectorAll('.nav-cat-link');
@@ -301,6 +326,16 @@ function renderHeader(active) {
           e.preventDefault();
           e.stopPropagation();
           window.openToolCategory(link.getAttribute('data-open-cat'));
+        });
+        link.addEventListener('mouseenter', function() {
+          clearTimeout(ddHoverTimer);
+          window.openToolCategory(link.getAttribute('data-open-cat'), true);
+        });
+        link.addEventListener('mouseleave', function() {
+          ddHoverTimer = setTimeout(function() {
+            dd.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+          }, 250);
         });
       })(catLinks[n]);
     }
