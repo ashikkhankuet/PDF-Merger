@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert Unix timestamps to and from readable dates, instantly in your browser." />
+<meta property="og:title" content="Timestamp Converter | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Timestamp Converter | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Timestamp Converter</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>Timestamp Converter</h1><p class="lead">Unix timestamp to date, or date to timestamp &mdash; both directions, live.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="info-grid" style="grid-template-columns:1fr 1fr;">
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Unix timestamp (seconds)</label>
+          <input id="tsIn" placeholder="1734000000" style="width:100%;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--card);color:var(--ink);" />
+          <button class="btn btn-ghost" id="nowBtn" style="margin-top:10px;">Use current time</button>
+          <div class="side-card" style="margin-top:16px;">
+            <h3>Result</h3>
+            <p class="mono" id="tsOutLocal" style="font-size:14px;"></p>
+            <p class="mono" id="tsOutUtc" style="font-size:14px;color:var(--ink-faint);"></p>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Date &amp; time</label>
+          <input id="dtIn" type="datetime-local" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;background:var(--card);color:var(--ink);" />
+          <div class="side-card" style="margin-top:16px;">
+            <h3>Result</h3>
+            <p class="mono" id="dtOutSec" style="font-size:14px;"></p>
+            <p class="mono" id="dtOutMs" style="font-size:14px;color:var(--ink-faint);"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Seconds or milliseconds?</summary><p>Unix timestamps are traditionally in seconds. This tool auto-detects milliseconds if the number you enter is 13 digits long.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('clock');</script>
+<script>
+(() => {
+  const tsIn = document.getElementById('tsIn');
+  const dtIn = document.getElementById('dtIn');
+  function fromTs() {
+    let v = tsIn.value.trim();
+    if (!v) { document.getElementById('tsOutLocal').textContent=''; document.getElementById('tsOutUtc').textContent=''; return; }
+    let n = Number(v);
+    if (isNaN(n)) { document.getElementById('tsOutLocal').textContent = 'Not a number.'; return; }
+    if (String(Math.trunc(n)).length <= 10) n = n * 1000;
+    const d = new Date(n);
+    if (isNaN(d.getTime())) { document.getElementById('tsOutLocal').textContent = 'Out of range.'; return; }
+    document.getElementById('tsOutLocal').textContent = 'Local: ' + d.toString();
+    document.getElementById('tsOutUtc').textContent = 'UTC: ' + d.toUTCString();
+  }
+  function fromDt() {
+    if (!dtIn.value) { document.getElementById('dtOutSec').textContent=''; document.getElementById('dtOutMs').textContent=''; return; }
+    const d = new Date(dtIn.value);
+    document.getElementById('dtOutSec').textContent = 'Seconds: ' + Math.floor(d.getTime()/1000);
+    document.getElementById('dtOutMs').textContent = 'Milliseconds: ' + d.getTime();
+  }
+  tsIn.addEventListener('input', fromTs);
+  dtIn.addEventListener('input', fromDt);
+  document.getElementById('nowBtn').addEventListener('click', () => { tsIn.value = Math.floor(Date.now()/1000); fromTs(); });
+  tsIn.value = Math.floor(Date.now()/1000);
+  fromTs();
+})();
+</script>
+</body>
+</html>

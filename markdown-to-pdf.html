@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Turn a Markdown file into a formatted PDF, entirely in your browser." />
+<meta property="og:title" content="Markdown to PDF | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Markdown to PDF | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Markdown to PDF</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>Markdown to PDF</h1><p class="lead">Basic, clean PDF formatting &mdash; headings, paragraphs, and lists.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <textarea id="mdIn" placeholder="# My Document&#10;&#10;A paragraph of text.&#10;&#10;- Item one&#10;- Item two" style="width:100%;min-height:280px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="genBtn">Generate PDF</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">document.pdf is ready</strong><span></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="document.pdf">Download .pdf</a>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('markdown');</script>
+<script>
+(() => {
+  const mdIn = document.getElementById('mdIn');
+  const resultBox = document.getElementById('resultBox');
+  const downloadBtn = document.getElementById('downloadBtn');
+  mdIn.value = '# My Document\n\nA paragraph of regular text goes here, wrapped automatically to fit the page.\n\n## A subheading\n\n- First point\n- Second point\n- Third point';
+
+  document.getElementById('clearBtn').addEventListener('click', () => { mdIn.value = ''; resultBox.classList.remove('show'); });
+
+  document.getElementById('genBtn').addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 56, maxWidth = 483;
+    let y = 64;
+    const pageH = 780;
+    function ensureSpace(lines) { if (y + lines*16 > pageH) { doc.addPage(); y = 64; } }
+    const tokens = marked.lexer(mdIn.value);
+    tokens.forEach(tok => {
+      if (tok.type === 'heading') {
+        const size = tok.depth === 1 ? 22 : tok.depth === 2 ? 17 : 14;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(size);
+        const lines = doc.splitTextToSize(tok.text, maxWidth);
+        ensureSpace(lines.length + 1);
+        lines.forEach(l => { doc.text(l, marginX, y); y += size + 4; });
+        y += 8;
+      } else if (tok.type === 'paragraph') {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        const lines = doc.splitTextToSize(tok.text, maxWidth);
+        ensureSpace(lines.length);
+        lines.forEach(l => { ensureSpace(1); doc.text(l, marginX, y); y += 16; });
+        y += 8;
+      } else if (tok.type === 'list') {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        tok.items.forEach(item => {
+          const lines = doc.splitTextToSize('\u2022  ' + item.text, maxWidth - 14);
+          lines.forEach((l, i) => { ensureSpace(1); doc.text(l, marginX + (i===0?0:14), y); y += 16; });
+        });
+        y += 8;
+      } else if (tok.type === 'space') {
+        // no-op
+      } else if (tok.type === 'hr') {
+        ensureSpace(2);
+        doc.setDrawColor(200); doc.line(marginX, y, marginX + maxWidth, y); y += 16;
+      } else if (tok.text) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        const lines = doc.splitTextToSize(tok.text, maxWidth);
+        lines.forEach(l => { ensureSpace(1); doc.text(l, marginX, y); y += 16; });
+        y += 8;
+      }
+    });
+    const blob = doc.output('blob');
+    downloadBtn.href = URL.createObjectURL(blob);
+    resultBox.classList.add('show');
+  });
+})();
+</script>
+</body>
+</html>

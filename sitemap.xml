@@ -14,4 +14,30 @@
   <url><loc>https://convertkoro.netlify.app/faq</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/privacy</loc><priority>0.4</priority><changefreq>yearly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/terms</loc><priority>0.4</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/pdf-to-text</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/image-compressor</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/svg-to-png</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/json-formatter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/base64-encoder</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/regex-tester</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/color-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/timestamp-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/image-resizer</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/remove-exif</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/json-to-csv</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/xml-to-json</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/pdf-to-markdown</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/markdown-to-html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/markdown-to-pdf</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/heic-to-jpg</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/heic-to-png</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/jpg-to-webp</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/png-to-webp</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/webp-to-jpg</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/pdf-ocr</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/image-cropper</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/word-to-pdf</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/pdf-to-excel</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/pdf-to-powerpoint</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/url-shortener</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
 </urlset>

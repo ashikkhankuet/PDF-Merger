@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Pull tables out of a PDF into an Excel spreadsheet, entirely in your browser." />
+<meta property="og:title" content="PDF to Excel | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>PDF to Excel | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>PDF to Excel</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--highlight-tint);color:var(--highlight-dk);"></span>
+        <div><h1>PDF to Excel</h1><p class="lead">Reconstructs a grid from text positions on the page &mdash; one sheet per PDF page.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>Best for simple, grid-aligned tables.</strong> This groups text by its X/Y position on the page rather than reading real table structure &mdash; multi-column layouts, merged cells, and scanned tables won't extract cleanly. For plain text, use PDF to Text instead.</span>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop a PDF here, or <span class="browse">browse</span></strong>
+        <div class="hint">Nothing uploaded</div>
+        <input type="file" id="fileInput" accept="application/pdf" hidden />
+      </div>
+      <div class="file-list" id="fileList"></div>
+      <div class="progress-wrap" id="progressWrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div class="progress-label">Reconstructing tables&hellip;</div></div>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">document.xlsx is ready</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="document.xlsx">Download .xlsx</a>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="convertBtn" disabled>Convert to Excel</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('csv');</script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileList = document.getElementById('fileList');
+  const convertBtn = document.getElementById('convertBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  let file = null;
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
+  function setFile(f) {
+    if (!f || f.type !== 'application/pdf') return;
+    file = f;
+    fileList.innerHTML = `<div class="file-row">
+      <span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M13 3v5h5"/></svg></span>
+      <span class="fname">${f.name}</span><span class="fsize">${fmtSize(f.size)}</span>
+      <button class="fremove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`;
+    convertBtn.disabled = false;
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+  }
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; fileList.innerHTML=''; convertBtn.disabled=true; } });
+  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; convertBtn.disabled=true; resultBox.classList.remove('show'); });
+
+  function pageToGrid(items) {
+    if (items.length === 0) return [[]];
+    const rows = [];
+    const sorted = [...items].sort((a,b) => b.transform[5] - a.transform[5]);
+    let curRowY = null, curRow = [];
+    sorted.forEach(it => {
+      const y = it.transform[5];
+      if (curRowY === null || Math.abs(y - curRowY) > 4) {
+        if (curRow.length) rows.push(curRow);
+        curRow = []; curRowY = y;
+      }
+      curRow.push({ x: it.transform[4], text: it.str });
+    });
+    if (curRow.length) rows.push(curRow);
+    rows.forEach(r => r.sort((a,b) => a.x - b.x));
+    const grid = rows.map(row => {
+      const cells = [];
+      let lastX = null;
+      row.forEach(cell => {
+        if (lastX !== null && cell.x - lastX < 12 && cells.length) {
+          cells[cells.length-1] += cell.text;
+        } else {
+          cells.push(cell.text);
+        }
+        lastX = cell.x + cell.text.length * 5;
+      });
+      return cells;
+    });
+    return grid;
+  }
+
+  convertBtn.addEventListener('click', async () => {
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '10%';
+    convertBtn.disabled = true;
+    try {
+      const bytes = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+      const wb = XLSX.utils.book_new();
+      let anyContent = false;
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const grid = pageToGrid(content.items);
+        if (grid.some(r => r.length)) anyContent = true;
+        const ws = XLSX.utils.aoa_to_sheet(grid);
+        XLSX.utils.book_append_sheet(wb, ws, `Page ${i}`.slice(0, 31));
+        progressFill.style.width = `${10 + (i/pdf.numPages)*80}%`;
+      }
+      if (!anyContent) throw new Error('no-text');
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      const baseName = file.name.replace(/\.pdf$/i, '');
+      downloadBtn.href = URL.createObjectURL(blob);
+      downloadBtn.setAttribute('download', `${baseName}.xlsx`);
+      resultTitle.textContent = `${baseName}.xlsx is ready`;
+      resultMeta.textContent = `${pdf.numPages} sheet${pdf.numPages>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+      progressFill.style.width = '100%';
+      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = err.message === 'no-text' ? 'No selectable text was found \u2014 this PDF is likely a scanned image.' : 'Couldn\u2019t process this PDF.';
+      errBox.classList.add('show');
+    }
+    convertBtn.disabled = false;
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

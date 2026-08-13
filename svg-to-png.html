@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert an SVG file into a PNG at any size, entirely in your browser." />
+<meta property="og:title" content="SVG to PNG | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>SVG to PNG | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>SVG to PNG</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--ok-tint);color:var(--ok);"></span>
+        <div><h1>SVG to PNG</h1><p class="lead">Rasterize a vector SVG into a PNG at the size you need.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop an SVG file here, or <span class="browse">browse</span></strong>
+        <div class="hint">Nothing uploaded</div>
+        <input type="file" id="fileInput" accept="image/svg+xml,.svg" hidden />
+      </div>
+      <div id="previewWrap" style="display:none;margin-top:18px;">
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;">
+          <div id="preview" style="width:180px;height:180px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden;"></div>
+          <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px;">
+            <label style="font-size:13px;font-weight:600;">Output width (px)</label>
+            <input id="widthIn" type="number" value="1024" min="16" max="8000" style="padding:11px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--card);color:var(--ink);width:160px;" />
+          </div>
+        </div>
+      </div>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">image.png is ready</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="image.png">Download .png</a>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="convertBtn" disabled>Convert to PNG</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('img2pdf');</script>
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const previewWrap = document.getElementById('previewWrap');
+  const preview = document.getElementById('preview');
+  const widthIn = document.getElementById('widthIn');
+  const convertBtn = document.getElementById('convertBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  let svgText = '', baseName = 'image', naturalW = 512, naturalH = 512;
+
+  function setFile(f) {
+    if (!f || !/\.svg$/i.test(f.name)) return;
+    baseName = f.name.replace(/\.svg$/i, '');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      svgText = e.target.result;
+      preview.innerHTML = svgText;
+      const svgEl = preview.querySelector('svg');
+      if (svgEl) {
+        const vb = svgEl.getAttribute('viewBox');
+        if (vb) { const p = vb.split(/\s+/).map(Number); naturalW = p[2] || 512; naturalH = p[3] || 512; }
+        else { naturalW = parseFloat(svgEl.getAttribute('width')) || 512; naturalH = parseFloat(svgEl.getAttribute('height')) || 512; }
+        svgEl.style.maxWidth = '100%'; svgEl.style.maxHeight = '100%';
+      }
+      previewWrap.style.display = 'block';
+      convertBtn.disabled = false;
+      errBox.classList.remove('show'); resultBox.classList.remove('show');
+    };
+    reader.readAsText(f);
+  }
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  clearBtn.addEventListener('click', () => { svgText=''; previewWrap.style.display='none'; convertBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+
+  convertBtn.addEventListener('click', () => {
+    errBox.classList.remove('show');
+    try {
+      const targetW = parseInt(widthIn.value) || 1024;
+      const targetH = Math.round(targetW * (naturalH / naturalW));
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW; canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          downloadBtn.href = URL.createObjectURL(blob);
+          downloadBtn.setAttribute('download', `${baseName}.png`);
+          resultTitle.textContent = `${baseName}.png is ready`;
+          resultMeta.textContent = `${targetW}\u00d7${targetH}px`;
+          resultBox.classList.add('show');
+        }, 'image/png');
+      };
+      img.onerror = () => { errText.textContent = 'Couldn\u2019t render this SVG \u2014 check it\u2019s valid.'; errBox.classList.add('show'); };
+      img.src = url;
+    } catch (e) {
+      errText.textContent = 'Something went wrong converting this file.';
+      errBox.classList.add('show');
+    }
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

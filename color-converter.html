@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert colors between HEX, RGB, and HSL instantly in your browser." />
+<meta property="og:title" content="Color Converter | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Color Converter — HEX / RGB / HSL | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Color Converter</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>Color Converter</h1><p class="lead">Type a color in any format &mdash; get HEX, RGB, and HSL back instantly.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <div id="swatch" style="width:110px;height:110px;border-radius:16px;border:1px solid var(--line);flex:none;background:#0062F8;"></div>
+        <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:10px;">
+          <input id="cIn" value="#0062F8" style="padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--card);color:var(--ink);" />
+          <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+        </div>
+      </div>
+      <div id="outputs" style="margin-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div class="side-card" style="padding:16px;"><strong style="font-size:12px;color:var(--ink-faint);">HEX</strong><div class="mono" id="outHex" style="font-size:15px;margin-top:6px;"></div></div>
+        <div class="side-card" style="padding:16px;"><strong style="font-size:12px;color:var(--ink-faint);">RGB</strong><div class="mono" id="outRgb" style="font-size:15px;margin-top:6px;"></div></div>
+        <div class="side-card" style="padding:16px;"><strong style="font-size:12px;color:var(--ink-faint);">HSL</strong><div class="mono" id="outHsl" style="font-size:15px;margin-top:6px;"></div></div>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>What formats can I type in?</summary><p>HEX (#0062F8), RGB (rgb(0,98,248)), or HSL (hsl(215, 100%, 49%)) &mdash; the tool detects the format automatically.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('palette');</script>
+<script>
+(() => {
+  const cIn = document.getElementById('cIn');
+  const swatch = document.getElementById('swatch');
+  const outHex = document.getElementById('outHex');
+  const outRgb = document.getElementById('outRgb');
+  const outHsl = document.getElementById('outHsl');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+
+  function hexToRgb(h) {
+    h = h.replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  }
+  function rgbToHex(r,g,b) { return '#' + [r,g,b].map(v => Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join(''); }
+  function rgbToHsl(r,g,b) {
+    r/=255; g/=255; b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if (max===min) { h=s=0; }
+    else {
+      const d=max-min;
+      s = l>0.5 ? d/(2-max-min) : d/(max+min);
+      if (max===r) h=(g-b)/d+(g<b?6:0);
+      else if (max===g) h=(b-r)/d+2;
+      else h=(r-g)/d+4;
+      h/=6;
+    }
+    return [Math.round(h*360), Math.round(s*100), Math.round(l*100)];
+  }
+  function hslToRgb(h,s,l) {
+    h/=360; s/=100; l/=100;
+    let r,g,b;
+    if (s===0) { r=g=b=l; }
+    else {
+      const hue2rgb=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+      const q = l<0.5 ? l*(1+s) : l+s-l*s;
+      const p = 2*l-q;
+      r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+    }
+    return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+  }
+
+  function parse(v) {
+    v = v.trim();
+    let m;
+    if ((m = v.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/))) {
+      const rgb = hexToRgb(v.startsWith('#') ? v : '#'+v);
+      return rgb;
+    }
+    if ((m = v.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i))) {
+      return [+m[1], +m[2], +m[3]];
+    }
+    if ((m = v.match(/^hsla?\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%/i))) {
+      return hslToRgb(+m[1], +m[2], +m[3]);
+    }
+    return null;
+  }
+
+  function update() {
+    const rgb = parse(cIn.value);
+    if (!rgb) { errText.textContent = 'Couldn\u2019t recognize that color format.'; errBox.classList.add('show'); return; }
+    errBox.classList.remove('show');
+    const [r,g,b] = rgb;
+    const hex = rgbToHex(r,g,b);
+    const [h,s,l] = rgbToHsl(r,g,b);
+    swatch.style.background = hex;
+    outHex.textContent = hex;
+    outRgb.textContent = `rgb(${r}, ${g}, ${b})`;
+    outHsl.textContent = `hsl(${h}, ${s}%, ${l}%)`;
+  }
+  cIn.addEventListener('input', update);
+  update();
+})();
+</script>
+</body>
+</html>

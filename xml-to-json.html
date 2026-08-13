@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert XML to JSON, and back, entirely in your browser." />
+<meta property="og:title" content="XML to JSON Converter | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>XML to JSON Converter | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>XML to JSON</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>XML to JSON</h1><p class="lead">Paste XML, get JSON. Paste JSON, get XML back.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <textarea id="dataIn" placeholder="&lt;root&gt;&lt;item id=&quot;1&quot;&gt;Hello&lt;/item&gt;&lt;/root&gt;" style="width:100%;min-height:220px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="toJsonBtn">XML &rarr; JSON</button>
+        <button class="btn btn-primary btn-lg" id="toXmlBtn">JSON &rarr; XML</button>
+        <button class="btn btn-ghost" id="copyBtn">Copy</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Are XML attributes preserved?</summary><p>Yes &mdash; attributes are converted into an <code>@attributes</code> object on the corresponding JSON node.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('code');</script>
+<script>
+(() => {
+  const input = document.getElementById('dataIn');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  function showError(msg) { errText.textContent = msg; errBox.classList.add('show'); }
+  function clearError() { errBox.classList.remove('show'); }
+
+  function xmlNodeToObj(node) {
+    const obj = {};
+    if (node.attributes && node.attributes.length) {
+      obj['@attributes'] = {};
+      for (const attr of node.attributes) obj['@attributes'][attr.name] = attr.value;
+    }
+    const children = Array.from(node.children || []);
+    if (children.length === 0) {
+      const text = node.textContent.trim();
+      if (Object.keys(obj).length === 0) return text;
+      if (text) obj['#text'] = text;
+      return obj;
+    }
+    children.forEach(child => {
+      const val = xmlNodeToObj(child);
+      if (obj[child.tagName] === undefined) obj[child.tagName] = val;
+      else { if (!Array.isArray(obj[child.tagName])) obj[child.tagName] = [obj[child.tagName]]; obj[child.tagName].push(val); }
+    });
+    return obj;
+  }
+  function objToXml(obj, tag) {
+    if (typeof obj !== 'object' || obj === null) return `<${tag}>${obj}</${tag}>`;
+    let attrs = '';
+    let inner = '';
+    Object.keys(obj).forEach(k => {
+      if (k === '@attributes') { Object.keys(obj[k]).forEach(a => attrs += ` ${a}="${obj[k][a]}"`); }
+      else if (k === '#text') { inner += obj[k]; }
+      else if (Array.isArray(obj[k])) { obj[k].forEach(item => inner += objToXml(item, k)); }
+      else { inner += objToXml(obj[k], k); }
+    });
+    return `<${tag}${attrs}>${inner}</${tag}>`;
+  }
+
+  document.getElementById('toJsonBtn').addEventListener('click', () => {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(input.value, 'application/xml');
+      const errNode = doc.querySelector('parsererror');
+      if (errNode) throw new Error('Invalid XML.');
+      const root = doc.documentElement;
+      const result = { [root.tagName]: xmlNodeToObj(root) };
+      input.value = JSON.stringify(result, null, 2);
+      clearError();
+    } catch (e) { showError(e.message); }
+  });
+  document.getElementById('toXmlBtn').addEventListener('click', () => {
+    try {
+      const obj = JSON.parse(input.value);
+      const rootKey = Object.keys(obj)[0];
+      input.value = '<?xml version="1.0" encoding="UTF-8"?>\n' + objToXml(obj[rootKey], rootKey);
+      clearError();
+    } catch (e) { showError('Invalid JSON: ' + e.message); }
+  });
+  document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(input.value).catch(() => {}); });
+  document.getElementById('clearBtn').addEventListener('click', () => { input.value = ''; clearError(); });
+})();
+</script>
+</body>
+</html>

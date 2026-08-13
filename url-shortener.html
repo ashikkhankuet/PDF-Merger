@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Create a shareable short link with no server, no account, and no tracking." />
+<meta property="og:title" content="URL Shortener | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>URL Shortener | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>URL Shortener</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>URL Shortener</h1><p class="lead">A serverless link. No database, no dashboard, no click tracking.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>How this is different:</strong> a real shortener needs a server to store a mapping and redirect visitors. This one has neither &mdash; the destination is encoded directly inside the link itself. That means it works with zero infrastructure and zero tracking, but very long URLs won't shrink much. It's genuinely shorter for typical links, not for already-long ones.</span>
+      </div>
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Paste a long URL</label>
+      <input id="urlIn" placeholder="https://example.com/some/very/long/path?query=params" style="width:100%;padding:13px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--card);color:var(--ink);" />
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="actions-row"><button class="btn btn-primary btn-lg" id="shortenBtn">Create link</button></div>
+      <div class="side-card" id="resultCard" style="display:none;margin-top:18px;">
+        <h3>Your link</h3>
+        <p class="mono" id="shortOut" style="font-size:13.5px;word-break:break-all;background:var(--paper);padding:10px 12px;border-radius:8px;border:1px solid var(--line);"></p>
+        <div class="actions-row" style="margin-top:12px;">
+          <button class="btn btn-primary" id="copyBtn">Copy link</button>
+          <span class="mono" id="lenCompare" style="font-size:12px;color:var(--ink-faint);align-self:center;"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('link');</script>
+<script>
+(() => {
+  const urlIn = document.getElementById('urlIn');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultCard = document.getElementById('resultCard');
+  const shortOut = document.getElementById('shortOut');
+  const lenCompare = document.getElementById('lenCompare');
+
+  document.getElementById('shortenBtn').addEventListener('click', () => {
+    const raw = urlIn.value.trim();
+    errBox.classList.remove('show');
+    let url;
+    try { url = new URL(raw); } catch (e) {
+      errText.textContent = 'Enter a full URL, including https://';
+      errBox.classList.add('show');
+      return;
+    }
+    const encoded = btoa(encodeURIComponent(raw)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const shortUrl = `${location.origin}/go#${encoded}`;
+    shortOut.textContent = shortUrl;
+    const diff = raw.length - shortUrl.length;
+    lenCompare.textContent = diff > 0 ? `${diff} characters shorter` : `${Math.abs(diff)} characters longer \u2014 original was already short`;
+    resultCard.style.display = 'block';
+  });
+  document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(shortOut.textContent).catch(() => {}); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Render Markdown into clean HTML, live, in your browser." />
+<meta property="og:title" content="Markdown to HTML | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Markdown to HTML | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Markdown to HTML</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>Markdown to HTML</h1><p class="lead">Type Markdown on the left, get live-rendered HTML on the right.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <textarea id="mdIn" placeholder="# Hello&#10;&#10;Some **bold** text and a [link](https://example.com)." style="width:100%;min-height:320px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+        <div id="htmlPreview" class="doc" style="border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;overflow:auto;max-height:400px;background:var(--card);"></div>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="copyHtmlBtn">Copy HTML source</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('markdown');</script>
+<script>
+(() => {
+  const mdIn = document.getElementById('mdIn');
+  const preview = document.getElementById('htmlPreview');
+  let lastHtml = '';
+  function render() {
+    lastHtml = typeof marked !== 'undefined' ? marked.parse(mdIn.value) : mdIn.value;
+    preview.innerHTML = lastHtml;
+  }
+  mdIn.addEventListener('input', render);
+  document.getElementById('copyHtmlBtn').addEventListener('click', () => { navigator.clipboard.writeText(lastHtml).catch(() => {}); });
+  document.getElementById('clearBtn').addEventListener('click', () => { mdIn.value = ''; render(); });
+  mdIn.value = '# Welcome to ConvertKoro\n\nThis is **bold**, this is *italic*, and here\u2019s a [link](https://convertkoro.netlify.app).\n\n- One\n- Two\n- Three';
+  render();
+})();
+</script>
+</body>
+</html>

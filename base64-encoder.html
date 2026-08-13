@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Encode or decode text as Base64 instantly in your browser. Nothing uploaded." />
+<meta property="og:title" content="Base64 Encoder & Decoder | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Base64 Encoder & Decoder | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Base64 Encoder</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>Base64 Encoder &amp; Decoder</h1><p class="lead">Turn text into Base64, or decode Base64 back into readable text.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <textarea id="b64In" placeholder="Type or paste text here&hellip;" style="width:100%;min-height:180px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="encBtn">Encode &rarr; Base64</button>
+        <button class="btn btn-primary btn-lg" id="decBtn">Decode &rarr; Text</button>
+        <button class="btn btn-ghost" id="copyBtn">Copy</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Is this safe for sensitive text?</summary><p>Yes &mdash; encoding happens locally in your browser. Nothing is sent to a server. That said, Base64 is not encryption; it's just a text representation, so don't rely on it for secrecy.</p></details>
+        <details class="faq-item"><summary>Why did decoding fail?</summary><p>The text you pasted isn't valid Base64 &mdash; check for missing characters or extra whitespace.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('hash');</script>
+<script>
+(() => {
+  const input = document.getElementById('b64In');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  function showError(msg) { errText.textContent = msg; errBox.classList.add('show'); }
+  function clearError() { errBox.classList.remove('show'); }
+  document.getElementById('encBtn').addEventListener('click', () => {
+    try { input.value = btoa(unescape(encodeURIComponent(input.value))); clearError(); }
+    catch (e) { showError('Could not encode this text.'); }
+  });
+  document.getElementById('decBtn').addEventListener('click', () => {
+    try { input.value = decodeURIComponent(escape(atob(input.value))); clearError(); }
+    catch (e) { showError('This isn\u2019t valid Base64.'); }
+  });
+  document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(input.value).catch(() => {}); });
+  document.getElementById('clearBtn').addEventListener('click', () => { input.value = ''; clearError(); });
+})();
+</script>
+</body>
+</html>

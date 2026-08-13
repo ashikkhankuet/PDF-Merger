@@ -88,7 +88,7 @@
         </select>
         <button class="btn btn-primary btn-block" id="qsGo">Open tool</button>
       </div>
-      <div class="qs-hint">9 tools &middot; nothing uploaded &middot; no account</div>
+      <div class="qs-hint" id="qsHint">nothing uploaded &middot; no account</div>
     </div>
   </section>
 
@@ -149,7 +149,7 @@
         <div class="hiw-step">
           <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
           <h3>Add your file</h3>
-          <p>Drop it in or click browse &mdash; any of the 9 tools accepts what it needs.</p>
+          <p id="hiwCount">Drop it in or click browse &mdash; any tool accepts what it needs.</p>
         </div>
         <div class="hiw-connector"><svg viewBox="0 0 60 14"><path d="M0 7h54M48 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
         <div class="hiw-step">
@@ -172,7 +172,7 @@
       <div class="stats-bar">
         <div class="stat">
           <span class="sico" style="background:var(--accent-plum-tint);color:var(--accent-plum);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2H22l-6 4.4 2.3 7.1L12 16.3l-6.3 4.4 2.3-7.1-6-4.4h7.6z"/></svg></span>
-          <span><strong>9</strong><span>Tools available</span></span>
+          <span><strong id="statToolCount">9</strong><span>Tools available</span></span>
         </div>
         <div class="stat">
           <span class="sico" style="background:var(--ok-tint);color:var(--ok);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
@@ -211,7 +211,7 @@
         <p>Every conversion happens right here, right now, on your own device.</p>
         <div class="actions-row">
           <a href="/merge" class="btn btn-primary btn-lg">Start with PDF Merger</a>
-          <a href="#tools" class="btn btn-ghost btn-lg">See all 9 tools</a>
+          <a href="#tools" class="btn btn-ghost btn-lg" id="seeAllBtn">See all tools</a>
         </div>
       </div>
     </div>
@@ -222,35 +222,41 @@
 
 <script src="nav.js"></script>
 <script>
-  document.getElementById('toolGrid').innerHTML = TOOLS.map(t => `
+  const liveTools = TOOLS.filter(t => !t.soon);
+  document.getElementById('toolGrid').innerHTML = liveTools.map(t => `
     <a class="tool-card" href="${t.url}">
       <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
       <h3>${t.name}</h3>
       <p>${t.short}</p>
       <span class="tag">${t.tag}</span>
-    </a>`).join('');
+    </a>`).join('') + (TOOLS.length > liveTools.length ? `
+    <a class="tool-card tool-card-more" href="#tools" onclick="document.getElementById('toolsDD').querySelector('button').click();return false;">
+      <span class="ico" style="background:var(--accent-plum-tint);color:var(--accent-plum);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></span>
+      <h3>+${TOOLS.length - liveTools.length} more coming</h3>
+      <p>Browse everything planned in the Tools menu.</p>
+      <span class="tag">SOON</span>
+    </a>` : '');
 
-  const CATS = [
-    { tag: 'PDF',    label: 'PDF Tools' },
-    { tag: 'IMAGE',  label: 'Image Tools' },
-    { tag: 'OCR',    label: 'Text Extraction' },
-    { tag: 'CREATE', label: 'Create' },
-  ];
-  document.getElementById('catGrid').innerHTML = CATS.map(c => {
-    const count = TOOLS.filter(t => t.tag === c.tag).length;
-    const first = TOOLS.find(t => t.tag === c.tag);
+  document.getElementById('catGrid').innerHTML = CATEGORIES.filter(c => !c.soon).map(c => {
+    const count = TOOLS.filter(t => t.tag === c.key).length;
+    const first = TOOLS.find(t => t.tag === c.key);
     return `<a class="cat-card" href="${first.url}">
-      <span class="ico" style="${tintStyle(c.tag)}">${svgIcon(first.icon)}</span>
+      <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
       <strong>${c.label}</strong>
       <span>${count} tool${count>1?'s':''}</span>
     </a>`;
   }).join('');
 
   const qsSelectEl = document.getElementById('qsSelect');
-  qsSelectEl.innerHTML += TOOLS.map(t => `<option value="${t.url}">${t.name}</option>`).join('');
+  qsSelectEl.innerHTML += liveTools.map(t => `<option value="${t.url}">${t.name}</option>`).join('');
   document.getElementById('qsGo').addEventListener('click', () => {
     if (qsSelectEl.value) window.location.href = qsSelectEl.value;
   });
+
+  document.getElementById('qsHint').textContent = `${liveTools.length} tools \u00b7 nothing uploaded \u00b7 no account`;
+  document.getElementById('hiwCount').textContent = `Drop it in or click browse \u2014 any of the ${liveTools.length} tools accepts what it needs.`;
+  document.getElementById('seeAllBtn').textContent = `See all ${liveTools.length} tools`;
+  document.getElementById('statToolCount').textContent = liveTools.length;
 </script>
 </body>
 </html>

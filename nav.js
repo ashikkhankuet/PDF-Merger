@@ -14,17 +14,28 @@ const ICONS = {
   img2text: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="M4 16l4.5-4.5L12 15l3-3 5 5"/>',
   video: '<rect x="2.5" y="5" width="14" height="14" rx="2"/><path d="M16.5 10l5-3v10l-5-3z"/>',
   audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
-  doc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/>'
+  doc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/>',
+  code: '<path d="M8 5l-5 7 5 7"/><path d="M16 5l5 7-5 7"/>',
+  hash: '<path d="M9 3L7 21M17 3l-2 18M4 9h17M3 15h17"/>',
+  palette: '<path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H16a4 4 0 0 0 4-4c0-5-3.6-9.7-8-9.7z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="11" cy="7" r="1.2"/><circle cx="15.5" cy="9" r="1.2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  link: '<path d="M9 15l6-6"/><path d="M13 5.5l1.5-1.5a3.5 3.5 0 0 1 5 5L18 10.5"/><path d="M11 18.5L9.5 20a3.5 3.5 0 0 1-5-5L6 13.5"/>',
+  crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+  resize: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  eraser: '<path d="M20 20H8l-6-6a2 2 0 0 1 0-2.8L13 2.4a2 2 0 0 1 2.8 0l5.8 5.8a2 2 0 0 1 0 2.8L14 18.5"/><path d="M8.5 13.5L15 20"/>',
+  csv: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M4 15h16M9 4v16M15 4v16"/>',
+  markdown: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 15V9l3 3 3-3v6"/><path d="M16 9v6M13.5 12.5L16 15l2.5-2.5"/>'
 };
 
 const CATEGORIES = [
   { key: 'PDF',      label: 'PDF Tools',      icon: 'merge' },
   { key: 'IMAGE',    label: 'Image Tools',    icon: 'img2pdf' },
   { key: 'OCR',      label: 'Text & OCR',     icon: 'img2text' },
+  { key: 'DEV',      label: 'Developer Tools',icon: 'code' },
+  { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc' },
   { key: 'CREATE',   label: 'Create',         icon: 'qr' },
   { key: 'VIDEO',    label: 'Video Tools',    icon: 'video',  soon: true },
   { key: 'AUDIO',    label: 'Audio Tools',    icon: 'audio',  soon: true },
-  { key: 'DOCUMENT', label: 'Document Tools', icon: 'doc',    soon: true },
 ];
 
 const TOOLS = [
@@ -46,6 +57,60 @@ const TOOLS = [
     tag: 'CREATE',short: 'Make a scannable QR code for a link or text.' },
   { id: 'img2text', name: 'Image to Text',    url: '/image-to-text',icon: 'img2text',
     tag: 'OCR',   short: 'Pull editable text out of a photo or screenshot.' },
+
+  { id: 'pdf2text',    name: 'PDF to Text',        url: '/pdf-to-text',        icon: 'doc',
+    tag: 'PDF',   short: 'Extract every word of a PDF as plain .txt.' },
+  { id: 'img-compress',name: 'Image Compressor',   url: '/image-compressor',   icon: 'compress',
+    tag: 'IMAGE', short: 'Shrink JPG/PNG file size with a quality slider.' },
+  { id: 'svg2png',     name: 'SVG to PNG',         url: '/svg-to-png',         icon: 'img2pdf',
+    tag: 'IMAGE', short: 'Rasterize an SVG into a PNG at any size.' },
+  { id: 'json-format', name: 'JSON Formatter',     url: '/json-formatter',     icon: 'code',
+    tag: 'DEV',   short: 'Format, validate, and minify JSON.' },
+  { id: 'base64',      name: 'Base64 Encoder',     url: '/base64-encoder',     icon: 'hash',
+    tag: 'DEV',   short: 'Encode or decode text and files as Base64.' },
+  { id: 'regex',       name: 'Regex Tester',       url: '/regex-tester',       icon: 'code',
+    tag: 'DEV',   short: 'Test a regular expression against sample text live.' },
+  { id: 'color',       name: 'Color Converter',    url: '/color-converter',    icon: 'palette',
+    tag: 'DEV',   short: 'Convert between HEX, RGB, and HSL instantly.' },
+  { id: 'timestamp',   name: 'Timestamp Converter',url: '/timestamp-converter',icon: 'clock',
+    tag: 'DEV',   short: 'Convert Unix timestamps to and from readable dates.' },
+
+  { id: 'word2pdf', name: 'Word to PDF',    url: '/word-to-pdf', icon: 'doc',    tag: 'PDF',
+    short: 'Convert a .docx file into a PDF.' },
+  { id: 'pdf2excel', name: 'PDF to Excel',  url: '/pdf-to-excel', icon: 'csv',    tag: 'PDF',
+    short: 'Pull tables out of a PDF into .xlsx.' },
+  { id: 'pdf2ppt',   name: 'PDF to PowerPoint', url: '/pdf-to-powerpoint', icon: 'doc', tag: 'PDF',
+    short: 'Turn each PDF page into an image slide.' },
+  { id: 'heic2jpg',  name: 'HEIC to JPG',   url: '/heic-to-jpg', icon: 'img2pdf', tag: 'IMAGE',
+    short: 'Convert iPhone HEIC photos to JPG.' },
+  { id: 'heic2png',  name: 'HEIC to PNG',   url: '/heic-to-png', icon: 'img2pdf', tag: 'IMAGE',
+    short: 'Convert iPhone HEIC photos to PNG.' },
+  { id: 'jpg2webp',  name: 'JPG to WebP',   url: '/jpg-to-webp', icon: 'jpg2pdf', tag: 'IMAGE',
+    short: 'Convert JPG images to the smaller WebP format.' },
+  { id: 'png2webp',  name: 'PNG to WebP',   url: '/png-to-webp', icon: 'jpg2pdf', tag: 'IMAGE',
+    short: 'Convert PNG images to the smaller WebP format.' },
+  { id: 'webp2jpg',  name: 'WebP to JPG',   url: '/webp-to-jpg', icon: 'jpg2pdf', tag: 'IMAGE',
+    short: 'Convert WebP images back to standard JPG.' },
+  { id: 'pdf-ocr',   name: 'PDF OCR',       url: '/pdf-ocr', icon: 'img2text', tag: 'OCR',
+    short: 'Extract text from a scanned (image-only) PDF.' },
+  { id: 'img-resize',name: 'Image Resizer', url: '/image-resizer', icon: 'resize',  tag: 'IMAGE',
+    short: 'Resize an image to exact pixel dimensions.' },
+  { id: 'img-crop',  name: 'Image Cropper', url: '/image-cropper', icon: 'crop',    tag: 'IMAGE',
+    short: 'Crop an image to the area you select.' },
+  { id: 'exif',      name: 'Remove EXIF Data', url: '/remove-exif', icon: 'eraser', tag: 'IMAGE',
+    short: 'Strip location and camera metadata from photos.' },
+  { id: 'json2csv',  name: 'JSON to CSV',   url: '/json-to-csv', icon: 'csv',     tag: 'DEV',
+    short: 'Convert a JSON array into a CSV spreadsheet.' },
+  { id: 'xml2json',  name: 'XML to JSON',   url: '/xml-to-json', icon: 'code',    tag: 'DEV',
+    short: 'Convert XML documents to JSON, and back.' },
+  { id: 'url-short', name: 'URL Shortener', url: '/url-shortener', icon: 'link',    tag: 'DEV',
+    short: 'Create a serverless short link — no backend needed.' },
+  { id: 'pdf2md',    name: 'PDF to Markdown', url: '/pdf-to-markdown', icon: 'markdown', tag: 'DOCUMENT',
+    short: 'Convert PDF text into Markdown formatting.' },
+  { id: 'md2html',   name: 'Markdown to HTML', url: '/markdown-to-html', icon: 'markdown', tag: 'DOCUMENT',
+    short: 'Render Markdown into clean HTML.' },
+  { id: 'md2pdf',    name: 'Markdown to PDF', url: '/markdown-to-pdf', icon: 'markdown', tag: 'DOCUMENT',
+    short: 'Turn a Markdown file into a formatted PDF.' },
 ];
 
 function svgIcon(key, extra) {
@@ -66,7 +131,11 @@ function tintStyle(tag) {
 }
 
 function renderHeader(active) {
-  const ddItemsAll = TOOLS.map(t => `
+  const ddItemsAll = TOOLS.map(t => t.soon ? `
+    <span class="dd-item dd-item-soon" data-name="${t.name.toLowerCase()}" data-cat="${t.tag}">
+      <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
+      <span><strong>${t.name} <em>Soon</em></strong><span>${t.short}</span></span>
+    </span>` : `
     <a class="dd-item" href="${t.url}" data-name="${t.name.toLowerCase()}" data-cat="${t.tag}">
       <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
       <span><strong>${t.name}</strong><span>${t.short}</span></span>
@@ -85,7 +154,9 @@ function renderHeader(active) {
     </button>`;
   }).join('');
 
-  const mobileToolLinks = TOOLS.map(t => `<a href="${t.url}">${t.name}</a>`).join('');
+  const mobileToolLinks = TOOLS.map(t => t.soon
+    ? `<span class="mob-soon">${t.name} <em>Soon</em></span>`
+    : `<a href="${t.url}">${t.name}</a>`).join('');
 
   document.getElementById('site-header').outerHTML = `
   <header class="site-header">
@@ -243,8 +314,11 @@ function applyStoredTheme() {
 applyStoredTheme();
 
 function renderFooter() {
-  const toolLinksA = TOOLS.slice(0,4).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('');
-  const toolLinksB = TOOLS.slice(4).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('');
+  const liveTools = TOOLS.filter(t => !t.soon);
+  const half = Math.ceil(liveTools.length / 2);
+  const toolLinksA = liveTools.slice(0, half).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('');
+  const toolLinksB = liveTools.slice(half).map(t => `<li><a href="${t.url}">${t.name}</a></li>`).join('')
+    + `<li><a href="/#tools">See all ${TOOLS.length} tools &rarr;</a></li>`;
   document.getElementById('site-footer').outerHTML = `
   <footer class="site-footer">
     <div class="container">
@@ -272,7 +346,7 @@ function renderFooter() {
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; <span id="yr"></span> ConvertKoro. All rights reserved. ConvertKoro is an independent project and is not affiliated with Adobe, Microsoft, or Google. "PDF" refers to the Portable Document Format specification.</p>
+        <p>&copy; <span id="yr"></span> ConvertKoro. All rights reserved. ConvertKoro is built independently and has no affiliation with Adobe, Microsoft, or Google.</p>
         <p class="mono" style="font-size:11.5px;">Built for people who'd rather not upload their files.</p>
       </div>
     </div>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Resize an image to exact pixel dimensions, entirely in your browser." />
+<meta property="og:title" content="Image Resizer | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Image Resizer | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Image Resizer</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--ok-tint);color:var(--ok);"></span>
+        <div><h1>Image Resizer</h1><p class="lead">Resize to exact pixel dimensions, with or without keeping the aspect ratio.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop an image here, or <span class="browse">browse</span></strong>
+        <div class="hint">JPG, PNG, or WebP &middot; nothing uploaded</div>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
+      </div>
+      <div id="previewWrap" style="display:none;margin-top:18px;">
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;">
+          <img id="preview" style="max-width:220px;border-radius:12px;border:1px solid var(--line);" />
+          <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;gap:10px;align-items:center;">
+              <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px;">Width</label>
+                <input id="wIn" type="number" style="width:110px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+              <div style="padding-top:20px;color:var(--ink-faint);">&times;</div>
+              <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px;">Height</label>
+                <input id="hIn" type="number" style="width:110px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;">
+              <input type="checkbox" id="lockRatio" checked /> Keep aspect ratio
+            </label>
+            <p class="mono" id="origInfo" style="font-size:12.5px;color:var(--ink-faint);"></p>
+          </div>
+        </div>
+      </div>
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">Image resized</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="resized.png">Download</a>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="resizeBtn" disabled>Resize</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('resize');</script>
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const previewWrap = document.getElementById('previewWrap');
+  const preview = document.getElementById('preview');
+  const wIn = document.getElementById('wIn');
+  const hIn = document.getElementById('hIn');
+  const lockRatio = document.getElementById('lockRatio');
+  const origInfo = document.getElementById('origInfo');
+  const resizeBtn = document.getElementById('resizeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const resultBox = document.getElementById('resultBox');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  let img = null, file = null, ratio = 1, syncing = false;
+
+  function setFile(f) {
+    if (!f || !f.type.startsWith('image/')) return;
+    file = f;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img = new Image();
+      img.onload = () => {
+        preview.src = e.target.result;
+        previewWrap.style.display = 'block';
+        resizeBtn.disabled = false;
+        ratio = img.naturalWidth / img.naturalHeight;
+        wIn.value = img.naturalWidth; hIn.value = img.naturalHeight;
+        origInfo.textContent = `Original: ${img.naturalWidth}\u00d7${img.naturalHeight}px`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(f);
+    resultBox.classList.remove('show');
+  }
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+  clearBtn.addEventListener('click', () => { file=null; img=null; previewWrap.style.display='none'; resizeBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+
+  wIn.addEventListener('input', () => { if (lockRatio.checked && !syncing) { syncing=true; hIn.value = Math.round(wIn.value / ratio); syncing=false; } });
+  hIn.addEventListener('input', () => { if (lockRatio.checked && !syncing) { syncing=true; wIn.value = Math.round(hIn.value * ratio); syncing=false; } });
+
+  resizeBtn.addEventListener('click', () => {
+    const w = parseInt(wIn.value) || img.naturalWidth;
+    const h = parseInt(hIn.value) || img.naturalHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const ext = mime === 'image/png' ? 'png' : 'jpg';
+    canvas.toBlob((blob) => {
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      downloadBtn.href = URL.createObjectURL(blob);
+      downloadBtn.setAttribute('download', `${baseName}-${w}x${h}.${ext}`);
+      resultTitle.textContent = `${baseName}-${w}x${h}.${ext} is ready`;
+      resultMeta.textContent = `${w}\u00d7${h}px`;
+      resultBox.classList.add('show');
+    }, mime, 0.92);
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

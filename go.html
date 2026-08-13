@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Redirecting&hellip; | ConvertKoro</title>
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<main style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 20px;">
+  <div>
+    <p class="mono" style="color:var(--ink-faint);font-size:13px;margin-bottom:10px;">ConvertKoro link</p>
+    <h1 style="font-size:22px;">Redirecting you now&hellip;</h1>
+    <p id="dest" style="color:var(--ink-soft);word-break:break-all;max-width:480px;margin:14px auto 0;font-size:13.5px;"></p>
+    <p id="fallback" style="display:none;margin-top:20px;"><a id="fallbackLink" class="btn btn-primary" href="#">Click to continue</a></p>
+  </div>
+</main>
+<script>
+(() => {
+  const hash = window.location.hash.slice(1);
+  const destEl = document.getElementById('dest');
+  const fallback = document.getElementById('fallback');
+  const fallbackLink = document.getElementById('fallbackLink');
+  if (!hash) {
+    document.querySelector('h1').textContent = 'No destination found in this link.';
+    return;
+  }
+  try {
+    const url = decodeURIComponent(atob(hash.replace(/-/g,'+').replace(/_/g,'/')));
+    destEl.textContent = url;
+    fallbackLink.href = url;
+    fallback.style.display = 'block';
+    setTimeout(() => { window.location.replace(url); }, 600);
+  } catch (e) {
+    document.querySelector('h1').textContent = 'This link looks corrupted.';
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Test a regular expression against sample text live, in your browser." />
+<meta property="og:title" content="Regex Tester | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Regex Tester | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Regex Tester</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>Regex Tester</h1><p class="lead">Type a pattern, paste sample text, see every match highlighted live.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <input id="rxPattern" placeholder="e.g. \\d{3}-\\d{4}" style="flex:1;min-width:220px;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--card);color:var(--ink);" />
+        <input id="rxFlags" placeholder="flags (g, i, m&hellip;)" value="g" style="width:150px;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--card);color:var(--ink);" />
+      </div>
+      <textarea id="rxText" placeholder="Paste sample text to test against&hellip;" style="width:100%;min-height:200px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div id="rxResult" style="margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:13px;white-space:pre-wrap;line-height:1.6;min-height:40px;"></div>
+      <div class="actions-row"><span class="mono" style="font-size:12.5px;color:var(--ink-faint);" id="matchCount">No pattern yet</span></div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Is my text sent anywhere?</summary><p>No &mdash; matching runs entirely in your browser using JavaScript's native regex engine.</p></details>
+        <details class="faq-item"><summary>What flags are supported?</summary><p>Standard JS regex flags: g (global), i (case-insensitive), m (multiline), s (dotall), u (unicode).</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('code');</script>
+<script>
+(() => {
+  const pat = document.getElementById('rxPattern');
+  const flags = document.getElementById('rxFlags');
+  const text = document.getElementById('rxText');
+  const result = document.getElementById('rxResult');
+  const matchCount = document.getElementById('matchCount');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function run() {
+    errBox.classList.remove('show');
+    if (!pat.value) { result.innerHTML = ''; matchCount.textContent = 'No pattern yet'; return; }
+    try {
+      const re = new RegExp(pat.value, flags.value);
+      const t = text.value;
+      if (!flags.value.includes('g')) {
+        const m = t.match(re);
+        if (!m) { result.textContent = esc(t); matchCount.textContent = '0 matches'; return; }
+        const out = esc(t.slice(0, m.index)) + '<mark style="background:var(--signal-tint);color:var(--signal-dk);border-radius:3px;">' + esc(m[0]) + '</mark>' + esc(t.slice(m.index + m[0].length));
+        result.innerHTML = out;
+        matchCount.textContent = '1 match';
+        return;
+      }
+      let count = 0, out = '', last = 0, m;
+      const re2 = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+      while ((m = re2.exec(t)) !== null) {
+        out += esc(t.slice(last, m.index)) + '<mark style="background:var(--signal-tint);color:var(--signal-dk);border-radius:3px;">' + esc(m[0]) + '</mark>';
+        last = m.index + (m[0].length || 1);
+        count++;
+        if (m[0].length === 0) re2.lastIndex++;
+        if (count > 5000) break;
+      }
+      out += esc(t.slice(last));
+      result.innerHTML = out;
+      matchCount.textContent = count + ' match' + (count === 1 ? '' : 'es');
+    } catch (e) {
+      errText.textContent = 'Invalid pattern: ' + e.message;
+      errBox.classList.add('show');
+    }
+  }
+  [pat, flags, text].forEach(el => el.addEventListener('input', run));
+})();
+</script>
+</body>
+</html>

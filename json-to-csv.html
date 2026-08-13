@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Convert a JSON array into a CSV spreadsheet, and back, in your browser." />
+<meta property="og:title" content="JSON to CSV Converter | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>JSON to CSV Converter | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>JSON to CSV</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--accent-plum-tint);color:var(--accent-plum);"></span>
+        <div><h1>JSON to CSV</h1><p class="lead">Paste a JSON array of objects, get a CSV table back. Works both directions.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <textarea id="dataIn" placeholder='[{"name":"Ashik","city":"Dhaka"},{"name":"Nusrat","city":"Chittagong"}]' style="width:100%;min-height:220px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;"></textarea>
+      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-lg" id="toCsvBtn">JSON &rarr; CSV</button>
+        <button class="btn btn-primary btn-lg" id="toJsonBtn">CSV &rarr; JSON</button>
+        <button class="btn btn-ghost" id="copyBtn">Copy</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>What JSON shape does this expect?</summary><p>An array of flat objects with the same keys, like <code>[{"a":1,"b":2}]</code> &mdash; nested objects and arrays inside fields aren't flattened.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('csv');</script>
+<script>
+(() => {
+  const input = document.getElementById('dataIn');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  function showError(msg) { errText.textContent = msg; errBox.classList.add('show'); }
+  function clearError() { errBox.classList.remove('show'); }
+
+  function jsonToCsv(arr) {
+    if (!Array.isArray(arr) || arr.length === 0) throw new Error('Expected a non-empty JSON array of objects.');
+    const keys = Object.keys(arr[0]);
+    const esc = (v) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    };
+    const rows = [keys.join(',')];
+    arr.forEach(obj => rows.push(keys.map(k => esc(obj[k])).join(',')));
+    return rows.join('\n');
+  }
+  function csvToJson(text) {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 1) throw new Error('No CSV data found.');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const out = lines.slice(1).filter(l => l.trim()).map(line => {
+      const cells = line.split(',');
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = (cells[i] || '').trim());
+      return obj;
+    });
+    return JSON.stringify(out, null, 2);
+  }
+
+  document.getElementById('toCsvBtn').addEventListener('click', () => {
+    try { const arr = JSON.parse(input.value); input.value = jsonToCsv(arr); clearError(); }
+    catch (e) { showError(e.message); }
+  });
+  document.getElementById('toJsonBtn').addEventListener('click', () => {
+    try { input.value = csvToJson(input.value); clearError(); }
+    catch (e) { showError(e.message); }
+  });
+  document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(input.value).catch(() => {}); });
+  document.getElementById('clearBtn').addEventListener('click', () => { input.value = ''; clearError(); });
+})();
+</script>
+</body>
+</html>
