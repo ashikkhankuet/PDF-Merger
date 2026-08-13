@@ -91,7 +91,7 @@ function renderHeader(active) {
   <header class="site-header">
     <div class="container">
       <div class="nav-row">
-        <a class="wordmark" href="/">`+BRAND_IMG+`Convert<span class="koro">Koro</span></a>
+        <a class="wordmark" href="/">`+BRAND_IMG+`<span class="wordmark-text">Convert<span class="koro">Koro</span></span></a>
         <nav class="nav-main">
           <a class="nav-link ${active==='home'?'active':''}" href="/">Home</a>
           <div class="nav-dd" id="toolsDD">
@@ -250,7 +250,7 @@ function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-about">
-          <a class="wordmark" href="/">`+BRAND_IMG+`Convert<span class="koro">Koro</span></a>
+          <a class="wordmark" href="/">`+BRAND_IMG+`<span class="wordmark-text">Convert<span class="koro">Koro</span></span></a>
           <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
         </div>
         <div><h4>Tools</h4><ul>${toolLinksA}</ul></div>
