@@ -65,4 +65,5 @@
   <url><loc>https://convertkoro.netlify.app/unit-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/currency-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.netlify.app/emi-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.netlify.app/date-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
 </urlset>

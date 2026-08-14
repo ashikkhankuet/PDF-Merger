@@ -4,20 +4,62 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
-<meta name="description" content="Calculate exact age in years, months, and days from a date of birth." />
-<meta property="og:title" content="Age Calculator | ConvertKoro" />
+<meta name="description" content="Calculate exact age in years, months, and days — plus total weeks, days, hours, and days until your next birthday." />
+<meta property="og:title" content="Age Calculator — Find Your Exact Age Free | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
-<title>Age Calculator | ConvertKoro</title>
+<title>Age Calculator — Find Your Exact Age Free | ConvertKoro</title>
+<link rel="canonical" href="https://convertkoro.netlify.app/age-calculator" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="icon" href="icon-ck.ico" sizes="any" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
+<style>
+  .age-input-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  .age-input-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .age-field { flex: 1; min-width: 200px; }
+  .age-field label { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); display: block; margin-bottom: 8px; }
+  .age-field input {
+    width: 100%; padding: 13px 14px; border: 1px solid var(--line-strong); border-radius: 10px;
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; background: var(--paper); color: var(--ink);
+  }
+  .age-hero {
+    text-align: center; padding: 32px 20px; margin-top: 22px; border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--grad-calc)); color: #fff; display: none;
+  }
+  .age-hero .big { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 5vw, 42px); font-weight: 700; line-height: 1.15; }
+  .age-hero .sub { font-size: 13.5px; opacity: .85; margin-top: 8px; }
+  .age-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; display: none; }
+  .age-stat {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 16px 14px; text-align: center;
+  }
+  .age-stat strong { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--ink); }
+  .age-stat span { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; }
+  .age-extra {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; display: none;
+  }
+  .age-extra-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 16px 18px; display: flex; align-items: center; gap: 12px;
+  }
+  .age-extra-card .ico { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .age-extra-card .ico svg { width: 18px; height: 18px; }
+  .age-extra-card strong { display: block; font-size: 14.5px; }
+  .age-extra-card span { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  @media (max-width: 600px) { .age-stats { grid-template-columns: repeat(2, 1fr); } .age-extra { grid-template-columns: 1fr; } }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Age Calculator","description":"Calculate exact age in years, months, and days — plus total weeks, days, hours, and days until your next birthday.","url":"https://convertkoro.netlify.app/age-calculator","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.netlify.app/"},{"@type":"ListItem","position":2,"name":"Age Calculator","item":"https://convertkoro.netlify.app/age-calculator"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is age calculated exactly?","acceptedAnswer":{"@type":"Answer","text":"By comparing your date of birth to the \"as of\" date down to the day, giving a precise years/months/days breakdown rather than just subtracting birth year from the current year."}},{"@type":"Question","name":"Can I calculate someone else's age, or age on a future date?","acceptedAnswer":{"@type":"Answer","text":"Yes — enter any date of birth and any \"as of\" date, past or future."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -27,24 +69,49 @@
       <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Age Calculator</span></div>
       <div class="tool-hero-top">
         <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
-        <div><h1>Age Calculator</h1><p class="lead">Exact age in years, months, and days &mdash; from any date of birth.</p></div>
+        <div><h1>Age Calculator</h1><p class="lead">Exact age, full breakdown, and your next birthday countdown.</p></div>
       </div>
     </div>
   </section>
   <section class="container">
     <div class="workspace">
-      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Date of birth</label>
-      <input type="date" id="dobIn" style="padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;background:var(--card);color:var(--ink);" />
-      <label style="font-size:13px;font-weight:600;display:block;margin:14px 0 8px;">Calculate age as of</label>
-      <input type="date" id="asOfIn" style="padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;background:var(--card);color:var(--ink);" />
-      <button class="btn btn-ghost" id="todayBtn" style="margin-left:10px;">Use today</button>
+      <div class="age-input-card">
+        <div class="age-input-row">
+          <div class="age-field">
+            <label>Date of birth</label>
+            <input type="date" id="dobIn" />
+          </div>
+          <div class="age-field">
+            <label>Calculate age as of</label>
+            <input type="date" id="asOfIn" />
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="todayBtn" style="margin-top:14px;">Use today's date</button>
+      </div>
 
-      <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
+      <div class="err-box" id="errBox" style="margin-top:16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
 
-      <div class="side-card" id="resultCard" style="display:none;margin-top:20px;">
-        <h3>Result</h3>
-        <p class="mono" id="mainResult" style="font-size:18px;margin-top:8px;"></p>
-        <p class="mono" id="subResult" style="font-size:13px;color:var(--ink-faint);margin-top:6px;"></p>
+      <div class="age-hero" id="ageHero">
+        <div class="big" id="ageHeroBig"></div>
+        <div class="sub" id="ageHeroSub"></div>
+      </div>
+
+      <div class="age-stats" id="ageStats">
+        <div class="age-stat"><strong id="statWeeks"></strong><span>Weeks</span></div>
+        <div class="age-stat"><strong id="statDays"></strong><span>Days</span></div>
+        <div class="age-stat"><strong id="statHours"></strong><span>Hours</span></div>
+        <div class="age-stat"><strong id="statMinutes"></strong><span>Minutes</span></div>
+      </div>
+
+      <div class="age-extra" id="ageExtra">
+        <div class="age-extra-card">
+          <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
+          <div><strong id="dayOfWeek"></strong><span>Day of the week born</span></div>
+        </div>
+        <div class="age-extra-card">
+          <span class="ico" style="background:var(--ok-tint);color:var(--ok);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          <div><strong id="nextBday"></strong><span>Until next birthday</span></div>
+        </div>
       </div>
     </div>
     <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
@@ -53,11 +120,18 @@
         <ol class="steps">
           <li><strong>Enter the date of birth</strong><span>Pick it from the calendar or type it in.</span></li>
           <li><strong>Choose the "as of" date</strong><span>Defaults to today, or pick any date to calculate age at that point.</span></li>
-          <li><strong>Read the exact age</strong><span>Shown in years, months, and days, plus total days lived.</span></li>
+          <li><strong>Read the full breakdown</strong><span>Exact age, total time lived in several units, and a countdown to the next birthday.</span></li>
         </ol>
       </div>
     </div>
   </section>
+
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>How is age calculated exactly?</summary><p>By comparing your date of birth to the "as of" date down to the day, giving a precise years/months/days breakdown rather than just subtracting birth year from the current year.</p></details>
+        <details class="faq-item"><summary>Can I calculate someone else's age, or age on a future date?</summary><p>Yes — enter any date of birth and any "as of" date, past or future.</p></details>
+      </div>
+    </section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
@@ -68,9 +142,10 @@
   const asOfIn = document.getElementById('asOfIn');
   const errBox = document.getElementById('errBox');
   const errText = document.getElementById('errText');
-  const resultCard = document.getElementById('resultCard');
-  const mainResult = document.getElementById('mainResult');
-  const subResult = document.getElementById('subResult');
+  const ageHero = document.getElementById('ageHero');
+  const ageStats = document.getElementById('ageStats');
+  const ageExtra = document.getElementById('ageExtra');
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
   document.getElementById('todayBtn').addEventListener('click', () => {
     asOfIn.value = new Date().toISOString().slice(0,10);
@@ -79,7 +154,8 @@
   asOfIn.value = new Date().toISOString().slice(0,10);
 
   function compute() {
-    errBox.classList.remove('show'); resultCard.style.display = 'none';
+    errBox.classList.remove('show');
+    ageHero.style.display = 'none'; ageStats.style.display = 'none'; ageExtra.style.display = 'none';
     if (!dobIn.value) return;
     const dob = new Date(dobIn.value + 'T00:00:00');
     const asOf = new Date((asOfIn.value || new Date().toISOString().slice(0,10)) + 'T00:00:00');
@@ -97,10 +173,26 @@
       days += prevMonth.getDate();
     }
     if (months < 0) { years -= 1; months += 12; }
-    const totalDays = Math.round((asOf - dob) / 86400000);
-    mainResult.textContent = `${years} years, ${months} months, ${days} days`;
-    subResult.textContent = `Total: ${totalDays.toLocaleString()} days \u00b7 ${Math.floor(totalDays/7).toLocaleString()} weeks`;
-    resultCard.style.display = 'block';
+    const totalMs = asOf - dob;
+    const totalDays = Math.floor(totalMs / 86400000);
+
+    document.getElementById('ageHeroBig').textContent = `${years} years, ${months} months, ${days} days`;
+    document.getElementById('ageHeroSub').textContent = `As of ${asOf.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}`;
+    ageHero.style.display = 'block';
+
+    document.getElementById('statWeeks').textContent = Math.floor(totalDays/7).toLocaleString();
+    document.getElementById('statDays').textContent = totalDays.toLocaleString();
+    document.getElementById('statHours').textContent = Math.floor(totalMs/3600000).toLocaleString();
+    document.getElementById('statMinutes').textContent = Math.floor(totalMs/60000).toLocaleString();
+    ageStats.style.display = 'grid';
+
+    document.getElementById('dayOfWeek').textContent = DAYS[dob.getDay()];
+
+    let nextBday = new Date(asOf.getFullYear(), dob.getMonth(), dob.getDate());
+    if (nextBday < asOf) nextBday = new Date(asOf.getFullYear()+1, dob.getMonth(), dob.getDate());
+    const daysUntil = Math.round((nextBday - asOf) / 86400000);
+    document.getElementById('nextBday').textContent = daysUntil === 0 ? 'Today! \ud83c\udf89' : `${daysUntil} day${daysUntil>1?'s':''}`;
+    ageExtra.style.display = 'grid';
   }
   dobIn.addEventListener('input', compute);
   asOfIn.addEventListener('input', compute);

@@ -12,6 +12,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
 <title>Document Tools | ConvertKoro</title>
+<link rel="canonical" href="https://convertkoro.netlify.app/document-tools" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -56,14 +57,21 @@
       <p>${t.short}</p>
       <span class="tag">${t.tag}</span>
     </a>`).join('');
-  document.getElementById('otherCats').innerHTML = CATEGORIES.filter(c => !c.soon && c.key !== key).map(c => {
+  document.getElementById('otherCats').innerHTML = CATEGORIES.filter(c => !c.soon && c.key !== key && c.key !== 'AUDIO' && c.key !== 'VIDEO').map(c => {
     const count = TOOLS.filter(t => t.tag === c.key).length;
     return `<a class="cat-card" href="${c.pageUrl}">
       <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
       <strong>${c.label}</strong>
       <span>${count} tool${count>1?'s':''}</span>
     </a>`;
-  }).join('');
+  }).join('') + (key !== 'AUDIO' && key !== 'VIDEO' ? (() => {
+    const mediaCount = TOOLS.filter(t => (t.tag === 'AUDIO' || t.tag === 'VIDEO') && !t.soon).length;
+    return `<a class="cat-card" href="/media-tools">
+      <span class="ico" style="${tintStyle('AUDIO')}">${svgIcon('video')}</span>
+      <strong>Media</strong>
+      <span>${mediaCount} tools</span>
+    </a>`;
+  })() : '');
 })();
 </script>
 </body>

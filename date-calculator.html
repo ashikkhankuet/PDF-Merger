@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Free Date Calculator: find the exact number of days, weeks, or months between two dates, or add/subtract days from a date. Fast, private, no sign-up." />
+<meta property="og:title" content="Date Calculator — Days Between Dates & Add/Subtract Days | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<title>Date Calculator — Days Between Two Dates | ConvertKoro</title>
+<link rel="canonical" href="https://convertkoro.netlify.app/date-calculator" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Date Calculator","description":"Free Date Calculator: find the exact number of days, weeks, or months between two dates, or add/subtract days from a date. Fast, private, no sign-up.","url":"https://convertkoro.netlify.app/date-calculator","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I find out how many days are between two dates?","acceptedAnswer":{"@type":"Answer","text":"Switch to \"Days between two dates,\" enter a start and end date, and the total days, weeks, weekdays, and weekend days appear instantly."}},{"@type":"Question","name":"Can I calculate a date 90 days from today?","acceptedAnswer":{"@type":"Answer","text":"Yes &mdash; switch to \"Add / subtract days,\" set the start date to today, enter 90 in Amount, choose Days, and Add."}},{"@type":"Question","name":"Does this account for leap years?","acceptedAnswer":{"@type":"Answer","text":"Yes, all calculations use standard JavaScript date arithmetic, which correctly accounts for leap years and varying month lengths."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.netlify.app/"},{"@type":"ListItem","position":2,"name":"Calculators","item":"https://convertkoro.netlify.app/calculators"},{"@type":"ListItem","position":3,"name":"Date Calculator","item":"https://convertkoro.netlify.app/date-calculator"}]}</script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <a href="/calculators">Calculators</a> <span>/</span> <span>Date Calculator</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-calc);color:#fff;"></span>
+        <div><h1>Date Calculator</h1><p class="lead">Days between two dates, or add/subtract days from a date.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+        <button class="btn btn-ghost cat-btn active" data-mode="diff">Days between two dates</button>
+        <button class="btn btn-ghost cat-btn" data-mode="addsub">Add / subtract days</button>
+      </div>
+
+      <div id="diffMode">
+        <div class="age-input-row" style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div class="age-field" style="flex:1;min-width:200px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">Start date</label>
+            <input type="date" id="diffStart" style="width:100%;padding:13px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:15px;background:var(--card);color:var(--ink);" />
+          </div>
+          <div class="age-field" style="flex:1;min-width:200px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">End date</label>
+            <input type="date" id="diffEnd" style="width:100%;padding:13px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:15px;background:var(--card);color:var(--ink);" />
+          </div>
+        </div>
+        <div class="age-hero" id="diffHero" style="text-align:center;padding:28px 20px;margin-top:20px;border-radius:16px;background:linear-gradient(135deg, var(--grad-calc));color:#fff;display:none;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:clamp(24px,4.5vw,36px);font-weight:700;" id="diffBig"></div>
+          <div style="font-size:13px;opacity:.85;margin-top:6px;" id="diffSub"></div>
+        </div>
+        <div class="age-stats" id="diffStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;display:none;">
+          <div class="age-stat" style="background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 14px;text-align:center;"><strong id="diffWeeks" style="display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;"></strong><span style="display:block;font-size:11.5px;color:var(--ink-faint);margin-top:4px;">Weeks</span></div>
+          <div class="age-stat" style="background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 14px;text-align:center;"><strong id="diffDays" style="display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;"></strong><span style="display:block;font-size:11.5px;color:var(--ink-faint);margin-top:4px;">Days</span></div>
+          <div class="age-stat" style="background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 14px;text-align:center;"><strong id="diffWeekdays" style="display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;"></strong><span style="display:block;font-size:11.5px;color:var(--ink-faint);margin-top:4px;">Weekdays</span></div>
+          <div class="age-stat" style="background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 14px;text-align:center;"><strong id="diffWeekends" style="display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;"></strong><span style="display:block;font-size:11.5px;color:var(--ink-faint);margin-top:4px;">Weekend days</span></div>
+        </div>
+      </div>
+
+      <div id="addsubMode" style="display:none;">
+        <div class="age-input-row" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="age-field" style="flex:1;min-width:180px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">Start date</label>
+            <input type="date" id="asStart" style="width:100%;padding:13px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:15px;background:var(--card);color:var(--ink);" />
+          </div>
+          <div style="width:100px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">Amount</label>
+            <input type="number" id="asAmount" value="30" style="width:100%;padding:13px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--card);color:var(--ink);" />
+          </div>
+          <div style="width:130px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">Unit</label>
+            <select id="asUnit" style="width:100%;padding:13px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--card);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;">
+              <option value="days">Days</option>
+              <option value="weeks">Weeks</option>
+              <option value="months">Months</option>
+              <option value="years">Years</option>
+            </select>
+          </div>
+          <div style="width:110px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">Direction</label>
+            <select id="asDir" style="width:100%;padding:13px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--card);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;">
+              <option value="add">Add</option>
+              <option value="sub">Subtract</option>
+            </select>
+          </div>
+        </div>
+        <div class="age-hero" id="asHero" style="text-align:center;padding:28px 20px;margin-top:20px;border-radius:16px;background:linear-gradient(135deg, var(--grad-calc));color:#fff;display:none;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:clamp(24px,4.5vw,36px);font-weight:700;" id="asBig"></div>
+          <div style="font-size:13px;opacity:.85;margin-top:6px;" id="asSub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+      <div>
+        <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Pick a mode</strong><span>Find the days between two dates, or add/subtract time from a single date.</span></li>
+          <li><strong>Enter your dates</strong><span>Everything updates live as you type &mdash; no button to click.</span></li>
+          <li><strong>Read the result</strong><span>Total days, weeks, weekdays and weekends, or the resulting date.</span></li>
+        </ol>
+      </div>
+    </div>
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>How do I find out how many days are between two dates?</summary><p>Switch to "Days between two dates," enter a start and end date, and the total days, weeks, weekdays, and weekend days appear instantly.</p></details>
+        <details class="faq-item"><summary>Can I calculate a date 90 days from today?</summary><p>Yes &mdash; switch to "Add / subtract days," set the start date to today, enter 90 in Amount, choose Days, and Add.</p></details>
+        <details class="faq-item"><summary>Does this account for leap years?</summary><p>Yes, all calculations use standard JavaScript date arithmetic, which correctly accounts for leap years and varying month lengths.</p></details>
+      </div>
+    </section>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('clock');</script>
+<script>
+(() => {
+  document.querySelectorAll('#diffMode ~ button, .cat-btn').forEach(() => {});
+  document.querySelectorAll('.cat-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('diffMode').style.display = mode === 'diff' ? 'block' : 'none';
+    document.getElementById('addsubMode').style.display = mode === 'addsub' ? 'block' : 'none';
+  }));
+
+  const diffStart = document.getElementById('diffStart');
+  const diffEnd = document.getElementById('diffEnd');
+  function computeDiff() {
+    const hero = document.getElementById('diffHero');
+    const stats = document.getElementById('diffStats');
+    if (!diffStart.value || !diffEnd.value) { hero.style.display='none'; stats.style.display='none'; return; }
+    const start = new Date(diffStart.value + 'T00:00:00');
+    const end = new Date(diffEnd.value + 'T00:00:00');
+    const totalDays = Math.round((end - start) / 86400000);
+    document.getElementById('diffBig').textContent = `${Math.abs(totalDays).toLocaleString()} days`;
+    document.getElementById('diffSub').textContent = totalDays >= 0
+      ? `From ${start.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})} to ${end.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}`
+      : 'End date is before start date';
+    let weekdays = 0, weekends = 0;
+    const dir = totalDays >= 0 ? 1 : -1;
+    const cursor = new Date(start);
+    for (let i = 0; i < Math.abs(totalDays); i++) {
+      cursor.setDate(cursor.getDate() + dir);
+      const day = cursor.getDay();
+      if (day === 0 || day === 6) weekends++; else weekdays++;
+    }
+    document.getElementById('diffWeeks').textContent = Math.floor(Math.abs(totalDays)/7).toLocaleString();
+    document.getElementById('diffDays').textContent = Math.abs(totalDays).toLocaleString();
+    document.getElementById('diffWeekdays').textContent = weekdays.toLocaleString();
+    document.getElementById('diffWeekends').textContent = weekends.toLocaleString();
+    hero.style.display = 'block'; stats.style.display = 'grid';
+  }
+  diffStart.addEventListener('input', computeDiff);
+  diffEnd.addEventListener('input', computeDiff);
+  const today = new Date().toISOString().slice(0,10);
+  diffStart.value = today;
+  const in30 = new Date(); in30.setDate(in30.getDate()+30);
+  diffEnd.value = in30.toISOString().slice(0,10);
+  computeDiff();
+
+  const asStart = document.getElementById('asStart');
+  const asAmount = document.getElementById('asAmount');
+  const asUnit = document.getElementById('asUnit');
+  const asDir = document.getElementById('asDir');
+  function computeAddSub() {
+    const hero = document.getElementById('asHero');
+    if (!asStart.value) { hero.style.display='none'; return; }
+    const start = new Date(asStart.value + 'T00:00:00');
+    const amount = parseFloat(asAmount.value) || 0;
+    const sign = asDir.value === 'add' ? 1 : -1;
+    const result = new Date(start);
+    if (asUnit.value === 'days') result.setDate(result.getDate() + sign*amount);
+    else if (asUnit.value === 'weeks') result.setDate(result.getDate() + sign*amount*7);
+    else if (asUnit.value === 'months') result.setMonth(result.getMonth() + sign*amount);
+    else if (asUnit.value === 'years') result.setFullYear(result.getFullYear() + sign*amount);
+    document.getElementById('asBig').textContent = result.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('asSub').textContent = `${asDir.value === 'add' ? 'Adding' : 'Subtracting'} ${amount} ${asUnit.value} ${asDir.value === 'add' ? 'to' : 'from'} ${start.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}`;
+    hero.style.display = 'block';
+  }
+  [asStart, asAmount, asUnit, asDir].forEach(el => el.addEventListener('input', computeAddSub));
+  asStart.value = today;
+  computeAddSub();
+})();
+</script>
+</body>
+</html>

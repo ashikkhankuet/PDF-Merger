@@ -36,6 +36,7 @@ const ICONS = {
   xmltag: '<path d="M8 8L4 12l4 4"/><path d="M13 4l-2 16"/><path d="M16 8l4 4-4 4"/>',
   convertdoc: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M9 14l3-3 3 3M12 11v7"/>',
   trim: '<path d="M2 12h4l2-7 3 14 2-7h4"/><path d="M18 5l4 4M22 5l-4 4"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
   percent: '<circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M19 5L5 19"/>',
   ruler: '<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v3M15 8v3M19 8v3"/>',
   money: '<circle cx="12" cy="12" r="9"/><path d="M9 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><path d="M8 12h8"/><line x1="12" y1="15" x2="12" y2="15"/>',
@@ -161,6 +162,8 @@ const TOOLS = [
     short: 'Live exchange rates, including BDT.' },
   { id: 'emi-calc',  name: 'EMI / Loan Calculator', url: '/emi-calculator', icon: 'bank',   tag: 'CALC',
     short: 'Monthly payment, interest, and total repayment.' },
+  { id: 'date-calc', name: 'Date Calculator',   url: '/date-calculator',   icon: 'calendar', tag: 'CALC',
+    short: 'Days between two dates, or add/subtract days.' },
 ];
 
 function svgIcon(key, extra) {
@@ -259,10 +262,16 @@ function renderHeader(active) {
             <button type="button" aria-expanded="false">Media
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            <div class="dd-panel-small">
-              <a href="/media-tools"><strong>All Media Tools</strong><span>Audio + video, everything in one place</span></a>
-              <a href="/audio-tools"><strong>Audio Tools</strong><span>Convert, trim, compress audio</span></a>
-              <a href="/video-tools"><strong>Video Tools</strong><span>Convert, trim, compress video</span></a>
+            <div class="dd-panel-cat dd-panel-media">
+              <a class="dd-panel-cat-all" href="/media-tools"><strong>All Media Tools</strong><span>Audio + video \u2192</span></a>
+              <div class="dd-media-group">
+                <div class="dd-media-group-head"><span class="ico" style="${tintStyle('AUDIO')}">${svgIcon('audio')}</span><strong>Audio Tools</strong><a href="/audio-tools">See all &rarr;</a></div>
+                <div class="dd-panel-cat-list">${TOOLS.filter(t => t.tag === 'AUDIO' && !t.soon).map(t => `<a href="${t.url}">${t.name}</a>`).join('')}</div>
+              </div>
+              <div class="dd-media-group">
+                <div class="dd-media-group-head"><span class="ico" style="${tintStyle('VIDEO')}">${svgIcon('video')}</span><strong>Video Tools</strong><a href="/video-tools">See all &rarr;</a></div>
+                <div class="dd-panel-cat-list">${TOOLS.filter(t => t.tag === 'VIDEO' && !t.soon).map(t => `<a href="${t.url}">${t.name}</a>`).join('')}</div>
+              </div>
             </div>
           </div>
           ${catNavDropdown('DEV', 'Developer', 'devDD')}

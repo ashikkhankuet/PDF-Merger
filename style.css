@@ -155,6 +155,18 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
 }
 .dd-panel-cat-list a:hover { background: var(--paper); color: var(--ink); }
 
+.dd-panel-media { width: 320px; }
+.dd-media-group { margin-bottom: 12px; }
+.dd-media-group:last-child { margin-bottom: 0; }
+.dd-media-group-head {
+  display: flex; align-items: center; gap: 8px; padding: 4px 4px 6px;
+}
+.dd-media-group-head .ico { width: 22px; height: 22px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.dd-media-group-head .ico svg { width: 12px; height: 12px; }
+.dd-media-group-head strong { font-size: 12.5px; color: var(--ink); flex: 1; }
+.dd-media-group-head a { font-size: 11px; color: var(--signal-dk); font-weight: 600; text-decoration: none; }
+.dd-media-group .dd-panel-cat-list { max-height: none; }
+
 .dd-panel {
   position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
   width: 680px; max-width: 92vw;

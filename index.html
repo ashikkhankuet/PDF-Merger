@@ -30,6 +30,7 @@
 </script>
 
 <title>ConvertKoro — Free PDF & Image Tools, Nothing Uploaded</title>
+<link rel="canonical" href="https://convertkoro.netlify.app/" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -285,14 +286,21 @@
 
   document.getElementById('toolsByCategory').innerHTML = mainRows + mediaRow + moreRow;
 
-  document.getElementById('catGrid').innerHTML = CATEGORIES.filter(c => !c.soon).map(c => {
+  document.getElementById('catGrid').innerHTML = CATEGORIES.filter(c => !c.soon && c.key !== 'AUDIO' && c.key !== 'VIDEO').map(c => {
     const count = TOOLS.filter(t => t.tag === c.key).length;
     return `<a class="cat-card" href="${c.pageUrl}">
       <span class="ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
       <strong>${c.label}</strong>
       <span>${count} tool${count>1?'s':''}</span>
     </a>`;
-  }).join('');
+  }).join('') + (() => {
+    const mediaCount = TOOLS.filter(t => (t.tag === 'AUDIO' || t.tag === 'VIDEO') && !t.soon).length;
+    return `<a class="cat-card" href="/media-tools">
+      <span class="ico" style="${tintStyle('AUDIO')}">${svgIcon('video')}</span>
+      <strong>Media</strong>
+      <span>${mediaCount} tools</span>
+    </a>`;
+  })();
 
   const qsSelectEl = document.getElementById('qsSelect');
   qsSelectEl.innerHTML += liveTools.map(t => `<option value="${t.url}">${t.name}</option>`).join('');

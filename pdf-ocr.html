@@ -12,6 +12,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
 <title>PDF OCR — Extract Text from Scanned PDFs | ConvertKoro</title>
+<link rel="canonical" href="https://convertkoro.netlify.app/pdf-ocr" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -20,6 +21,9 @@
 <link rel="stylesheet" href="style.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF OCR","description":"Extract text from a scanned PDF using OCR, entirely in your browser.","url":"https://convertkoro.netlify.app/pdf-ocr","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.netlify.app/"},{"@type":"ListItem","position":2,"name":"PDF OCR","item":"https://convertkoro.netlify.app/pdf-ocr"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is this different from PDF to Text?","acceptedAnswer":{"@type":"Answer","text":"PDF to Text reads real, selectable text instantly. PDF OCR is for scanned PDFs with no real text — it reads each page as an image, which takes longer."}},{"@type":"Question","name":"Why is there a 15-page limit?","acceptedAnswer":{"@type":"Answer","text":"OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -72,6 +76,13 @@
       </div>
     </div>
   </section>
+
+    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>How is this different from PDF to Text?</summary><p>PDF to Text reads real, selectable text instantly. PDF OCR is for scanned PDFs with no real text — it reads each page as an image, which takes longer.</p></details>
+        <details class="faq-item"><summary>Why is there a 15-page limit?</summary><p>OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first.</p></details>
+      </div>
+    </section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
