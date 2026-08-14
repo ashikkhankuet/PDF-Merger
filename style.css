@@ -132,6 +132,29 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
 .dd-panel-small a strong { font-size: 13.5px; font-weight: 600; }
 .dd-panel-small a span { font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
 
+.dd-panel-cat {
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  width: 300px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 10px; display: none; flex-direction: column;
+}
+.nav-dd.open .dd-panel-cat { display: flex; }
+.dd-panel-cat-all {
+  display: flex; align-items: center; justify-content: space-between; text-decoration: none;
+  padding: 10px 11px; border-radius: 9px; background: var(--paper); margin-bottom: 8px;
+}
+.dd-panel-cat-all strong { font-size: 13.5px; color: var(--ink); }
+.dd-panel-cat-all span { font-size: 12px; color: var(--signal-dk); font-weight: 600; }
+.dd-panel-cat-all:hover { background: var(--signal-tint); }
+.dd-panel-cat-list {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  max-height: 260px; overflow-y: auto;
+}
+.dd-panel-cat-list a {
+  padding: 8px 9px; border-radius: 8px; text-decoration: none; color: var(--ink-soft);
+  font-size: 12.5px; transition: background .12s ease, color .12s ease;
+}
+.dd-panel-cat-list a:hover { background: var(--paper); color: var(--ink); }
+
 .dd-panel {
   position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
   width: 680px; max-width: 92vw;

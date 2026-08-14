@@ -185,6 +185,22 @@ function tintStyle(tag) {
   return `background:${grad};color:#fff;`;
 }
 
+function catNavDropdown(key, label, id) {
+  const catTools = TOOLS.filter(t => t.tag === key && !t.soon);
+  const cat = CATEGORIES.find(c => c.key === key);
+  const items = catTools.map(t => `<a href="${t.url}">${t.name}</a>`).join('');
+  return `
+          <div class="nav-dd nav-dd-media" id="${id}">
+            <button type="button" aria-expanded="false">${label}
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dd-panel-cat">
+              <a class="dd-panel-cat-all" href="${cat.pageUrl}"><strong>All ${label} Tools</strong><span>See all ${catTools.length} \u2192</span></a>
+              <div class="dd-panel-cat-list">${items}</div>
+            </div>
+          </div>`;
+}
+
 function renderHeader(active) {
   const ddItemsAll = TOOLS.map(t => t.soon ? `
     <span class="dd-item dd-item-soon" data-name="${t.name.toLowerCase()}" data-cat="${t.tag}">
@@ -237,8 +253,8 @@ function renderHeader(active) {
               </div>
             </div>
           </div>
-          <a class="nav-link ${active==='pdf-tools'?'active':''}" href="/pdf-tools">PDF</a>
-          <a class="nav-link ${active==='image-tools'?'active':''}" href="/image-tools">Image</a>
+          ${catNavDropdown('PDF', 'PDF', 'pdfDD')}
+          ${catNavDropdown('IMAGE', 'Image', 'imageDD')}
           <div class="nav-dd nav-dd-media" id="mediaDD">
             <button type="button" aria-expanded="false">Media
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -249,7 +265,7 @@ function renderHeader(active) {
               <a href="/video-tools"><strong>Video Tools</strong><span>Convert, trim, compress video</span></a>
             </div>
           </div>
-          <a class="nav-link ${active==='dev-tools'?'active':''}" href="/developer-tools">Developer</a>
+          ${catNavDropdown('DEV', 'Developer', 'devDD')}
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
         </nav>
         <a class="nav-cta" href="/#tools">All tools &rarr;</a>
@@ -404,29 +420,30 @@ function renderHeader(active) {
     });
   }
 
-  const mediaDD = document.getElementById('mediaDD');
-  if (mediaDD) {
-    const mBtn = mediaDD.querySelector('button');
-    let mHoverTimer = null;
-    mBtn.addEventListener('click', (e) => {
+  ['mediaDD', 'pdfDD', 'imageDD', 'devDD'].forEach(ddId => {
+    const smallDD = document.getElementById(ddId);
+    if (!smallDD) return;
+    const sBtn = smallDD.querySelector('button');
+    let sHoverTimer = null;
+    sBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      mediaDD.classList.toggle('open');
-      mBtn.setAttribute('aria-expanded', mediaDD.classList.contains('open'));
+      smallDD.classList.toggle('open');
+      sBtn.setAttribute('aria-expanded', smallDD.classList.contains('open'));
     });
-    mediaDD.addEventListener('mouseenter', () => {
-      clearTimeout(mHoverTimer);
-      mediaDD.classList.add('open');
-      mBtn.setAttribute('aria-expanded', 'true');
+    smallDD.addEventListener('mouseenter', () => {
+      clearTimeout(sHoverTimer);
+      smallDD.classList.add('open');
+      sBtn.setAttribute('aria-expanded', 'true');
     });
-    mediaDD.addEventListener('mouseleave', () => {
-      mHoverTimer = setTimeout(() => {
-        mediaDD.classList.remove('open');
-        mBtn.setAttribute('aria-expanded', 'false');
+    smallDD.addEventListener('mouseleave', () => {
+      sHoverTimer = setTimeout(() => {
+        smallDD.classList.remove('open');
+        sBtn.setAttribute('aria-expanded', 'false');
       }, 250);
     });
-    document.addEventListener('click', (e) => { if (!mediaDD.contains(e.target)) mediaDD.classList.remove('open'); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') mediaDD.classList.remove('open'); });
-  }
+    document.addEventListener('click', (e) => { if (!smallDD.contains(e.target)) smallDD.classList.remove('open'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') smallDD.classList.remove('open'); });
+  });
 
   const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');
