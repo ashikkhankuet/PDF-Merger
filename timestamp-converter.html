@@ -37,7 +37,8 @@
   </section>
   <section class="container">
     <div class="workspace">
-      <div class="info-grid" style="grid-template-columns:1fr 1fr;">
+      
+<div class="info-grid" style="grid-template-columns:1fr 1fr;">
         <div>
           <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Unix timestamp (seconds)</label>
           <input id="tsIn" placeholder="1734000000" style="width:100%;padding:12px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--card);color:var(--ink);" />
@@ -59,14 +60,10 @@
         </div>
       </div>
     </div>
-    <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
-      <div class="faq-list">
-        <details class="faq-item"><summary>Seconds or milliseconds?</summary><p>Unix timestamps are traditionally in seconds. This tool auto-detects milliseconds if the number you enter is 13 digits long.</p></details>
-      </div>
-    </div></section>
   </section>
 
   <section class="container">
+    <p class="tool-intro-copy">Unix timestamps are unreadable to humans but everywhere in logs, APIs, and databases — convert between Unix time and a normal readable date instantly, in either direction.</p>
     <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
@@ -77,6 +74,11 @@
         </ol>
       </div>
     </div>
+    <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Seconds or milliseconds?</summary><p>Unix timestamps are traditionally in seconds. This tool auto-detects milliseconds if the number you enter is 13 digits long.</p></details>
+      </div>
+    </div></section>
   </section>
 </main>
 <div id="site-footer"></div>

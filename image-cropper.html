@@ -50,7 +50,7 @@
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
       </div>
       <div id="stageWrap" style="display:none;margin-top:18px;">
-        <div id="cropStage"><img id="stageImg" /><div id="cropBox"></div></div>
+        <div id="cropStage"><img id="stageImg" alt="Image being cropped" /><div id="cropBox"></div></div>
         <p class="mono" id="cropInfo" style="font-size:12.5px;color:var(--ink-faint);margin-top:10px;">Click and drag on the image to select a crop area.</p>
       </div>
       <div class="result-box" id="resultBox">
@@ -66,7 +66,9 @@
   </section>
 
   <section class="container">
-    <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
+    
+    <p class="tool-intro-copy">Cutting an image down to just the part you need — cropping a screenshot, removing unwanted background, or preparing a profile photo — with a draggable selection box and live pixel dimensions as you adjust.</p>
+<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
