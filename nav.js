@@ -524,7 +524,7 @@ function renderFooter() {
         </ul></div>
         <div>
           <h4>Stay updated</h4>
-          <p style="font-size:14.5px;color:#9AA6BC;margin:0 0 12px;line-height:1.5;">Get notified when new tools launch.</p>
+          <p style="font-size:14.5px;color:#FFFFFF;margin:0 0 12px;line-height:1.5;">Get notified when new tools launch.</p>
           <div class="newsletter-row">
             <input type="email" id="newsEmail" placeholder="you@email.com" />
             <button id="newsBtn" type="button">Notify me</button>
