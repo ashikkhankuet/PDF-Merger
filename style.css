@@ -510,7 +510,26 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
 .faq-item p { margin: 0; padding: 0 20px 18px; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
 
 /* ---------------- footer ---------------- */
-.site-footer { border-top: 1px solid var(--line); margin-top: 60px; padding: 48px 0 32px; }
+.site-footer {
+  border-top: 1px solid var(--line); margin-top: 60px; padding: 52px 0 32px;
+  background: #0B1220; color: #C7D0E0;
+}
+.site-footer .wordmark { color: #F4F6FB; }
+.site-footer .wordmark .koro { color: #5B9CFF; }
+.site-footer .brand-mark { box-shadow: 0 0 0 1px rgba(255,255,255,.12); }
+.site-footer .footer-about p { color: #9AA6BC; }
+.site-footer .footer-grid h4 { color: #6B7A99; }
+.site-footer .footer-grid a { color: #C7D0E0; }
+.site-footer .footer-grid a:hover { color: #5B9CFF; }
+.site-footer .footer-bottom { border-top-color: rgba(255,255,255,.09); }
+.site-footer .footer-bottom p { color: #6B7A99; }
+.site-footer .newsletter-row input {
+  background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: #F4F6FB;
+}
+.site-footer .newsletter-row input::placeholder { color: #6B7A99; }
+.site-footer .newsletter-row button { background: #5B9CFF; color: #0B1220; }
+.site-footer .newsletter-row button:hover { background: #82B4FF; }
+.site-footer .newsletter-msg { color: #4ADE80; }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(4, 1fr); gap: 28px; }
 @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 .footer-grid h4 {
@@ -575,7 +594,6 @@ code, .mono { font-family: "IBM Plex Mono", monospace; }
 :root[data-theme="dark"] .hero::before { opacity: .35; }
 :root[data-theme="dark"] .callout { border-color: rgba(34,180,110,.28); }
 :root[data-theme="dark"] .eyebrow { border-color: rgba(34,180,110,.3); }
-:root[data-theme="dark"] .site-footer { background: #0C0E13; }
 
 .theme-toggle {
   flex: none; width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line-strong);
