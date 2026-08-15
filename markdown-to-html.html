@@ -6,22 +6,30 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
 <meta name="description" content="Render Markdown into clean HTML, live, in your browser." />
 <meta property="og:title" content="Markdown to HTML Converter — Free Online Tool | ConvertKoro" />
-<meta property="og:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://convertkoro.netlify.app/og-image.png" />
+<meta name="twitter:image" content="https://convertkoro.com/og-image.png" />
 <title>Markdown to HTML Converter — Free Online Tool | ConvertKoro</title>
-<link rel="canonical" href="https://convertkoro.netlify.app/markdown-to-html" />
+<link rel="canonical" href="https://convertkoro.com/markdown-to-html" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="icon" href="icon-ck-v2.ico" sizes="any" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Markdown to HTML","description":"Render Markdown into clean HTML, live, in your browser.","url":"https://convertkoro.netlify.app/markdown-to-html","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.netlify.app/"},{"@type":"ListItem","position":2,"name":"Markdown to HTML","item":"https://convertkoro.netlify.app/markdown-to-html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Markdown to HTML","description":"Render Markdown into clean HTML, live, in your browser.","url":"https://convertkoro.com/markdown-to-html","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Markdown to HTML","item":"https://convertkoro.com/markdown-to-html"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does this support tables and code blocks?","acceptedAnswer":{"@type":"Answer","text":"Yes — standard Markdown syntax including tables, code blocks, and nested lists renders correctly."}},{"@type":"Question","name":"Can I copy the HTML into my own website?","acceptedAnswer":{"@type":"Answer","text":"Yes — use the \"Copy HTML source\" button and paste it anywhere."}}]}</script>
 </head>
 <body data-page="tools">
@@ -86,7 +94,7 @@
   mdIn.addEventListener('input', render);
   document.getElementById('copyHtmlBtn').addEventListener('click', () => { navigator.clipboard.writeText(lastHtml).catch(() => {}); });
   document.getElementById('clearBtn').addEventListener('click', () => { mdIn.value = ''; render(); });
-  mdIn.value = '# Welcome to ConvertKoro\n\nThis is **bold**, this is *italic*, and here\u2019s a [link](https://convertkoro.netlify.app).\n\n- One\n- Two\n- Three';
+  mdIn.value = '# Welcome to ConvertKoro\n\nThis is **bold**, this is *italic*, and here\u2019s a [link](https://convertkoro.com).\n\n- One\n- Two\n- Three';
   render();
 })();
 </script>

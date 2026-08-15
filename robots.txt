@@ -51,4 +51,4 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://convertkoro.netlify.app/sitemap.xml
+Sitemap: https://convertkoro.com/sitemap.xml
