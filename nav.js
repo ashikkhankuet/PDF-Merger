@@ -277,6 +277,15 @@ function renderHeader(active) {
           ${catNavDropdown('DEV', 'Developer', 'devDD')}
           <a class="nav-link ${active==='about'?'active':''}" href="/about">About</a>
         </nav>
+        <div class="nav-dd nav-search-dd" id="navSearchDD">
+          <button type="button" class="nav-search-btn" aria-expanded="false" aria-label="Search tools">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+          <div class="dd-panel-search">
+            <input type="text" id="navSearchInput" placeholder="What are you looking for?" autocomplete="off" />
+            <div class="qs-results" id="navSearchResults"></div>
+          </div>
+        </div>
         <a class="nav-cta" href="/#tools">All tools &rarr;</a>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
           <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
@@ -453,6 +462,32 @@ function renderHeader(active) {
     document.addEventListener('click', (e) => { if (!smallDD.contains(e.target)) smallDD.classList.remove('open'); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') smallDD.classList.remove('open'); });
   });
+
+  const navSearchDD = document.getElementById('navSearchDD');
+  if (navSearchDD) {
+    const nsBtn = navSearchDD.querySelector('.nav-search-btn');
+    const nsInput = document.getElementById('navSearchInput');
+    const nsResults = document.getElementById('navSearchResults');
+    function renderNavSearch(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) { nsResults.classList.remove('open'); nsResults.innerHTML = ''; return; }
+      const matches = TOOLS.filter(t => !t.soon && (t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q)));
+      nsResults.innerHTML = matches.length
+        ? matches.map(t => `<a href="${t.url}" class="qs-result-item"><span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span><span class="qs-result-text"><strong>${t.name}</strong><span>${t.tag}</span></span></a>`).join('')
+        : `<div class="qs-no-match">No tools match "${query}"</div>`;
+      nsResults.classList.add('open');
+    }
+    nsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navSearchDD.classList.toggle('open');
+      nsBtn.setAttribute('aria-expanded', navSearchDD.classList.contains('open'));
+      if (navSearchDD.classList.contains('open')) setTimeout(() => nsInput.focus(), 50);
+    });
+    nsInput.addEventListener('input', () => renderNavSearch(nsInput.value));
+    nsInput.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', (e) => { if (!navSearchDD.contains(e.target)) navSearchDD.classList.remove('open'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') navSearchDD.classList.remove('open'); });
+  }
 
   const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');

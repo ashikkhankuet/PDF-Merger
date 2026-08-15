@@ -307,11 +307,11 @@
   const qsResults = document.getElementById('qsResults');
   function renderQsResults(query) {
     const q = query.trim().toLowerCase();
-    const matches = q ? liveTools.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q)) : liveTools.slice(0, 8);
+    const matches = q ? liveTools.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q)) : liveTools;
     if (!matches.length) {
       qsResults.innerHTML = `<div class="qs-no-match">No tools match "${query}"</div>`;
     } else {
-      qsResults.innerHTML = matches.slice(0, 8).map(t => `
+      qsResults.innerHTML = matches.map(t => `
         <a href="${t.url}" class="qs-result-item">
           <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
           <span class="qs-result-text"><strong>${t.name}</strong><span>${t.tag}</span></span>

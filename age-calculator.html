@@ -32,8 +32,8 @@
     font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; background: var(--paper); color: var(--ink);
   }
   .age-hero {
-    text-align: center; padding: 26px 20px; margin-top: 22px; border-radius: var(--radius);
-    background: linear-gradient(135deg, var(--grad-calc)); color: #fff; display: none;
+    text-align: center; padding: 22px 20px; margin-top: 16px; border-radius: var(--radius);
+    background: var(--grad-calc); color: #fff; display: none;
   }
   .age-ymd { display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; }
   .age-ymd-unit { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
@@ -55,10 +55,10 @@
     background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
     padding: 16px 18px; display: flex; align-items: center; gap: 12px;
   }
-  .age-extra-card .ico { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-  .age-extra-card .ico svg { width: 18px; height: 18px; }
-  .age-extra-card strong { display: block; font-size: 14.5px; }
-  .age-extra-card span { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .age-extra-card .ico { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .age-extra-card .ico svg { width: 19px; height: 19px; }
+  .age-extra-card strong { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+  .age-extra-card span { display: block; font-size: 12px; margin-top: 3px; font-weight: 500; }
   @media (max-width: 600px) { .age-stats { grid-template-columns: repeat(2, 1fr); } .age-extra { grid-template-columns: 1fr; } .age-ymd { gap: 8px; } .age-ymd-unit { min-width: 52px; } .age-ymd-sep { font-size: 16px; } }
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Age Calculator","description":"Calculate exact age in years, months, and days — plus total weeks, days, hours, and days until your next birthday.","url":"https://convertkoro.netlify.app/age-calculator","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
