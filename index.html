@@ -83,11 +83,12 @@
         <span class="qs-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14"/><path d="M6 13l6 6 6-6"/></svg></span>
       </div>
       <div class="qs-select-row">
-        <label style="font-size:13px;font-weight:600;">Jump straight to a tool</label>
-        <select class="qs-select" id="qsSelect">
-          <option value="">Choose a tool&hellip;</option>
-        </select>
-        <button class="btn btn-primary btn-block" id="qsGo">Open tool</button>
+        <label style="font-size:13px;font-weight:600;">Search 51 tools</label>
+        <div class="qs-search-wrap">
+          <svg class="qs-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="qs-search-input" id="qsSearch" placeholder="Type a tool name&hellip;" autocomplete="off" />
+          <div class="qs-results" id="qsResults"></div>
+        </div>
       </div>
       <div class="qs-hint" id="qsHint">nothing uploaded &middot; no account</div>
     </div>
@@ -302,10 +303,26 @@
     </a>`;
   })();
 
-  const qsSelectEl = document.getElementById('qsSelect');
-  qsSelectEl.innerHTML += liveTools.map(t => `<option value="${t.url}">${t.name}</option>`).join('');
-  document.getElementById('qsGo').addEventListener('click', () => {
-    if (qsSelectEl.value) window.location.href = qsSelectEl.value;
+  const qsSearch = document.getElementById('qsSearch');
+  const qsResults = document.getElementById('qsResults');
+  function renderQsResults(query) {
+    const q = query.trim().toLowerCase();
+    const matches = q ? liveTools.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q)) : liveTools.slice(0, 8);
+    if (!matches.length) {
+      qsResults.innerHTML = `<div class="qs-no-match">No tools match "${query}"</div>`;
+    } else {
+      qsResults.innerHTML = matches.slice(0, 8).map(t => `
+        <a href="${t.url}" class="qs-result-item">
+          <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
+          <span class="qs-result-text"><strong>${t.name}</strong><span>${t.tag}</span></span>
+        </a>`).join('');
+    }
+    qsResults.classList.add('open');
+  }
+  qsSearch.addEventListener('focus', () => renderQsResults(qsSearch.value));
+  qsSearch.addEventListener('input', () => renderQsResults(qsSearch.value));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.qs-search-wrap')) qsResults.classList.remove('open');
   });
 
   document.getElementById('qsHint').textContent = `${liveTools.length} tools \u00b7 nothing uploaded \u00b7 no account`;

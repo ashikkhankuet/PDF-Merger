@@ -32,12 +32,16 @@
     font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; background: var(--paper); color: var(--ink);
   }
   .age-hero {
-    text-align: center; padding: 32px 20px; margin-top: 22px; border-radius: var(--radius);
+    text-align: center; padding: 26px 20px; margin-top: 22px; border-radius: var(--radius);
     background: linear-gradient(135deg, var(--grad-calc)); color: #fff; display: none;
   }
-  .age-hero .big { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 5vw, 42px); font-weight: 700; line-height: 1.15; }
-  .age-hero .sub { font-size: 13.5px; opacity: .85; margin-top: 8px; }
-  .age-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; display: none; }
+  .age-ymd { display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .age-ymd-unit { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+  .age-ymd-unit span { font-family: 'Space Grotesk', sans-serif; font-size: clamp(32px, 7vw, 48px); font-weight: 700; line-height: 1; }
+  .age-ymd-unit small { font-size: 12px; opacity: .85; margin-top: 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .age-ymd-sep { font-size: 22px; opacity: .5; align-self: center; }
+  .age-hero .sub { font-size: 13px; opacity: .85; margin-top: 14px; }
+  .age-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; display: none; }
   .age-stat {
     background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
     padding: 16px 14px; text-align: center;
@@ -55,7 +59,7 @@
   .age-extra-card .ico svg { width: 18px; height: 18px; }
   .age-extra-card strong { display: block; font-size: 14.5px; }
   .age-extra-card span { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
-  @media (max-width: 600px) { .age-stats { grid-template-columns: repeat(2, 1fr); } .age-extra { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) { .age-stats { grid-template-columns: repeat(2, 1fr); } .age-extra { grid-template-columns: 1fr; } .age-ymd { gap: 8px; } .age-ymd-unit { min-width: 52px; } .age-ymd-sep { font-size: 16px; } }
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Age Calculator","description":"Calculate exact age in years, months, and days — plus total weeks, days, hours, and days until your next birthday.","url":"https://convertkoro.netlify.app/age-calculator","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.netlify.app/"},{"@type":"ListItem","position":2,"name":"Age Calculator","item":"https://convertkoro.netlify.app/age-calculator"}]}</script>
@@ -91,8 +95,14 @@
 
       <div class="err-box" id="errBox" style="margin-top:16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
 
-      <div class="age-hero" id="ageHero">
-        <div class="big" id="ageHeroBig"></div>
+      <div class="age-hero" id="ageHero" style="display:none;">
+        <div class="age-ymd" id="ageYMD">
+          <div class="age-ymd-unit"><span id="ageY">0</span><small>Years</small></div>
+          <div class="age-ymd-sep">&bull;</div>
+          <div class="age-ymd-unit"><span id="ageM">0</span><small>Months</small></div>
+          <div class="age-ymd-sep">&bull;</div>
+          <div class="age-ymd-unit"><span id="ageD">0</span><small>Days</small></div>
+        </div>
         <div class="sub" id="ageHeroSub"></div>
       </div>
 
@@ -104,13 +114,13 @@
       </div>
 
       <div class="age-extra" id="ageExtra">
-        <div class="age-extra-card">
-          <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
-          <div><strong id="dayOfWeek"></strong><span>Day of the week born</span></div>
+        <div class="age-extra-card" style="background:linear-gradient(135deg,#fff5f0,#ffe4d6);border-color:#ffc9aa;">
+          <span class="ico" style="background:linear-gradient(135deg,#ff7043,#f4511e);color:#fff;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
+          <div><strong id="dayOfWeek" style="color:#bf360c;"></strong><span style="color:#e64a19;">Day of the week born</span></div>
         </div>
-        <div class="age-extra-card">
-          <span class="ico" style="background:var(--ok-tint);color:var(--ok);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
-          <div><strong id="nextBday"></strong><span>Until next birthday</span></div>
+        <div class="age-extra-card" style="background:linear-gradient(135deg,#f0f9ff,#d4eeff);border-color:#93d0f7;">
+          <span class="ico" style="background:linear-gradient(135deg,#1e88e5,#0d47a1);color:#fff;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          <div><strong id="nextBday" style="color:#0d47a1;"></strong><span style="color:#1565c0;">Until next birthday</span></div>
         </div>
       </div>
     </div>
@@ -126,12 +136,12 @@
     </div>
   </section>
 
-    <section class="section"><div class="section-head"><h2>FAQ</h2></div>
+    <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
         <details class="faq-item"><summary>How is age calculated exactly?</summary><p>By comparing your date of birth to the "as of" date down to the day, giving a precise years/months/days breakdown rather than just subtracting birth year from the current year.</p></details>
         <details class="faq-item"><summary>Can I calculate someone else's age, or age on a future date?</summary><p>Yes — enter any date of birth and any "as of" date, past or future.</p></details>
       </div>
-    </section>
+    </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
@@ -176,7 +186,9 @@
     const totalMs = asOf - dob;
     const totalDays = Math.floor(totalMs / 86400000);
 
-    document.getElementById('ageHeroBig').textContent = `${years} years, ${months} months, ${days} days`;
+    document.getElementById('ageY').textContent = years;
+    document.getElementById('ageM').textContent = months;
+    document.getElementById('ageD').textContent = days;
     document.getElementById('ageHeroSub').textContent = `As of ${asOf.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}`;
     ageHero.style.display = 'block';
 
