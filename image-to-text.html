@@ -99,6 +99,7 @@
         <ul>
           <li>Works best on clear, well-lit, horizontal text</li>
           <li>Handwriting recognition is far less reliable than printed text</li>
+          <li>Stylized, embossed, or decorative fonts (like on cards or signage) are harder to read accurately than plain printed text</li>
           <li>First run downloads a small language file, then caches it in your browser</li>
         </ul>
       </div>
@@ -164,12 +165,87 @@
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) reset(); });
   clearBtn.addEventListener('click', reset);
 
+  // Load a File into an HTMLImageElement
+  function loadImage(f) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(f);
+    });
+  }
+
+  // Preprocess: normalize images into a reasonable resolution band before OCR, plus a
+  // gentle contrast normalization that only engages when the image is genuinely
+  // low-contrast (hazy photos, faded scans).
+  // - Small images get upscaled (long side to ~1600px) with high-quality interpolation —
+  //   this measurably helps Tesseract resolve character strokes in real-world photos
+  //   and screenshots.
+  // - Large images (e.g. a modern phone camera's 4000px+ photos) get downscaled to a
+  //   sensible ceiling — OCR accuracy doesn't improve past a certain resolution, but
+  //   processing time does get much worse, especially on mid-range phones.
+  // An earlier version of this also applied a hard contrast curve to every image, which
+  // testing showed *introduced* new misreads on already-legible screenshots (destroys
+  // the anti-aliasing Tesseract relies on for small text), so that part was removed.
+  // None of this fixes stylized/embossed novelty fonts on decorative backgrounds —
+  // that class of image needs a cloud vision AI model, not classical OCR.
+  function preprocessToCanvas(img) {
+    const MIN_DIM = 1600;
+    const MAX_DIM = 2600;
+    let scale = 1;
+    const longSide = Math.max(img.naturalWidth, img.naturalHeight);
+    if (longSide < MIN_DIM) scale = MIN_DIM / longSide;
+    else if (longSide > MAX_DIM) scale = MAX_DIM / longSide;
+    if (scale > 3) scale = 3; // don't blow up tiny icons into absurd canvases
+
+    const w = Math.round(img.naturalWidth * scale);
+    const h = Math.round(img.naturalHeight * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Only apply contrast normalization if the image is genuinely low-contrast
+    // (a narrow histogram range) — clean screenshots and well-lit photos already
+    // use the full range and are left untouched.
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const d = imageData.data;
+    let min = 255, max = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      if (g < min) min = g;
+      if (g > max) max = g;
+    }
+    const range = max - min;
+    if (range < 140) {
+      // Gentle linear stretch toward the full 0-255 range, no hard curve.
+      const lo = Math.max(0, min - 10);
+      const hi = Math.min(255, max + 10);
+      const span = Math.max(1, hi - lo);
+      for (let i = 0; i < d.length; i += 4) {
+        for (let c = 0; c < 3; c++) {
+          d[i + c] = Math.max(0, Math.min(255, ((d[i + c] - lo) / span) * 255));
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    return canvas;
+  }
+
   extractBtn.addEventListener('click', async () => {
     errBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '5%';
+    progressLabel.textContent = 'Preparing image\u2026';
     extractBtn.disabled = true;
     try {
-      const result = await Tesseract.recognize(file, 'eng', {
+      const img = await loadImage(file);
+      const processedCanvas = preprocessToCanvas(img);
+
+      const recognizeOpts = {
         logger: m => {
           if (m.status === 'recognizing text') {
             progressFill.style.width = `${10 + m.progress * 85}%`;
@@ -177,9 +253,31 @@
           } else {
             progressLabel.textContent = m.status.charAt(0).toUpperCase() + m.status.slice(1) + '\u2026';
           }
+        },
+        // No forced page-segmentation mode: an earlier version of this forced PSM 6
+        // ("single uniform block"), which tested well on single-paragraph screenshots
+        // but was found to break multi-column layouts — it interleaves two unrelated
+        // side-by-side columns line-by-line instead of reading them separately.
+        // Tesseract's automatic segmentation handles both cases correctly with no
+        // measured downside, so no override is applied.
+      };
+
+      let result = await Tesseract.recognize(processedCanvas, 'eng', recognizeOpts);
+      let text = result.data.text.trim();
+      let confidence = result.data.confidence || 0;
+
+      // Fallback: if the processed version produced very little text or low
+      // confidence, retry once on the original untouched image — preprocessing
+      // helps most images but can occasionally hurt an already-clean scan.
+      if ((text.length < 3 || confidence < 35)) {
+        progressLabel.textContent = 'Trying original image\u2026';
+        const fallback = await Tesseract.recognize(file, 'eng', recognizeOpts);
+        if (fallback.data.text.trim().length > text.length) {
+          text = fallback.data.text.trim();
         }
-      });
-      outputText.value = result.data.text.trim();
+      }
+
+      outputText.value = text;
       outputWrap.style.display = 'block'; copyBtn.style.display = 'inline-flex';
       progressFill.style.width = '100%';
       setTimeout(() => progressWrap.classList.remove('show'), 250);
