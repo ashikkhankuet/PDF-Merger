@@ -236,6 +236,54 @@
     return canvas;
   }
 
+  // Rebuild extracted text from per-word confidence data instead of using the raw
+  // text blob directly. Real-world UI screenshots (dashboards, settings pages) mix
+  // genuine text with icons, checkboxes, toggles, and button glyphs — Tesseract often
+  // misreads those as garbage tokens glued onto the real word next to them (e.g. a
+  // sidebar icon next to "Domains" becomes "BE Domains"). Testing against real
+  // dashboard-style screenshots showed these icon misreads are consistently both
+  // SHORT (1-3 characters) and low-confidence, while real short words ("for", "at",
+  // "Forms") still clear a moderate confidence bar even at small size — so short
+  // tokens get a stricter confidence requirement than longer ones, rather than a
+  // single floor for everything.
+  function reconstructFromWords(data) {
+    if (!data.words || !data.words.length) return data.text.trim();
+    const lines = [];
+    let currentLine = null;
+    let currentLineWords = [];
+
+    for (const w of data.words) {
+      const text = (w.text || '').trim();
+      if (!text) continue;
+      const conf = w.confidence;
+      // Short tokens (icon-glyph misread territory) need higher confidence to survive.
+      // Longer tokens just need to clear a low absolute floor (catches severely
+      // garbled multi-character noise without penalizing normal-length real words).
+      const keep = text.length <= 3 ? conf >= 45 : conf >= 20;
+      if (!keep) continue;
+
+      // Group by the word's parent line object (not a raw pixel coordinate) —
+      // Tesseract's own internal line grouping is reliable; re-deriving line breaks
+      // from individual word y-coordinates is not, since per-word vertical position
+      // can jitter several pixels within the same visual line (differing character
+      // heights/baselines), which was found to fragment single sentences into many
+      // broken one-word lines during testing.
+      const lineKey = w.line || null;
+      if (currentLine === null || lineKey !== currentLine) {
+        if (currentLineWords.length) lines.push(currentLineWords.join(' '));
+        currentLineWords = [];
+        currentLine = lineKey;
+      }
+      currentLineWords.push(text);
+    }
+    if (currentLineWords.length) lines.push(currentLineWords.join(' '));
+    const rebuilt = lines.join('\n').trim();
+    // Guard: if filtering somehow stripped almost everything, fall back to the
+    // original text rather than returning something worse than doing nothing.
+    if (rebuilt.length < data.text.trim().length * 0.4) return data.text.trim();
+    return rebuilt;
+  }
+
   extractBtn.addEventListener('click', async () => {
     errBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '5%';
@@ -263,7 +311,7 @@
       };
 
       let result = await Tesseract.recognize(processedCanvas, 'eng', recognizeOpts);
-      let text = result.data.text.trim();
+      let text = reconstructFromWords(result.data);
       let confidence = result.data.confidence || 0;
 
       // Fallback: if the processed version produced very little text or low
@@ -272,8 +320,9 @@
       if ((text.length < 3 || confidence < 35)) {
         progressLabel.textContent = 'Trying original image\u2026';
         const fallback = await Tesseract.recognize(file, 'eng', recognizeOpts);
-        if (fallback.data.text.trim().length > text.length) {
-          text = fallback.data.text.trim();
+        const fallbackText = reconstructFromWords(fallback.data);
+        if (fallbackText.length > text.length) {
+          text = fallbackText;
         }
       }
 
