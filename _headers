@@ -1,0 +1,21 @@
+# Force HTML pages to always revalidate with the server instead of using a
+# possibly-stale cached copy. This was added after a real incident: a shipped
+# fix to image-to-text.html was verified correct in the delivered zip, but the
+# live site kept showing old broken behavior — consistent with a stale CDN/
+# browser cache serving an old copy of the page after deploy. HTML pages here
+# contain the actual tool logic inline (not just markup), so caching them like
+# static assets can silently serve outdated functionality after every deploy.
+/*.html
+  Cache-Control: no-cache, must-revalidate
+
+/
+  Cache-Control: no-cache, must-revalidate
+
+# Actual static assets (CSS/JS/images) are safe to cache normally — they're
+# unchanged far more often than the HTML logic, and browsers already
+# revalidate them via ETags.
+/style.css
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/nav.js
+  Cache-Control: public, max-age=3600, must-revalidate

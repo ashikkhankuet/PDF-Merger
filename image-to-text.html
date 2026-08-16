@@ -62,13 +62,11 @@
       <img id="preview" alt="Preview of the uploaded image for text extraction" style="display:none;max-height:260px;border-radius:var(--radius-sm);border:1px solid var(--line);margin:16px 0;" />
 
       <div class="lang-row" id="langRow" style="display:none;margin:14px 0;">
-        <label for="langSelect" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Text language</label>
+        <label for="langSelect" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Didn't look right? Try a different language</label>
         <select id="langSelect" style="padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;background:var(--card);color:var(--ink);">
           <option value="eng">English</option>
-          <option value="ben">Bengali (বাংলা)</option>
-          <option value="ben+eng">Bengali + English (mixed)</option>
-          <option value="hin">Hindi (हिन्दी)</option>
-          <option value="hin+eng">Hindi + English (mixed)</option>
+          <option value="ben+eng">Bengali (বাংলা)</option>
+          <option value="hin+eng">Hindi (हिन्दी)</option>
           <option value="ara">Arabic (العربية)</option>
           <option value="spa">Spanish</option>
           <option value="fra">French</option>
@@ -170,9 +168,8 @@
       <button class="fremove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>`;
     preview.src = URL.createObjectURL(f); preview.style.display = 'block';
-    langRow.style.display = 'block';
     extractBtn.disabled = false; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
-    errBox.classList.remove('show');
+    errBox.classList.remove('show'); langRow.style.display = 'none';
   }
 
   function reset() {
@@ -338,79 +335,93 @@
     return rebuilt;
   }
 
+  // Runs one full OCR attempt (preprocess + recognize + table-detection pass +
+  // same-language fallback) for a given language code. Returns {text, confidence}.
+  async function runExtraction(lang) {
+    const LATIN_SCRIPT_LANGS = new Set(['eng', 'spa', 'fra', 'deu', 'por']);
+    const isLatin = lang.split('+').every(l => LATIN_SCRIPT_LANGS.has(l));
+
+    const img = await loadImage(file);
+    const processedCanvas = preprocessToCanvas(img, !isLatin);
+
+    const recognizeOpts = {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          progressFill.style.width = `${10 + m.progress * 80}%`;
+          progressLabel.textContent = `Reading text\u2026 ${Math.round(m.progress*100)}%`;
+        } else {
+          progressLabel.textContent = m.status.charAt(0).toUpperCase() + m.status.slice(1) + '\u2026';
+        }
+      },
+      // No forced page-segmentation mode: an earlier version of this forced PSM 6
+      // ("single uniform block"), which tested well on single-paragraph screenshots
+      // but was found to break multi-column layouts — it interleaves two unrelated
+      // side-by-side columns line-by-line instead of reading them separately.
+      // Tesseract's automatic segmentation handles both cases correctly with no
+      // measured downside, so no override is applied.
+    };
+
+    let result = await Tesseract.recognize(processedCanvas, lang, recognizeOpts);
+    let text = reconstructFromWords(result.data);
+    let confidence = result.data.confidence || 0;
+
+    // Second pass with PSM 4 ("single column of variable-sized text") to catch
+    // tables and other row-based layouts. Tesseract's automatic mode sometimes
+    // treats every cell as its own isolated block on structured data like a table,
+    // producing one word per line instead of full rows. PSM 4 correctly joins those
+    // into rows — but forcing it for every image was tested and found to break true
+    // multi-column prose (two separate side-by-side paragraphs get wrongly merged
+    // line-by-line into nonsense), so it's only used when the auto-mode result looks
+    // suspiciously fragmented: specifically when auto produces 3x+ more lines than
+    // PSM 4 does for the same image, which reliably identifies "many short isolated
+    // lines that should have been joined into rows" without misfiring on genuine
+    // separate columns (which only show roughly a 2x difference, not 3x+).
+    try {
+      const psm4Result = await Tesseract.recognize(processedCanvas, lang, {
+        ...recognizeOpts, tessedit_pageseg_mode: '4',
+      });
+      const psm4Text = reconstructFromWords(psm4Result.data);
+      const autoLines = text.split('\n').filter(l => l.trim()).length;
+      const psm4Lines = psm4Text.split('\n').filter(l => l.trim()).length;
+      if (autoLines >= psm4Lines * 3 && psm4Text.length > 0) {
+        text = psm4Text;
+        confidence = psm4Result.data.confidence || confidence;
+      }
+    } catch (e) { /* if this pass fails for any reason, keep the auto-mode result */ }
+
+    // Fallback: if the processed version produced very little text or low
+    // confidence, retry once on the original untouched image — preprocessing
+    // helps most images but can occasionally hurt an already-clean scan.
+    if (text.length < 3 || confidence < 35) {
+      const fallback = await Tesseract.recognize(file, lang, recognizeOpts);
+      const fallbackText = reconstructFromWords(fallback.data);
+      if (fallbackText.length > text.length) text = fallbackText;
+    }
+
+    return { text, confidence };
+  }
+
   extractBtn.addEventListener('click', async () => {
     errBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '5%';
     progressLabel.textContent = 'Preparing image\u2026';
     extractBtn.disabled = true;
     try {
-      const lang = (langSelect && langSelect.value) || 'eng';
-      const LATIN_SCRIPT_LANGS = new Set(['eng', 'spa', 'fra', 'deu', 'por']);
-      const isLatin = lang.split('+').every(l => LATIN_SCRIPT_LANGS.has(l));
+      // Use the language picker's value if the user has explicitly chosen one
+      // (it only appears if extraction comes back empty — see below). Otherwise,
+      // default to the combined Bengali+English model with zero interaction
+      // required. Testing confirmed this produces byte-identical results to
+      // English-only on every pure-English test image (no accuracy cost), while
+      // also correctly reading Bengali script that an English-only model cannot —
+      // covering the two most common cases for this audience automatically.
+      const manualLang = langSelect && langRow.style.display !== 'none' ? langSelect.value : null;
 
-      const img = await loadImage(file);
-      const processedCanvas = preprocessToCanvas(img, !isLatin);
-
-      const recognizeOpts = {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            progressFill.style.width = `${10 + m.progress * 85}%`;
-            progressLabel.textContent = `Reading text\u2026 ${Math.round(m.progress*100)}%`;
-          } else {
-            progressLabel.textContent = m.status.charAt(0).toUpperCase() + m.status.slice(1) + '\u2026';
-          }
-        },
-        // No forced page-segmentation mode: an earlier version of this forced PSM 6
-        // ("single uniform block"), which tested well on single-paragraph screenshots
-        // but was found to break multi-column layouts — it interleaves two unrelated
-        // side-by-side columns line-by-line instead of reading them separately.
-        // Tesseract's automatic segmentation handles both cases correctly with no
-        // measured downside, so no override is applied.
-      };
-
-      let result = await Tesseract.recognize(processedCanvas, lang, recognizeOpts);
-      let text = reconstructFromWords(result.data);
-      let confidence = result.data.confidence || 0;
-
-      // Second pass with PSM 4 ("single column of variable-sized text") to catch
-      // tables and other row-based layouts. Tesseract's automatic mode sometimes
-      // treats every cell as its own isolated block on structured data like a table,
-      // producing one word per line instead of full rows. PSM 4 correctly joins those
-      // into rows — but forcing it for every image was tested and found to break true
-      // multi-column prose (two separate side-by-side paragraphs get wrongly merged
-      // line-by-line into nonsense), so it's only used when the auto-mode result looks
-      // suspiciously fragmented: specifically when auto produces 3x+ more lines than
-      // PSM 4 does for the same image, which reliably identifies "many short isolated
-      // lines that should have been joined into rows" without misfiring on genuine
-      // separate columns (which only show roughly a 2x difference, not 3x+).
-      try {
-        const psm4Result = await Tesseract.recognize(processedCanvas, lang, {
-          ...recognizeOpts, tessedit_pageseg_mode: '4',
-        });
-        const psm4Text = reconstructFromWords(psm4Result.data);
-        const autoLines = text.split('\n').filter(l => l.trim()).length;
-        const psm4Lines = psm4Text.split('\n').filter(l => l.trim()).length;
-        if (autoLines >= psm4Lines * 3 && psm4Text.length > 0) {
-          text = psm4Text;
-          confidence = psm4Result.data.confidence || confidence;
-        }
-      } catch (e) { /* if this pass fails for any reason, keep the auto-mode result */ }
-
-      // Fallback: if the processed version produced very little text or low
-      // confidence, retry once on the original untouched image — preprocessing
-      // helps most images but can occasionally hurt an already-clean scan.
-      if ((text.length < 3 || confidence < 35)) {
-        progressLabel.textContent = 'Trying original image\u2026';
-        const fallback = await Tesseract.recognize(file, lang, recognizeOpts);
-        const fallbackText = reconstructFromWords(fallback.data);
-        if (fallbackText.length > text.length) {
-          text = fallbackText;
-        }
-      }
+      let { text, confidence } = await runExtraction(manualLang || 'ben+eng');
 
       if (!text || text.trim().length === 0) {
         progressWrap.classList.remove('show');
-        errText.textContent = 'No text could be read from this image. If it\u2019s not in English, check the language picker above is set correctly, then try again — or try a clearer image.';
+        langRow.style.display = 'block';
+        errText.textContent = 'No text could be read automatically. Try picking the image\u2019s language below and extract again — or try a clearer image.';
         errBox.classList.add('show');
         extractBtn.disabled = false;
         return;
