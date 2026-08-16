@@ -228,9 +228,25 @@ function renderHeader(active) {
     </button>`;
   }).join('');
 
-  const mobileToolLinks = TOOLS.map(t => t.soon
-    ? `<span class="mob-soon">${t.name} <em>Soon</em></span>`
-    : `<a href="${t.url}">${t.name}</a>`).join('');
+  const mobCatBlocks = CATEGORIES.map(c => {
+    const catTools = TOOLS.filter(t => t.tag === c.key);
+    if (!catTools.length) return '';
+    const liveCount = catTools.filter(t => !t.soon).length;
+    const links = catTools.map(t => t.soon
+      ? `<span class="mob-tool-link mob-tool-soon"><span class="mob-tool-ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>${t.name} <em>Soon</em></span>`
+      : `<a class="mob-tool-link" href="${t.url}" data-name="${t.name.toLowerCase()}"><span class="mob-tool-ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>${t.name}</a>`
+    ).join('');
+    return `
+      <div class="mob-cat" data-catkey="${c.key}">
+        <button type="button" class="mob-cat-head">
+          <span class="mob-cat-ico" style="${tintStyle(c.key)}">${svgIcon(c.icon)}</span>
+          <span class="mob-cat-label">${c.label}</span>
+          <span class="mob-cat-count">${liveCount}</span>
+          <svg class="mob-cat-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="mob-cat-body">${links}</div>
+      </div>`;
+  }).join('');
 
   document.getElementById('site-header').outerHTML = `
   <header class="site-header">
@@ -290,18 +306,26 @@ function renderHeader(active) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
         </button>
       </div>
-      <div class="mobile-panel" id="mobPanel">
-        <a href="/">Home</a>
-        <div class="grp-label">Tools</div>
-        ${mobileToolLinks}
-        <div class="grp-label">More</div>
-        <a href="/about">About</a>
-        <a href="/faq">FAQ</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
+    </div>
+  </header>
+  <div class="mobile-panel" id="mobPanel">
+    <div class="mob-panel-inner">
+      <div class="mob-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="mobSearch" placeholder="Search ${TOOLS.length} tools&hellip;" autocomplete="off" />
+      </div>
+      <a class="mob-toplink ${active==='home'?'active':''}" href="/">Home</a>
+      <div class="mob-cats" id="mobCats">${mobCatBlocks}</div>
+      <div class="mob-empty" id="mobEmpty">No tools match that search.</div>
+      <div class="mob-more">
+        <a class="mob-toplink ${active==='about'?'active':''}" href="/about">About</a>
+        <a class="mob-toplink" href="/faq">FAQ</a>
+        <a class="mob-toplink" href="/privacy">Privacy</a>
+        <a class="mob-toplink" href="/terms">Terms</a>
       </div>
     </div>
-  </header>`;
+  </div>`;
+
 
   const dd = document.getElementById('toolsDD');
   if (dd) {
@@ -480,7 +504,61 @@ function renderHeader(active) {
 
   const mobToggle = document.getElementById('mobToggle');
   const mobPanel = document.getElementById('mobPanel');
-  if (mobToggle) mobToggle.addEventListener('click', () => mobPanel.classList.toggle('open'));
+  function closeMobPanel() {
+    mobPanel.classList.remove('open');
+    document.body.classList.remove('mob-panel-open');
+    mobToggle.setAttribute('aria-expanded', 'false');
+  }
+  function openMobPanel() {
+    mobPanel.classList.add('open');
+    document.body.classList.add('mob-panel-open');
+    mobToggle.setAttribute('aria-expanded', 'true');
+  }
+  if (mobToggle) {
+    mobToggle.addEventListener('click', () => {
+      if (mobPanel.classList.contains('open')) closeMobPanel(); else openMobPanel();
+    });
+  }
+  if (mobPanel) {
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMobPanel(); });
+    mobPanel.querySelectorAll('.mob-toplink, a.mob-tool-link').forEach(a => {
+      a.addEventListener('click', closeMobPanel);
+    });
+
+    const mobCatHeads = Array.prototype.slice.call(mobPanel.querySelectorAll('.mob-cat-head'));
+    mobCatHeads.forEach(head => {
+      head.addEventListener('click', () => {
+        const cat = head.closest('.mob-cat');
+        const wasOpen = cat.classList.contains('open');
+        mobCatHeads.forEach(h => h.closest('.mob-cat').classList.remove('open'));
+        if (!wasOpen) cat.classList.add('open');
+      });
+    });
+
+    const mobSearch = document.getElementById('mobSearch');
+    const mobEmpty = document.getElementById('mobEmpty');
+    const mobCatsWrap = document.getElementById('mobCats');
+    if (mobSearch) {
+      mobSearch.addEventListener('input', () => {
+        const q = mobSearch.value.trim().toLowerCase();
+        const searching = q.length > 0;
+        let anyVisible = false;
+        mobCatsWrap.querySelectorAll('.mob-cat').forEach(cat => {
+          let catHasMatch = false;
+          cat.querySelectorAll('.mob-tool-link[data-name]').forEach(link => {
+            const match = !searching || link.getAttribute('data-name').indexOf(q) !== -1;
+            link.style.display = match ? '' : 'none';
+            if (match) catHasMatch = true;
+          });
+          cat.style.display = catHasMatch ? '' : 'none';
+          if (searching) cat.classList.toggle('open', catHasMatch);
+          else cat.classList.remove('open');
+          if (catHasMatch) anyVisible = true;
+        });
+        mobEmpty.style.display = (searching && !anyVisible) ? 'block' : 'none';
+      });
+    }
+  }
 
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) themeToggle.addEventListener('click', () => {
