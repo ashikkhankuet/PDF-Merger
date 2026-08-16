@@ -230,14 +230,29 @@
   // the anti-aliasing Tesseract relies on for small text), so that part was removed.
   // None of this fixes stylized/embossed novelty fonts on decorative backgrounds —
   // that class of image needs a cloud vision AI model, not classical OCR.
-  function preprocessToCanvas(img) {
+  // Resolution normalization is ONLY applied for Latin-script languages (English,
+  // Spanish, French, etc). Testing found it unreliable for complex scripts like
+  // Bengali — the same upscale that fixed a real bug for English content made
+  // Bengali glyphs disappear entirely from the OCR output, and the failure didn't
+  // follow a clean scale threshold (worked at some scale factors, silently failed
+  // at others on the identical image) — so rather than guess at a safe factor,
+  // non-Latin-script images are left at their original resolution.
+  function preprocessToCanvas(img, skipResize) {
     const MIN_DIM = 1600;
     const MAX_DIM = 2600;
+    const MIN_SHORT_SIDE = 200; // minimum for the SHORTER dimension too — a wide,
+      // short strip (e.g. a cropped table row) was found to lose content because
+      // scaling only by the long side left too little vertical resolution for
+      // Tesseract to resolve character height accurately.
     let scale = 1;
-    const longSide = Math.max(img.naturalWidth, img.naturalHeight);
-    if (longSide < MIN_DIM) scale = MIN_DIM / longSide;
-    else if (longSide > MAX_DIM) scale = MAX_DIM / longSide;
-    if (scale > 3) scale = 3; // don't blow up tiny icons into absurd canvases
+    if (!skipResize) {
+      const longSide = Math.max(img.naturalWidth, img.naturalHeight);
+      const shortSide = Math.min(img.naturalWidth, img.naturalHeight);
+      if (longSide < MIN_DIM) scale = MIN_DIM / longSide;
+      else if (longSide > MAX_DIM) scale = MAX_DIM / longSide;
+      if (shortSide * scale < MIN_SHORT_SIDE) scale = Math.max(scale, MIN_SHORT_SIDE / shortSide);
+      if (scale > 3) scale = 3; // don't blow up tiny icons into absurd canvases
+    }
 
     const w = Math.round(img.naturalWidth * scale);
     const h = Math.round(img.naturalHeight * scale);
@@ -286,7 +301,10 @@
   // SHORT (1-3 characters) and low-confidence, while real short words ("for", "at",
   // "Forms") still clear a moderate confidence bar even at small size — so short
   // tokens get a stricter confidence requirement than longer ones, rather than a
-  // single floor for everything.
+  // single floor for everything. A lone punctuation/symbol character (not a letter
+  // or digit) gets the strictest bar of all — testing against a real alert-log
+  // screenshot found a stray "|" glyph misread at 52% confidence slipping through
+  // the short-token floor, so single symbol characters need to clear a higher bar.
   function reconstructFromWords(data) {
     if (!data.words || !data.words.length) return data.text.trim();
     const lines = [];
@@ -297,10 +315,12 @@
       const text = (w.text || '').trim();
       if (!text) continue;
       const conf = w.confidence;
+      const isLoneSymbol = text.length === 1 && !/[A-Za-z0-9]/.test(text);
       // Short tokens (icon-glyph misread territory) need higher confidence to survive.
-      // Longer tokens just need to clear a low absolute floor (catches severely
-      // garbled multi-character noise without penalizing normal-length real words).
-      const keep = text.length <= 3 ? conf >= 45 : conf >= 20;
+      // Longer tokens need a moderate floor — raised from an earlier 20% after
+      // testing found real garbage ("WE\elg", a misread UI icon) at 27% confidence
+      // was surviving the old, too-permissive floor.
+      const keep = isLoneSymbol ? conf >= 60 : (text.length <= 3 ? conf >= 45 : conf >= 30);
       if (!keep) continue;
 
       // Group by the word's parent line object (not a raw pixel coordinate) —
@@ -331,10 +351,12 @@
     progressLabel.textContent = 'Preparing image\u2026';
     extractBtn.disabled = true;
     try {
-      const img = await loadImage(file);
-      const processedCanvas = preprocessToCanvas(img);
-
       const lang = (langSelect && langSelect.value) || 'eng';
+      const LATIN_SCRIPT_LANGS = new Set(['eng', 'spa', 'fra', 'deu', 'por']);
+      const isLatin = lang.split('+').every(l => LATIN_SCRIPT_LANGS.has(l));
+
+      const img = await loadImage(file);
+      const processedCanvas = preprocessToCanvas(img, !isLatin);
 
       const recognizeOpts = {
         logger: m => {
@@ -391,6 +413,14 @@
         if (fallbackText.length > text.length) {
           text = fallbackText;
         }
+      }
+
+      if (!text || text.trim().length === 0) {
+        progressWrap.classList.remove('show');
+        errText.textContent = 'No text could be read from this image. If it\u2019s not in English, check the language picker above is set correctly, then try again — or try a clearer image.';
+        errBox.classList.add('show');
+        extractBtn.disabled = false;
+        return;
       }
 
       outputText.value = text;
