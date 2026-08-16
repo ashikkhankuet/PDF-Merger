@@ -295,16 +295,17 @@
   // Rebuild extracted text from per-word confidence data instead of using the raw
   // text blob directly. Real-world UI screenshots (dashboards, settings pages) mix
   // genuine text with icons, checkboxes, toggles, and button glyphs — Tesseract often
-  // misreads those as garbage tokens glued onto the real word next to them (e.g. a
-  // sidebar icon next to "Domains" becomes "BE Domains"). Testing against real
-  // dashboard-style screenshots showed these icon misreads are consistently both
-  // SHORT (1-3 characters) and low-confidence, while real short words ("for", "at",
-  // "Forms") still clear a moderate confidence bar even at small size — so short
-  // tokens get a stricter confidence requirement than longer ones, rather than a
-  // single floor for everything. A lone punctuation/symbol character (not a letter
-  // or digit) gets the strictest bar of all — testing against a real alert-log
-  // screenshot found a stray "|" glyph misread at 52% confidence slipping through
-  // the short-token floor, so single symbol characters need to clear a higher bar.
+  // rebuild it via Tesseract's own line-grouping instead. An earlier version also
+  // filtered words by confidence score to strip UI-icon misreads (e.g. a sidebar
+  // icon glyph next to "Domains" reading as "BE Domains"). That was removed after
+  // testing found confidence filtering has no reliable basis: genuine, fully correct
+  // content — real numbers, real short words, real non-Latin-script text — regularly
+  // scores in the exact same 7-15% confidence range as actual OCR misreads, so any
+  // threshold that filters out icon garbage also silently deletes real user data.
+  // On a real test table, confidence filtering dropped several genuine comma-
+  // separated codes ("FA, SMS,", "FINA, SU,") while trying to remove garbage — data
+  // loss is a worse failure than a few stray extra characters, so this tool no
+  // longer filters by confidence at all.
   function reconstructFromWords(data) {
     if (!data.words || !data.words.length) return data.text.trim();
     const lines = [];
@@ -314,14 +315,6 @@
     for (const w of data.words) {
       const text = (w.text || '').trim();
       if (!text) continue;
-      const conf = w.confidence;
-      const isLoneSymbol = text.length === 1 && !/[A-Za-z0-9]/.test(text);
-      // Short tokens (icon-glyph misread territory) need higher confidence to survive.
-      // Longer tokens need a moderate floor — raised from an earlier 20% after
-      // testing found real garbage ("WE\elg", a misread UI icon) at 27% confidence
-      // was surviving the old, too-permissive floor.
-      const keep = isLoneSymbol ? conf >= 60 : (text.length <= 3 ? conf >= 45 : conf >= 30);
-      if (!keep) continue;
 
       // Group by the word's parent line object (not a raw pixel coordinate) —
       // Tesseract's own internal line grouping is reliable; re-deriving line breaks
