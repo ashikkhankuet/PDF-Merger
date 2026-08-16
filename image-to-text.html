@@ -61,6 +61,26 @@
       <div class="file-list" id="fileList"></div>
       <img id="preview" alt="Preview of the uploaded image for text extraction" style="display:none;max-height:260px;border-radius:var(--radius-sm);border:1px solid var(--line);margin:16px 0;" />
 
+      <div class="lang-row" id="langRow" style="display:none;margin:14px 0;">
+        <label for="langSelect" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Text language</label>
+        <select id="langSelect" style="padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;background:var(--card);color:var(--ink);">
+          <option value="eng">English</option>
+          <option value="ben">Bengali (বাংলা)</option>
+          <option value="ben+eng">Bengali + English (mixed)</option>
+          <option value="hin">Hindi (हिन्दी)</option>
+          <option value="hin+eng">Hindi + English (mixed)</option>
+          <option value="ara">Arabic (العربية)</option>
+          <option value="spa">Spanish</option>
+          <option value="fra">French</option>
+          <option value="deu">German</option>
+          <option value="por">Portuguese</option>
+          <option value="rus">Russian</option>
+          <option value="chi_sim">Chinese (Simplified)</option>
+          <option value="jpn">Japanese</option>
+          <option value="kor">Korean</option>
+        </select>
+      </div>
+
       <div class="progress-wrap" id="progressWrap">
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
         <div class="progress-label" id="progressLabel">Reading text&hellip;</div>
@@ -100,7 +120,8 @@
           <li>Works best on clear, well-lit, horizontal text</li>
           <li>Handwriting recognition is far less reliable than printed text</li>
           <li>Stylized, embossed, or decorative fonts (like on cards or signage) are harder to read accurately than plain printed text</li>
-          <li>First run downloads a small language file, then caches it in your browser</li>
+          <li>Pick the right language above for non-English text — English is selected by default and won't read other scripts correctly</li>
+          <li>First run in a language downloads a small language file, then caches it in your browser</li>
         </ul>
       </div>
     </div>
@@ -124,6 +145,8 @@
   const fileInput = document.getElementById('fileInput');
   const fileList = document.getElementById('fileList');
   const preview = document.getElementById('preview');
+  const langRow = document.getElementById('langRow');
+  const langSelect = document.getElementById('langSelect');
   const extractBtn = document.getElementById('extractBtn');
   const copyBtn = document.getElementById('copyBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -147,12 +170,14 @@
       <button class="fremove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>`;
     preview.src = URL.createObjectURL(f); preview.style.display = 'block';
+    langRow.style.display = 'block';
     extractBtn.disabled = false; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
     errBox.classList.remove('show');
   }
 
   function reset() {
     file = null; fileList.innerHTML = ''; preview.style.display = 'none'; preview.src='';
+    langRow.style.display = 'none';
     extractBtn.disabled = true; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
     outputText.value = ''; errBox.classList.remove('show');
   }
@@ -309,6 +334,8 @@
       const img = await loadImage(file);
       const processedCanvas = preprocessToCanvas(img);
 
+      const lang = (langSelect && langSelect.value) || 'eng';
+
       const recognizeOpts = {
         logger: m => {
           if (m.status === 'recognizing text') {
@@ -326,7 +353,7 @@
         // measured downside, so no override is applied.
       };
 
-      let result = await Tesseract.recognize(processedCanvas, 'eng', recognizeOpts);
+      let result = await Tesseract.recognize(processedCanvas, lang, recognizeOpts);
       let text = reconstructFromWords(result.data);
       let confidence = result.data.confidence || 0;
 
@@ -342,7 +369,7 @@
       // lines that should have been joined into rows" without misfiring on genuine
       // separate columns (which only show roughly a 2x difference, not 3x+).
       try {
-        const psm4Result = await Tesseract.recognize(processedCanvas, 'eng', {
+        const psm4Result = await Tesseract.recognize(processedCanvas, lang, {
           ...recognizeOpts, tessedit_pageseg_mode: '4',
         });
         const psm4Text = reconstructFromWords(psm4Result.data);
@@ -359,7 +386,7 @@
       // helps most images but can occasionally hurt an already-clean scan.
       if ((text.length < 3 || confidence < 35)) {
         progressLabel.textContent = 'Trying original image\u2026';
-        const fallback = await Tesseract.recognize(file, 'eng', recognizeOpts);
+        const fallback = await Tesseract.recognize(file, lang, recognizeOpts);
         const fallbackText = reconstructFromWords(fallback.data);
         if (fallbackText.length > text.length) {
           text = fallbackText;
