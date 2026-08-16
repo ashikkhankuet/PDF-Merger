@@ -1,3 +1,13 @@
+# Redirect the old Netlify subdomain to the custom domain, preserving the
+# path (so e.g. convertkoro.netlify.app/merge -> convertkoro.com/merge, not
+# just the homepage). 301 = permanent redirect, tells browsers AND search
+# engines the content has moved for good - this is also how Google's index
+# eventually stops showing the old netlify.app URL in results, since it
+# follows the redirect and re-indexes under the new address.
+# IMPORTANT: never delete/disable the netlify.app deploy target itself -
+# convertkoro.com's DNS points AT it; removing it takes the whole site down.
+https://convertkoro.netlify.app/*  https://convertkoro.com/:splat  301!
+
 /                    /index.html            200
 /about               /about.html            200
 /faq                 /faq.html              200

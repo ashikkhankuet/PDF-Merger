@@ -335,6 +335,235 @@
     return rebuilt;
   }
 
+  // Detects vertical grid lines in a table-style image (long, mostly-unbroken dark
+  // vertical strokes spanning most of the image height) and returns the x-positions
+  // of column boundaries, including the left and right edges. Returns null if fewer
+  // than 2 interior boundaries are found — meaning this isn't a gridded table, so
+  // the normal single-pass pipeline should be used unchanged. This exists because
+  // testing found Tesseract's own layout analysis unreliably drops or garbles entire
+  // columns on real gridded tables (verified on a real 3-column WhatsApp table
+  // screenshot: the middle two columns were silently missing from the output, while
+  // OCR-ing each column in isolation read correctly) — splitting by detected grid
+  // lines and OCR-ing each column separately sidesteps that failure.
+  function detectTableColumns(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const d = imageData.data;
+
+    // Grayscale every pixel and find the image's dominant background tone via a
+    // histogram mode — needed because "line pixel" can't be a fixed brightness
+    // threshold: on a light background, grid lines are darker than the
+    // background; on a dark-mode screenshot, the entire background is dark, so
+    // a fixed dark threshold wrongly treats the whole image as one giant line.
+    // Detecting lines as pixels that sharply DEPART from the actual background
+    // (in whichever direction is correct for that image) works for both.
+    const gray = new Uint8ClampedArray(w * h);
+    const hist = new Uint32Array(256);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        gray[y * w + x] = g;
+        hist[Math.round(g)]++;
+      }
+    }
+    let bgValue = 0, bgCount = 0;
+    for (let v = 0; v < 256; v++) if (hist[v] > bgCount) { bgCount = hist[v]; bgValue = v; }
+    const isDarkBg = bgValue < 128;
+
+    const dark = new Uint8Array(w * h);
+    const LINE_DELTA = 40;
+    for (let p = 0; p < w * h; p++) {
+      const diff = isDarkBg ? (gray[p] - bgValue) : (bgValue - gray[p]);
+      dark[p] = diff > LINE_DELTA ? 1 : 0;
+    }
+
+    // For each column, find the longest unbroken run of dark pixels (allowing tiny
+    // gaps from anti-aliasing) and how much of the image height it covers.
+    const MIN_RUN_FRACTION = 0.75; // a real grid line spans nearly the full table
+      // height — raised from an earlier 0.55 after finding a false positive: a
+      // table with a title block above the gridded rows produced a spurious
+      // ~55-64%-height "boundary" from coincidentally-aligned text pixels, which
+      // sliced straight through a column of non-Latin-script text and destroyed
+      // it. Tested that 0.75 still detects every real grid line in known-good
+      // tables (identical results to the old 0.55 there) while eliminating the
+      // false positive.
+    const MAX_GAP = 3;
+    const colScore = new Float32Array(w);
+    for (let x = 0; x < w; x++) {
+      let longest = 0, current = 0, gap = 0;
+      for (let y = 0; y < h; y++) {
+        if (dark[y * w + x]) {
+          current++; gap = 0;
+        } else {
+          gap++;
+          if (gap > MAX_GAP) { longest = Math.max(longest, current); current = 0; }
+        }
+      }
+      longest = Math.max(longest, current);
+      colScore[x] = longest / h;
+    }
+
+    // Columns clearing the fraction threshold are candidate grid-line pixels;
+    // cluster adjacent candidates into single boundary positions.
+    const candidates = [];
+    for (let x = 0; x < w; x++) if (colScore[x] >= MIN_RUN_FRACTION) candidates.push(x);
+    if (!candidates.length) return null;
+
+    const clusters = [];
+    let clusterStart = candidates[0], prev = candidates[0];
+    for (let i = 1; i < candidates.length; i++) {
+      const x = candidates[i];
+      if (x - prev > 8) {
+        clusters.push(Math.round((clusterStart + prev) / 2));
+        clusterStart = x;
+      }
+      prev = x;
+    }
+    clusters.push(Math.round((clusterStart + prev) / 2));
+
+    // A real bordered table needs at least 1 interior vertical boundary (2+
+    // columns). A single boundary is ambiguous on its own (could be a stray
+    // vertical rule unrelated to a table), so for that case only, additionally
+    // require a horizontal border somewhere in the image — genuine bordered
+    // tables reliably have one (a header divider, a top/bottom border), while
+    // plain paragraph content does not. 2+ interior boundaries (3+ columns) is
+    // accepted without the extra check, since that pattern is a strong enough
+    // signal on its own.
+    const interior = clusters.filter(x => x > w * 0.02 && x < w * 0.98);
+    if (interior.length < 1) return null;
+    if (interior.length === 1) {
+      const horizontalsize = Math.max(Math.floor(w / 4), 1);
+      let hasHorizontalBorder = false;
+      for (let y = 0; y < h && !hasHorizontalBorder; y++) {
+        let run = 0;
+        for (let x = 0; x < w; x++) {
+          if (dark[y * w + x]) { run++; if (run >= horizontalsize) { hasHorizontalBorder = true; break; } }
+          else run = 0;
+        }
+      }
+      if (!hasHorizontalBorder) return null;
+    }
+
+    return [0, ...interior, w];
+  }
+
+  // Runs OCR independently on each column of a detected table, then reassembles
+  // rows by matching each column's text lines to the simplest column's lines by
+  // vertical position (the column with the fewest lines is used as the "row
+  // anchor" since it's least likely to have wrapped/multi-line cells). Verified
+  // against a real 3-column gridded table: recovers columns that a single whole-
+  // image OCR pass silently drops.
+  async function extractTableByColumns(canvas, lang, recognizeOpts) {
+    const boundaries = detectTableColumns(canvas);
+    if (!boundaries) return null;
+
+    const h = canvas.height;
+    const colLineSets = [];
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      const x0 = boundaries[i], x1 = boundaries[i + 1];
+      const colW = x1 - x0;
+      if (colW < 15) { colLineSets.push([]); continue; }
+      const colCanvas = document.createElement('canvas');
+      colCanvas.width = colW; colCanvas.height = h;
+      colCanvas.getContext('2d').drawImage(canvas, x0, 0, colW, h, 0, 0, colW, h);
+
+      const result = await Tesseract.recognize(colCanvas, lang, recognizeOpts);
+      const words = (result.data.words || [])
+        .map(w => ({
+          text: (w.text || '').trim(),
+          top: w.bbox ? w.bbox.y0 : 0,
+          left: w.bbox ? w.bbox.x0 : 0,
+          height: w.bbox ? (w.bbox.y1 - w.bbox.y0) : 10,
+        }))
+        .filter(w => w.text);
+
+      // Group words into lines by top-position proximity, preserving left-right order.
+      const sorted = words.slice().sort((a, b) => a.top - b.top);
+      const lines = [];
+      for (const wd of sorted) {
+        let placed = false;
+        for (const ln of lines) {
+          if (Math.abs(ln.top - wd.top) < 15) { ln.words.push(wd); placed = true; break; }
+        }
+        if (!placed) lines.push({ top: wd.top, words: [wd] });
+      }
+      for (const ln of lines) {
+        ln.words.sort((a, b) => a.left - b.left);
+        ln.text = ln.words.map(x => x.text).join(' ');
+        ln.yMid = ln.words.reduce((s, x) => s + x.top + x.height / 2, 0) / ln.words.length;
+        ln.height = Math.max(...ln.words.map(x => x.height));
+      }
+      colLineSets.push(lines);
+    }
+
+    if (!colLineSets.some(c => c.length)) return null;
+
+    // Row-matching tolerance is derived from the actual text size in this image
+    // rather than a fixed pixel value — testing found a fixed tolerance that
+    // correctly merged a wrapped 2-line cell's lines on one table's row spacing
+    // completely failed on a different table with tighter row spacing (either
+    // merging distinct rows together, or failing to merge a wrapped cell's own
+    // lines). Median line height scales naturally with both text size and
+    // typical row spacing.
+    const allHeights = colLineSets.flat().map(l => l.height).filter(Boolean).sort((a, b) => a - b);
+    const medianHeight = allHeights.length ? allHeights[Math.floor(allHeights.length / 2)] : 20;
+    const ROW_TOL = medianHeight * 1.4;
+
+    function rowBandCount(lines) {
+      if (!lines.length) return 0;
+      const ys = lines.map(l => l.yMid).sort((a, b) => a - b);
+      let bands = 1, last = ys[0];
+      for (let i = 1; i < ys.length; i++) {
+        if (ys[i] - last > ROW_TOL) bands++;
+        last = ys[i];
+      }
+      return bands;
+    }
+
+    // Anchor on the column with the most REAL ROWS (band count, not raw line
+    // count) — a column with a wrapped 2-line cell shouldn't out-rank a column
+    // with more genuine one-line-per-row entries just because it has more raw
+    // lines. This is the strongest available signal that a column was both
+    // structurally simple and read reliably (a column that struggled tends to
+    // produce fewer distinguishable bands, not more).
+    let anchorIdx = 0;
+    for (let i = 1; i < colLineSets.length; i++) {
+      if (rowBandCount(colLineSets[i]) > rowBandCount(colLineSets[anchorIdx])) anchorIdx = i;
+    }
+    if (!colLineSets[anchorIdx].length) return null;
+
+    // Cluster the anchor column's own lines into row-bands (merges a wrapped
+    // multi-line cell's lines into one row), then pull matching lines from
+    // every other column by proximity to each band's center.
+    const anchorSorted = colLineSets[anchorIdx].slice().sort((a, b) => a.yMid - b.yMid);
+    const bands = [];
+    for (const l of anchorSorted) {
+      const lastBand = bands[bands.length - 1];
+      if (lastBand && l.yMid - lastBand.yMid < ROW_TOL) {
+        lastBand.lines.push(l);
+        lastBand.yMid = lastBand.lines.reduce((s, x) => s + x.yMid, 0) / lastBand.lines.length;
+      } else {
+        bands.push({ yMid: l.yMid, lines: [l] });
+      }
+    }
+
+    const outRows = [];
+    for (const band of bands) {
+      const row = colLineSets.map((lines, ci) => {
+        if (ci === anchorIdx) {
+          return band.lines.slice().sort((a, b) => a.yMid - b.yMid).map(l => l.text).join(' ');
+        }
+        const matched = lines.filter(l => Math.abs(l.yMid - band.yMid) < ROW_TOL);
+        matched.sort((x, y) => x.yMid - y.yMid);
+        return matched.map(l => l.text).join(' ');
+      });
+      outRows.push(row.join('\t'));
+    }
+    return outRows.join('\n');
+  }
+
   // Runs one full OCR attempt (preprocess + recognize + table-detection pass +
   // same-language fallback) for a given language code. Returns {text, confidence}.
   async function runExtraction(lang) {
@@ -388,6 +617,20 @@
         confidence = psm4Result.data.confidence || confidence;
       }
     } catch (e) { /* if this pass fails for any reason, keep the auto-mode result */ }
+
+    // Gridded-table pass: if the image has real vertical grid lines (a bordered
+    // table), OCR each column separately and reassemble by row. Whole-image OCR
+    // was found to silently drop or garble entire columns on real gridded tables
+    // (verified: a 3-column WhatsApp table screenshot lost its middle two columns
+    // entirely under normal recognition, while each column read correctly in
+    // isolation) — this only runs extra passes when a real grid is detected, so
+    // ordinary paragraphs/receipts/signs incur no extra cost.
+    try {
+      const tableText = await extractTableByColumns(processedCanvas, lang, recognizeOpts);
+      if (tableText && tableText.replace(/\s/g, '').length > text.replace(/\s/g, '').length) {
+        text = tableText.replace(/\t/g, '  |  ');
+      }
+    } catch (e) { /* if column splitting fails for any reason, keep the existing result */ }
 
     // Fallback: if the processed version produced very little text or low
     // confidence, retry once on the original untouched image — preprocessing
