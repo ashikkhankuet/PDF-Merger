@@ -29,7 +29,7 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF to Text","description":"Extract every word of a PDF as plain text, processed entirely in your browser.","url":"https://convertkoro.com/pdf-to-text","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"My PDF is a scan &mdash; nothing came out?","acceptedAnswer":{"@type":"Answer","text":"Scanned PDFs are images of text, not real characters. Try PDF OCR once it's live, or Image to Text for individual pages."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"My PDF is a scan &mdash; nothing came out?","acceptedAnswer":{"@type":"Answer","text":"Scanned PDFs are images of text, not real characters, so there's nothing here to extract. Use <a href=\"/pdf-ocr\" style=\"color:var(--signal-dk);text-decoration:underline;\">PDF OCR</a> instead, or <a href=\"/image-to-text\" style=\"color:var(--signal-dk);text-decoration:underline;\">Image to Text</a> for individual pages."}},{"@type":"Question","name":"Can I extract text from a password-protected PDF?","acceptedAnswer":{"@type":"Answer","text":"Not currently — password-protected or encrypted PDFs aren't supported. Remove the password first, then try again."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"PDF to Text","item":"https://convertkoro.com/pdf-to-text"}]}</script>
 </head>
 <body data-page="tools">
@@ -68,7 +68,7 @@
 
   <section class="container">
     
-    <p class="tool-intro-copy">When you just need the words out of a PDF — for a search, a quote, or pasting into another document — extracting plain text is faster than opening a full PDF viewer. This reads real, selectable text directly from the file.</p>
+    <p class="tool-intro-copy">When you just need the words out of a PDF — for a search, a quote, or pasting into another document — extracting plain text is faster than opening a full PDF viewer. This reads real, selectable text directly from the file, entirely in your browser, with nothing uploaded and no account needed.</p>
 <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
@@ -82,7 +82,9 @@
   </section>
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
-        <details class="faq-item"><summary>My PDF is a scan &mdash; nothing came out?</summary><p>Scanned PDFs are images of text, not real characters. Try <a href="/pdf-ocr" style="color:var(--signal-dk);">PDF OCR</a> once it's live, or <a href="/image-to-text" style="color:var(--signal-dk);">Image to Text</a> for individual pages.</p></details>
+        <details class="faq-item"><summary>My PDF is a scan &mdash; nothing came out?</summary><p>Scanned PDFs are images of text, not real characters, so there's nothing here to extract. Use <a href="/pdf-ocr" style="color:var(--signal-dk);text-decoration:underline;">PDF OCR</a> instead, or <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for individual pages.</p></details>
+        <details class="faq-item"><summary>Can I extract text from a password-protected PDF?</summary><p>Not currently — password-protected or encrypted PDFs aren't supported. Remove the password first, then try again.</p></details>
+        <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
   </section>

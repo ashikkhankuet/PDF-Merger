@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
 <meta name="description" content="Extract text from a scanned PDF using OCR, entirely in your browser." />
+<meta name="keywords" content="pdf ocr, scanned pdf to text, extract text from scanned pdf, pdf text recognition, bangla pdf ocr" />
 <meta property="og:title" content="PDF OCR | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
@@ -31,7 +32,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF OCR","description":"Extract text from a scanned PDF using OCR, entirely in your browser.","url":"https://convertkoro.com/pdf-ocr","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"PDF OCR","item":"https://convertkoro.com/pdf-ocr"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is this different from PDF to Text?","acceptedAnswer":{"@type":"Answer","text":"PDF to Text reads real, selectable text instantly. PDF OCR is for scanned PDFs with no real text — it reads each page as an image, which takes longer."}},{"@type":"Question","name":"Why is there a 15-page limit?","acceptedAnswer":{"@type":"Answer","text":"OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is this different from PDF to Text?","acceptedAnswer":{"@type":"Answer","text":"PDF to Text reads real, selectable text instantly. PDF OCR is for scanned PDFs with no real text — it reads each page as an image, which takes longer."}},{"@type":"Question","name":"Can this read Bangla (Bengali) text in a scanned PDF?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bengali and English are both enabled by default, so scanned pages with Bangla text are read automatically."}},{"@type":"Question","name":"Why is there a 15-page limit?","acceptedAnswer":{"@type":"Answer","text":"OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -74,7 +75,8 @@
 
   <section class="container">
     
-    <p class="tool-intro-copy">Some PDFs are just scanned images with no real text underneath, so normal copy-paste doesn't work. This runs OCR on each page to make a scanned PDF's content readable and extractable.</p>
+    <p class="tool-intro-copy">Some PDFs are just scanned images with no real text underneath, so normal copy-paste doesn't work. This runs OCR on each page to make a scanned PDF's content readable and extractable — entirely in your browser, with nothing uploaded. Reads Bengali (বাংলা) and English by default.</p>
+    <p class="tool-intro-bangla">স্ক্যান করা পিডিএফ থেকে লেখা বের করতে চান? এই টুল বাংলা ও ইংরেজি — দুই ভাষার লেখাই পড়তে পারে, সম্পূর্ণ আপনার ব্রাউজারে, কোনো আপলোড ছাড়াই।</p>
 <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
@@ -90,7 +92,9 @@
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
         <details class="faq-item"><summary>How is this different from PDF to Text?</summary><p>PDF to Text reads real, selectable text instantly. PDF OCR is for scanned PDFs with no real text — it reads each page as an image, which takes longer.</p></details>
+        <details class="faq-item"><summary>Can this read Bangla (Bengali) text in a scanned PDF?</summary><p>Yes — Bengali and English are both enabled by default, so scanned pages with Bangla text are read automatically.</p></details>
         <details class="faq-item"><summary>Why is there a 15-page limit?</summary><p>OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first.</p></details>
+        <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
 </main>
@@ -151,7 +155,7 @@
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width; canvas.height = viewport.height;
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        const { data } = await Tesseract.recognize(canvas, 'eng');
+        const { data } = await Tesseract.recognize(canvas, 'ben+eng');
         fullText += data.text + '\n\n';
         progressFill.style.width = `${5 + (i/maxPages)*90}%`;
       }
