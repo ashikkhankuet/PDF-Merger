@@ -1,0 +1,20 @@
+# Netlify build/function configuration for ConvertKoro.
+# Functions power the URL Shortener's server-backed short links
+# (the one tool on this site that stores data server-side, by design -
+# see url-shortener.html for the honest disclosure of why).
+[build]
+  functions = "netlify/functions"
+
+# Clean path for the short-link creation API, called from url-shortener.html
+[[redirects]]
+  from = "/api/shorten"
+  to = "/.netlify/functions/shorten"
+  status = 200
+
+# Short links themselves: /s/<code> -> looks up the real destination and
+# redirects. Kept short and separate from /go (the old client-side-only
+# encoded-link format, which keeps working for any links already shared).
+[[redirects]]
+  from = "/s/*"
+  to = "/.netlify/functions/redirect"
+  status = 200

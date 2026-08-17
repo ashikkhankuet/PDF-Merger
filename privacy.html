@@ -38,7 +38,7 @@
     <div class="doc">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span><strong>In short:</strong> Your files are processed entirely inside your own browser. They are never uploaded to, transmitted to, or stored on any server. The data described below relates only to advertising, standard website hosting, and a small number of third-party services used by specific tools (detailed below).</span>
+        <span><strong>In short:</strong> Your files are processed entirely inside your own browser. They are never uploaded to, transmitted to, or stored on any server. The one exception is the URL Shortener, which by necessity stores the destination link you submit (see Section 4) — every other tool remains fully client-side. The data described below also relates to advertising, standard website hosting, and a small number of third-party services used by specific tools (detailed below).</span>
       </div>
 
       <h2>1. Who we are</h2>
@@ -62,9 +62,12 @@
       </ul>
 
       <h2>4. The Currency Converter tool</h2>
-      <p>The Currency Converter is the one tool on ConvertKoro that contacts an external service by design: it fetches current exchange rates from a free, public exchange-rate API (open.er-api.com) each time you load the page. Only a generic rate request is sent — no amount you type, no currency you select, and no personal information is included in that request.</p>
+      <p>The Currency Converter is a tool on ConvertKoro that contacts an external service by design: it fetches current exchange rates from a free, public exchange-rate API (open.er-api.com) each time you load the page. Only a generic rate request is sent — no amount you type, no currency you select, and no personal information is included in that request.</p>
 
-      <h2>5. Cookies and advertising (Google AdSense)</h2>
+      <h2>5. The URL Shortener tool</h2>
+      <p>The URL Shortener is the only tool on ConvertKoro that stores something server-side by design — a genuinely short link is only possible if the destination is saved somewhere and looked up when the link is opened. When you use this tool, the URL you submit is stored (via Netlify's serverless storage) so it can redirect visitors who open the short link. Nothing else about you is collected as part of this — no account, no IP address logging beyond what any web request normally involves, no tracking of who clicks the link. Every other tool on this site remains fully client-side, with nothing ever uploaded.</p>
+
+      <h2>6. Cookies and advertising (Google AdSense)</h2>
       <p>This website uses <strong>Google AdSense</strong>, an advertising service provided by Google, to display ads. To do this, Google and its partners use cookies and similar technologies:</p>
       <ul>
         <li>Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this website and other websites.</li>
@@ -73,7 +76,7 @@
       </ul>
       <p>For more on how Google uses this data, see <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">How Google uses information from sites or apps that use its services</a>.</p>
 
-      <h2>6. Your choices and opt-out options</h2>
+      <h2>7. Your choices and opt-out options</h2>
       <ul>
         <li>Manage Google's ad personalization at <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Google Ads Settings</a>.</li>
         <li>Opt out of personalized ads from participating vendors at <a href="https://www.aboutads.info/choices" target="_blank" rel="noopener">aboutads.info/choices</a>.</li>
@@ -81,22 +84,22 @@
         <li>You can block or delete cookies through your browser settings at any time.</li>
       </ul>
 
-      <h2>7. Consent (EEA, UK, and Switzerland)</h2>
+      <h2>8. Consent (EEA, UK, and Switzerland)</h2>
       <p>If you are located in the European Economic Area, the United Kingdom, or Switzerland, you will be shown a consent message before personalized ads and non-essential cookies are used. You may grant, decline, or change your choices at any time. Withdrawing consent does not affect data already processed.</p>
 
-      <h2>8. Third-party services</h2>
+      <h2>9. Third-party services</h2>
       <ul>
         <li><strong>Google AdSense</strong> — advertising. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</li>
         <li><strong>Google Analytics</strong> — site usage statistics. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</li>
-        <li><strong>Netlify</strong> — website hosting and delivery. See <a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener">Netlify's Privacy Policy</a>.</li>
+        <li><strong>Netlify</strong> — website hosting and delivery, and serverless storage for the URL Shortener tool. See <a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener">Netlify's Privacy Policy</a>.</li>
         <li><strong>open.er-api.com</strong> — provides live exchange rates for the Currency Converter tool only.</li>
         <li><strong>CDN-hosted libraries</strong> (cdnjs, unpkg) — deliver the JavaScript and processing engines that power each tool, including the OCR language files and the video-processing engine.</li>
       </ul>
 
-      <h2>9. Data security</h2>
-      <p>Because your files are never transmitted to us, they are not exposed to interception in transit or storage on our side. The website is served over a secure HTTPS connection.</p>
+      <h2>10. Data security</h2>
+      <p>Except for the URL Shortener tool (Section 5), your files are never transmitted to us, so they are not exposed to interception in transit or storage on our side. The website is served over a secure HTTPS connection.</p>
 
-      <h2>10. Children's privacy</h2>
+      <h2>11. Children's privacy</h2>
       <p>This Service is not directed to children under 13 (or the equivalent minimum age in your jurisdiction), and we do not knowingly collect personal information from children.</p>
 
       <h2>11. International visitors</h2>

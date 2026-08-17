@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
-<meta name="description" content="Create a shareable short link with no server, no account, and no tracking." />
+<meta name="description" content="Create a genuinely short, shareable link in one click — free, no account needed." />
 <meta property="og:title" content="URL Shortener — Create Short Links Free | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
@@ -27,9 +27,9 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"URL Shortener","description":"Create a shareable short link with no server, no account, and no tracking.","url":"https://convertkoro.com/url-shortener","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"URL Shortener","description":"Create a genuinely short, shareable link in one click — free, no account needed.","url":"https://convertkoro.com/url-shortener","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"URL Shortener","item":"https://convertkoro.com/url-shortener"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is my short link sometimes not much shorter?","acceptedAnswer":{"@type":"Answer","text":"The destination is encoded directly into the link itself rather than stored in a database, so very long URLs don’t compress much."}},{"@type":"Question","name":"Do these links expire?","acceptedAnswer":{"@type":"Answer","text":"No — since there’s no server or database, the link works for as long as this domain exists."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does this store my URL somewhere?","acceptedAnswer":{"@type":"Answer","text":"Yes — this is the one tool on ConvertKoro that isn't fully client-side. The destination URL is stored so the short link can redirect to it. Nothing else is collected."}},{"@type":"Question","name":"Do these links expire?","acceptedAnswer":{"@type":"Answer","text":"No — links are stored indefinitely and keep working for as long as this domain exists."}},{"@type":"Question","name":"What happens if I created a link before this update?","acceptedAnswer":{"@type":"Answer","text":"Older links (using the /go# format) still work exactly as before — nothing about them changed."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -47,7 +47,7 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>How this is different:</strong> a real shortener needs a server to store a mapping and redirect visitors. This one has neither &mdash; the destination is encoded directly inside the link itself. That means it works with zero infrastructure and zero tracking, but very long URLs won't shrink much. It's genuinely shorter for typical links, not for already-long ones.</span>
+        <span><strong>Good to know:</strong> unlike every other tool on ConvertKoro, this one isn't fully client-side — a genuinely short link only works if something stores the destination on a server, so this tool does exactly that (and only that: the URL you submit, nothing else). Every other tool here still runs 100% in your browser with nothing uploaded.</span>
       </div>
       <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Paste a long URL</label>
       <input id="urlIn" placeholder="https://example.com/some/very/long/path?query=params" style="width:100%;padding:13px 14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--card);color:var(--ink);" />
@@ -66,14 +66,14 @@
 
   <section class="container">
     
-    <p class="tool-intro-copy">Long URLs are awkward to share in a text message, on a business card, or in a space-limited post. This creates a short link entirely without a server — the destination is encoded directly into the link itself, so it works indefinitely with no database and no tracking.</p>
+    <p class="tool-intro-copy">Long URLs are awkward to share in a text message, on a business card, or in a space-limited post. This creates a genuinely short link — a handful of characters, no matter how long the original URL was.</p>
 <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
           <li><strong>Paste a long URL</strong><span>Any full link, including https://.</span></li>
-          <li><strong>Click Create link</strong><span>The destination is encoded directly into a short /go link.</span></li>
-          <li><strong>Share the short link</strong><span>Anyone who opens it gets redirected instantly — no server involved.</span></li>
+          <li><strong>Click Create link</strong><span>A short code is generated and the destination is saved.</span></li>
+          <li><strong>Share the short link</strong><span>Anyone who opens it gets redirected to the real destination instantly.</span></li>
         </ol>
       </div>
     </div>
@@ -81,8 +81,9 @@
 
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
-        <details class="faq-item"><summary>Why is my short link sometimes not much shorter?</summary><p>The destination is encoded directly into the link itself rather than stored in a database, so very long URLs don’t compress much.</p></details>
-        <details class="faq-item"><summary>Do these links expire?</summary><p>No — since there’s no server or database, the link works for as long as this domain exists.</p></details>
+        <details class="faq-item"><summary>Does this store my URL somewhere?</summary><p>Yes — this is the one tool on ConvertKoro that isn't fully client-side. The destination URL is stored so the short link can redirect to it. Nothing else is collected.</p></details>
+        <details class="faq-item"><summary>Do these links expire?</summary><p>No — links are stored indefinitely and keep working for as long as this domain exists.</p></details>
+        <details class="faq-item"><summary>What happens if I created a link before this update?</summary><p>Older links (using the /go# format) still work exactly as before — nothing about them changed.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
@@ -99,23 +100,81 @@
   const shortOut = document.getElementById('shortOut');
   const lenCompare = document.getElementById('lenCompare');
 
-  document.getElementById('shortenBtn').addEventListener('click', () => {
+  document.getElementById('shortenBtn').addEventListener('click', async () => {
     const raw = urlIn.value.trim();
     errBox.classList.remove('show');
+    resultCard.style.display = 'none';
     let url;
     try { url = new URL(raw); } catch (e) {
       errText.textContent = 'Enter a full URL, including https://';
       errBox.classList.add('show');
       return;
     }
-    const encoded = btoa(encodeURIComponent(raw)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-    const shortUrl = `${location.origin}/go#${encoded}`;
-    shortOut.textContent = shortUrl;
-    const diff = raw.length - shortUrl.length;
-    lenCompare.textContent = diff > 0 ? `${diff} characters shorter` : `${Math.abs(diff)} characters longer \u2014 original was already short`;
-    resultCard.style.display = 'block';
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      errText.textContent = 'Only http:// and https:// links are supported';
+      errBox.classList.add('show');
+      return;
+    }
+
+    const btn = document.getElementById('shortenBtn');
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Creating link\u2026';
+
+    try {
+      const res = await fetch('/api/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: raw }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+      shortOut.textContent = data.shortUrl;
+      const diff = raw.length - data.shortUrl.length;
+      lenCompare.textContent = diff > 0
+        ? `${diff} characters shorter`
+        : `${Math.abs(diff)} characters longer \u2014 this URL was already short`;
+      resultCard.style.display = 'block';
+    } catch (err) {
+      // Fallback: if the server call fails for any reason (network issue,
+      // brief cold start, etc), still give the user a usable link via the
+      // old client-side-only encoding rather than a hard failure. It won't
+      // be as short, but the tool keeps working.
+      try {
+        const bytes = new TextEncoder().encode(raw);
+        let encoded, version;
+        if (typeof CompressionStream !== 'undefined') {
+          const cs = new CompressionStream('deflate-raw');
+          const compressedBuf = await new Response(
+            new Blob([bytes]).stream().pipeThrough(cs)
+          ).arrayBuffer();
+          encoded = bufferToBase64Url(new Uint8Array(compressedBuf));
+          version = '1';
+        } else {
+          encoded = bufferToBase64Url(bytes);
+          version = '0';
+        }
+        const shortUrl = `${location.origin}/go#${version}${encoded}`;
+        shortOut.textContent = shortUrl;
+        lenCompare.textContent = 'Created offline (server unavailable) \u2014 may not be as short';
+        resultCard.style.display = 'block';
+      } catch (fallbackErr) {
+        errText.textContent = 'Couldn\u2019t create a short link right now. Please try again.';
+        errBox.classList.add('show');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }
   });
   document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(shortOut.textContent).catch(() => {}); });
+
+  function bufferToBase64Url(bytes) {
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
 })();
 </script>
 </body>
