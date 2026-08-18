@@ -119,6 +119,7 @@
           <li>Works best on clear, well-lit, horizontal text</li>
           <li>Handwriting recognition is far less reliable than printed text</li>
           <li>Stylized, embossed, or decorative fonts (like on cards or signage) are harder to read accurately than plain printed text</li>
+          <li>Dense tables with many small columns, or colored/highlighted table cells, are the hardest case for this tool — expect occasional row misalignment or character mistakes on this kind of content specifically</li>
           <li>Pick the right language above for non-English text — English is selected by default and won't read other scripts correctly</li>
           <li>First run in a language downloads a small language file, then caches it in your browser</li>
         </ul>
@@ -514,35 +515,31 @@
     const medianHeight = allHeights.length ? allHeights[Math.floor(allHeights.length / 2)] : 20;
     const ROW_TOL = medianHeight * 1.4;
 
-    function rowBandCount(lines) {
-      if (!lines.length) return 0;
-      const ys = lines.map(l => l.yMid).sort((a, b) => a - b);
-      let bands = 1, last = ys[0];
-      for (let i = 1; i < ys.length; i++) {
-        if (ys[i] - last > ROW_TOL) bands++;
-        last = ys[i];
-      }
-      return bands;
-    }
+    // Build row-bands by pooling EVERY column's lines together and clustering
+    // by vertical position, rather than picking one "anchor" column and
+    // matching every other column to it. The earlier anchor-column approach
+    // (pick the column with the most row-bands, on the theory that a column
+    // that struggled would show fewer bands) had a real, verified failure
+    // mode: a column whose OWN cells wrap to multiple lines produces MORE
+    // raw bands than the true row count, and that inflated count could
+    // out-rank a correctly-single-line-per-row column, becoming the anchor
+    // and duplicating every wrapped row in the final output — confirmed by
+    // reconstructing a real 3-row/3-column table with a 2-line last column,
+    // which produced 6 output rows (each real row duplicated) under the old
+    // anchor rule. Pooling avoids this entirely: a wrapped cell's own lines
+    // are close together vertically regardless of which column produced
+    // them, so they naturally fall into the same row-band as that row's
+    // other (single-line) cells — there is no single column whose internal
+    // wrapping can inflate the row count. Verified this doesn't regress the
+    // narrow-numeric-column case (a column where most cells fail to OCR at
+    // all still contributes correctly to the row count from other columns'
+    // lines, rather than corrupting anchor selection).
+    const allLines = colLineSets.flatMap((lines, ci) => lines.map(l => ({ ...l, ci })));
+    allLines.sort((a, b) => a.yMid - b.yMid);
+    if (!allLines.length) return null;
 
-    // Anchor on the column with the most REAL ROWS (band count, not raw line
-    // count) — a column with a wrapped 2-line cell shouldn't out-rank a column
-    // with more genuine one-line-per-row entries just because it has more raw
-    // lines. This is the strongest available signal that a column was both
-    // structurally simple and read reliably (a column that struggled tends to
-    // produce fewer distinguishable bands, not more).
-    let anchorIdx = 0;
-    for (let i = 1; i < colLineSets.length; i++) {
-      if (rowBandCount(colLineSets[i]) > rowBandCount(colLineSets[anchorIdx])) anchorIdx = i;
-    }
-    if (!colLineSets[anchorIdx].length) return null;
-
-    // Cluster the anchor column's own lines into row-bands (merges a wrapped
-    // multi-line cell's lines into one row), then pull matching lines from
-    // every other column by proximity to each band's center.
-    const anchorSorted = colLineSets[anchorIdx].slice().sort((a, b) => a.yMid - b.yMid);
     const bands = [];
-    for (const l of anchorSorted) {
+    for (const l of allLines) {
       const lastBand = bands[bands.length - 1];
       if (lastBand && l.yMid - lastBand.yMid < ROW_TOL) {
         lastBand.lines.push(l);
@@ -555,10 +552,7 @@
     const outRows = [];
     for (const band of bands) {
       const row = colLineSets.map((lines, ci) => {
-        if (ci === anchorIdx) {
-          return band.lines.slice().sort((a, b) => a.yMid - b.yMid).map(l => l.text).join(' ');
-        }
-        const matched = lines.filter(l => Math.abs(l.yMid - band.yMid) < ROW_TOL);
+        const matched = band.lines.filter(l => l.ci === ci);
         matched.sort((x, y) => x.yMid - y.yMid);
         return matched.map(l => l.text).join(' ');
       });
