@@ -485,7 +485,20 @@
       window.__ckDebugColumnCanvases = window.__ckDebugColumnCanvases || [];
       window.__ckDebugColumnCanvases[i] = colCanvas;
 
-      const result = await Tesseract.recognize(colCanvas, lang, recognizeOpts);
+      const result = await Tesseract.recognize(colCanvas, lang, {
+        ...recognizeOpts,
+        // Force PSM 3 ("fully automatic page segmentation, no OSD") explicitly.
+        // This was found to be a REAL, root-cause bug, not a guess: identical
+        // column-crop PNG files read correctly via the tesseract CLI (which
+        // defaults to PSM 3) but lost words when run through Tesseract.js
+        // WITHOUT an explicit PSM set — verified directly, side by side, on
+        // the literal PNG files a live browser session produced (not just a
+        // synthetic replica). Tesseract.js's own un-set default behaves
+        // differently from the CLI's default on these narrow crops
+        // specifically; explicitly forcing PSM 3 here closes that gap and
+        // restored every missing word in testing across all 3 real columns.
+        tessedit_pageseg_mode: '3',
+      });
       const words = (result.data.words || [])
         .map(w => ({
           text: (w.text || '').trim(),
