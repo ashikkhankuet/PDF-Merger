@@ -454,6 +454,87 @@
     return [0, ...interior, w];
   }
 
+  // Detects where a colored/filled header band ends, using the same
+  // background-relative-run detection principle as detectTableColumns, but
+  // scanning ROWS instead of columns. A header row filled with a solid
+  // color (like a colored table header) registers as a wide, tall run of
+  // "non-background" pixels — this returns the y-coordinate where that run
+  // ends and the plain background-colored body rows begin, or null if no
+  // such band is found (ordinary tables with a plain white header row need
+  // no special handling — reconstructFromWords already reads those
+  // correctly as part of each column's normal text).
+  // This exists because whole-image and per-column OCR reliably discard a
+  // solid-color-filled header row entirely from layout analysis (confirmed
+  // via Tesseract's own hOCR output: a colored header band was classified
+  // as an "ocr_separator" — a non-text structural element — not as a text
+  // region at all, and doesn't appear as any block, not even garbled text).
+  // Isolating and OCR-ing that band separately, the same way individual
+  // table columns are isolated, was verified to reliably recover the text.
+  function detectHeaderBandEnd(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const d = imageData.data;
+
+    const gray = new Uint8ClampedArray(w * h);
+    const hist = new Uint32Array(256);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        gray[y * w + x] = g;
+        hist[Math.round(g)]++;
+      }
+    }
+    let bgValue = 0, bgCount = 0;
+    for (let v = 0; v < 256; v++) if (hist[v] > bgCount) { bgCount = hist[v]; bgValue = v; }
+    const isDarkBg = bgValue < 128;
+
+    const dark = new Uint8Array(w * h);
+    const LINE_DELTA = 40;
+    for (let p = 0; p < w * h; p++) {
+      const diff = isDarkBg ? (gray[p] - bgValue) : (bgValue - gray[p]);
+      dark[p] = diff > LINE_DELTA ? 1 : 0;
+    }
+
+    // For each row, find the longest unbroken run of "non-background" pixels
+    // and how much of the image width it covers — mirrors colScore above,
+    // just transposed to rows.
+    const MIN_RUN_FRACTION = 0.75;
+    const MAX_GAP = 3;
+    const rowScore = new Float32Array(h);
+    for (let y = 0; y < h; y++) {
+      let longest = 0, current = 0, gap = 0;
+      for (let x = 0; x < w; x++) {
+        if (dark[y * w + x]) {
+          current++; gap = 0;
+        } else {
+          gap++;
+          if (gap > MAX_GAP) { longest = Math.max(longest, current); current = 0; }
+        }
+      }
+      longest = Math.max(longest, current);
+      rowScore[y] = longest / w;
+    }
+
+    // Only interested in a band starting at the very top of the image (a
+    // header). Walk down from y=0 while rows keep clearing the threshold;
+    // stop at the first row that drops back to background. Require the band
+    // to be at least a few pixels tall (a single stray dark row at the top
+    // of an ordinary photo/screenshot shouldn't be treated as a header) and
+    // no more than 25% of the image height (a genuine header row is never
+    // most of the table).
+    let end = 0;
+    for (let y = 0; y < h && y < h * 0.25; y++) {
+      if (rowScore[y] >= MIN_RUN_FRACTION) {
+        end = y + 1;
+      } else {
+        break;
+      }
+    }
+    return end >= 8 ? end : null;
+  }
+
   // Runs OCR independently on each column of a detected table, then reassembles
   // rows by matching each column's text lines to the simplest column's lines by
   // vertical position (the column with the fewest lines is used as the "row
@@ -466,18 +547,82 @@
     if (!boundaries) return null;
 
     const h = canvas.height;
+    const headerEnd = detectHeaderBandEnd(canvas);
+    console.log('ConvertKoro Image-to-Text: detectHeaderBandEnd:', headerEnd);
+
     const colLineSets = [];
     for (let i = 0; i < boundaries.length - 1; i++) {
       const x0 = boundaries[i], x1 = boundaries[i + 1];
       const colW = x1 - x0;
       if (colW < 15) { colLineSets.push([]); continue; }
+
+      const lines = [];
+
+      // If a colored/filled header band was detected, OCR that band
+      // separately from the rest of the column. Verified this is genuinely
+      // necessary, not optional: Tesseract's own layout analysis was found
+      // to classify a solid-color header fill as a non-text structural
+      // "separator" region and exclude it entirely — it doesn't even appear
+      // as garbled text, just silently vanishes from the output regardless
+      // of PSM mode. Isolating it as its own small canvas recovers it
+      // reliably, but ONLY with real white padding margin around the crop
+      // (verified: the identical crop with zero or minimal padding reads
+      // correctly at exactly one specific pixel height and fails at every
+      // other height tested — a tiny, unpadded crop is too fragile to rely
+      // on; a genuine white margin on all sides fixed it consistently
+      // across all 3 real columns and both PSM 3 and PSM 6).
+      if (headerEnd) {
+        const PAD = 10;
+        const headerCanvas = document.createElement('canvas');
+        headerCanvas.width = colW + PAD * 2;
+        headerCanvas.height = headerEnd + PAD * 2;
+        const hctx = headerCanvas.getContext('2d');
+        hctx.fillStyle = '#fff';
+        hctx.fillRect(0, 0, headerCanvas.width, headerCanvas.height);
+        hctx.drawImage(canvas, x0, 0, colW, headerEnd, PAD, PAD, colW, headerEnd);
+        try {
+          const headerResult = await worker.recognize(headerCanvas, {
+            ...recognizeOpts, tessedit_pageseg_mode: '3',
+          });
+          const headerWords = (headerResult.data.words || [])
+            .map(w => ({
+              text: (w.text || '').trim(),
+              // Shift coordinates back into the column's own coordinate
+              // space (undo the padding offset) so header words line up
+              // correctly with the body rows detected below.
+              top: (w.bbox ? w.bbox.y0 : 0) - PAD,
+              left: (w.bbox ? w.bbox.x0 : 0) - PAD,
+              height: w.bbox ? (w.bbox.y1 - w.bbox.y0) : 10,
+            }))
+            .filter(w => w.text);
+          if (headerWords.length) {
+            headerWords.sort((a, b) => a.left - b.left);
+            lines.push({
+              top: 0,
+              words: headerWords,
+              text: headerWords.map(x => x.text).join(' '),
+              yMid: headerWords.reduce((s, x) => s + x.top + x.height / 2, 0) / headerWords.length,
+              height: Math.max(...headerWords.map(x => x.height)),
+            });
+          }
+        } catch (e) {
+          console.error(`ConvertKoro Image-to-Text: header-band OCR failed for column ${i}, continuing without it.`, e);
+        }
+      }
+
+      // OCR the rest of the column (the actual data rows), starting just
+      // after the header band if one was detected — avoids wasting a pass
+      // re-attempting the header region here, since it's already been
+      // handled above (or correctly has none to skip, if headerEnd is null).
+      const bodyTop = headerEnd || 0;
+      const bodyH = h - bodyTop;
       const colCanvas = document.createElement('canvas');
-      colCanvas.width = colW; colCanvas.height = h;
-      colCanvas.getContext('2d').drawImage(canvas, x0, 0, colW, h, 0, 0, colW, h);
+      colCanvas.width = colW; colCanvas.height = bodyH;
+      colCanvas.getContext('2d').drawImage(canvas, x0, bodyTop, colW, bodyH, 0, 0, colW, bodyH);
       // Diagnostic: log this exact column crop as a data URL so the actual pixel
       // data the browser is feeding into Tesseract can be inspected directly,
       // rather than assumed to match what a Node-based test produces.
-      console.log(`ConvertKoro Image-to-Text: column ${i} canvas (${colW}x${h}) data URL (copy and open in a new tab to view):`,
+      console.log(`ConvertKoro Image-to-Text: column ${i} canvas (${colW}x${bodyH}) data URL (copy and open in a new tab to view):`,
         colCanvas.toDataURL('image/png'));
       // Also stash the actual canvas for the debug-download button (see
       // ?debug=1 handling near the bottom of this script) so the exact
@@ -505,7 +650,10 @@
       const words = (result.data.words || [])
         .map(w => ({
           text: (w.text || '').trim(),
-          top: w.bbox ? w.bbox.y0 : 0,
+          // Shift top back into the FULL column's coordinate space (undo the
+          // bodyTop offset) so these lines stay correctly ordered relative
+          // to the header line already pushed above.
+          top: (w.bbox ? w.bbox.y0 : 0) + bodyTop,
           left: w.bbox ? w.bbox.x0 : 0,
           height: w.bbox ? (w.bbox.y1 - w.bbox.y0) : 10,
         }))
@@ -513,9 +661,10 @@
       console.log(`ConvertKoro Image-to-Text: column ${i} raw words:`,
         JSON.parse(JSON.stringify(words)));
 
-      // Group words into lines by top-position proximity, preserving left-right order.
+      // Group words into lines by top-position proximity, preserving left-right
+      // order. Appends to `lines`, which may already contain the header line
+      // pushed above — never reassigned here, so the header is preserved.
       const sorted = words.slice().sort((a, b) => a.top - b.top);
-      const lines = [];
       for (const wd of sorted) {
         let placed = false;
         for (const ln of lines) {
