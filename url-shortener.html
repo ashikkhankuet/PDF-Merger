@@ -127,8 +127,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: raw }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      let data;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        // The server didn't return JSON at all - e.g. Netlify Functions isn't
+        // deployed/configured correctly and /api/shorten fell through to a
+        // 404 HTML page instead of hitting the real function. Surface this
+        // distinctly rather than letting a JSON-parse crash masquerade as a
+        // generic "offline" fallback.
+        throw new Error(`Server returned ${res.status} (non-JSON response) - the shortener backend may not be deployed correctly`);
+      }
+      data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Server error (${res.status})`);
 
       shortOut.textContent = data.shortUrl;
       const diff = raw.length - data.shortUrl.length;
@@ -137,10 +147,17 @@
         : `${Math.abs(diff)} characters longer \u2014 this URL was already short`;
       resultCard.style.display = 'block';
     } catch (err) {
+      // Log the real reason to the console so this is diagnosable (e.g. from
+      // browser DevTools > Console) instead of only ever seeing "offline".
+      console.error('ConvertKoro URL Shortener: /api/shorten failed, falling back to client-side encoding.', err);
+
       // Fallback: if the server call fails for any reason (network issue,
-      // brief cold start, etc), still give the user a usable link via the
-      // old client-side-only encoding rather than a hard failure. It won't
-      // be as short, but the tool keeps working.
+      // brief cold start, backend not deployed, etc), still try to give the
+      // user a usable link via the old client-side-only encoding. But if that
+      // fallback link isn't actually shorter than the original - which is
+      // mathematically expected for longer URLs, since it has to carry the
+      // whole destination inside itself - say so plainly instead of handing
+      // back a "shortened" link that's actually longer.
       try {
         const bytes = new TextEncoder().encode(raw);
         let encoded, version;
@@ -156,10 +173,20 @@
           version = '0';
         }
         const shortUrl = `${location.origin}/go#${version}${encoded}`;
-        shortOut.textContent = shortUrl;
-        lenCompare.textContent = 'Created offline (server unavailable) \u2014 may not be as short';
-        resultCard.style.display = 'block';
+
+        if (shortUrl.length >= raw.length) {
+          // The offline fallback can't beat this URL's length - don't
+          // pretend it "shortened" anything. Tell the user honestly and
+          // don't show a misleading result.
+          errText.textContent = 'The shortener service is temporarily unavailable, and this URL is too long to shorten client-side without it. Please try again in a bit.';
+          errBox.classList.add('show');
+        } else {
+          shortOut.textContent = shortUrl;
+          lenCompare.textContent = 'Created offline (shortener service unavailable) \u2014 shorter than the original, but not as short as usual';
+          resultCard.style.display = 'block';
+        }
       } catch (fallbackErr) {
+        console.error('ConvertKoro URL Shortener: offline fallback also failed.', fallbackErr);
         errText.textContent = 'Couldn\u2019t create a short link right now. Please try again.';
         errBox.classList.add('show');
       }
