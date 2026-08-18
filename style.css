@@ -471,6 +471,9 @@ body.mob-panel-open { overflow: hidden; }
 @media (max-width: 640px) {
   .info-grid[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
+@media (max-width: 780px) {
+  #bmiWorkspaceGrid { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 420px) {
   .age-stats[style*="grid-template-columns"] { grid-template-columns: repeat(2, 1fr) !important; }
 }
