@@ -97,7 +97,19 @@
     try { input.value = decodeURIComponent(escape(atob(input.value))); clearError(); }
     catch (e) { showError('This isn\u2019t valid Base64.'); }
   });
-  document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(input.value).catch(() => {}); });
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const btn = document.getElementById('copyBtn');
+    const originalLabel = btn.textContent;
+    navigator.clipboard.writeText(input.value)
+      .then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1800);
+      })
+      .catch(() => {
+        btn.textContent = 'Couldn\u2019t copy';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1800);
+      });
+  });
   document.getElementById('clearBtn').addEventListener('click', () => { input.value = ''; clearError(); });
 })();
 </script>

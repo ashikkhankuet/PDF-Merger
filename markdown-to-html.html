@@ -93,7 +93,19 @@
     preview.innerHTML = lastHtml;
   }
   mdIn.addEventListener('input', render);
-  document.getElementById('copyHtmlBtn').addEventListener('click', () => { navigator.clipboard.writeText(lastHtml).catch(() => {}); });
+  document.getElementById('copyHtmlBtn').addEventListener('click', () => {
+    const btn = document.getElementById('copyHtmlBtn');
+    const originalLabel = btn.textContent;
+    navigator.clipboard.writeText(lastHtml)
+      .then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1800);
+      })
+      .catch(() => {
+        btn.textContent = 'Couldn\u2019t copy';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1800);
+      });
+  });
   document.getElementById('clearBtn').addEventListener('click', () => { mdIn.value = ''; render(); });
   mdIn.value = '# Welcome to ConvertKoro\n\nThis is **bold**, this is *italic*, and here\u2019s a [link](https://convertkoro.com).\n\n- One\n- Two\n- Three';
   render();
