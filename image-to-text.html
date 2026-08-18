@@ -627,7 +627,16 @@
       if (tableText && tableText.replace(/\s/g, '').length > text.replace(/\s/g, '').length) {
         text = tableText.replace(/\t/g, '  |  ');
       }
-    } catch (e) { /* if column splitting fails for any reason, keep the existing result */ }
+    } catch (e) {
+      // Log the real reason to the console instead of silently discarding it —
+      // this pass previously swallowed every failure here with zero visibility,
+      // making it impossible to tell "table detection correctly found no table"
+      // apart from "table detection crashed for an unknown reason" from the
+      // outside. Keep the existing whole-image result either way (this stays a
+      // best-effort enhancement, never a hard failure), but now the real cause
+      // is visible in DevTools > Console if this path misfires again.
+      console.error('ConvertKoro Image-to-Text: table column-splitting failed, using whole-image OCR result instead.', e);
+    }
 
     // Fallback: if the processed version produced very little text or low
     // confidence, retry once on the original untouched image — preprocessing
