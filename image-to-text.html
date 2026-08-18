@@ -510,7 +510,7 @@
           height: w.bbox ? (w.bbox.y1 - w.bbox.y0) : 10,
         }))
         .filter(w => w.text);
-      console.log(`ConvertKoro Image-to-Text: column ${i} raw words (lang=${lang}):`,
+      console.log(`ConvertKoro Image-to-Text: column ${i} raw words:`,
         JSON.parse(JSON.stringify(words)));
 
       // Group words into lines by top-position proximity, preserving left-right order.
