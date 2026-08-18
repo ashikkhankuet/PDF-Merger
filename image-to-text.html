@@ -565,11 +565,24 @@
   // Runs one full OCR attempt (preprocess + recognize + table-detection pass +
   // same-language fallback) for a given language code. Returns {text, confidence}.
   async function runExtraction(lang) {
-    const LATIN_SCRIPT_LANGS = new Set(['eng', 'spa', 'fra', 'deu', 'por']);
-    const isLatin = lang.split('+').every(l => LATIN_SCRIPT_LANGS.has(l));
-
+    // Which languages are Latin-script only matters for a DIFFERENT reason than
+    // it used to: it no longer skips the upscale outright. Skipping upscale
+    // whenever the DEFAULT language (ben+eng, applied to every image regardless
+    // of content) included Bengali was found to be a real bug — it silently
+    // capped every English-only image (tables, screenshots, everything) at its
+    // original resolution too, because ben+eng is the always-on default, not
+    // something the user opts into per image. Verified directly: a real 738px-
+    // wide table photo's column-grid-line detection produced wrong boundaries
+    // at that original width but correct ones once upscaled to 1600px — the
+    // upscale is genuinely needed for accurate table detection on ordinary
+    // English content, which is the common case, not the exception.
+    // New approach: always try the upscaled canvas first. Only fall back to the
+    // original resolution if the upscaled attempt comes back suspiciously
+    // empty/low-confidence — this is what a genuine Bengali-glyph-destroyed-by-
+    // upscaling failure looks like, and is the same signal already used
+    // elsewhere in this function to trigger a fallback pass.
     const img = await loadImage(file);
-    const processedCanvas = preprocessToCanvas(img, !isLatin);
+    let processedCanvas = preprocessToCanvas(img, false);
 
     const recognizeOpts = {
       logger: m => {
@@ -646,9 +659,15 @@
       console.error('ConvertKoro Image-to-Text: table column-splitting failed, using whole-image OCR result instead.', e);
     }
 
-    // Fallback: if the processed version produced very little text or low
-    // confidence, retry once on the original untouched image — preprocessing
-    // helps most images but can occasionally hurt an already-clean scan.
+    // Fallback: if the processed (upscaled) version produced very little text or
+    // low confidence, retry once on the original untouched file — this is the
+    // real protection for genuine non-Latin-script glyphs that the upscale can
+    // distort, now conditional on an actual bad result rather than triggered
+    // just because the language setting included Bengali. Note: this fallback
+    // pass does not re-run the gridded-table column-split (that only runs on
+    // the upscaled canvas above) — a real table image in a script the upscale
+    // damages badly enough to trigger this fallback will still get its text
+    // read correctly here, just without table row/column structure preserved.
     if (text.length < 3 || confidence < 35) {
       const fallback = await Tesseract.recognize(file, lang, recognizeOpts);
       const fallbackText = reconstructFromWords(fallback.data);
