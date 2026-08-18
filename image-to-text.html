@@ -98,6 +98,7 @@
         <button class="btn btn-primary btn-lg" id="extractBtn" disabled>Extract text</button>
         <button class="btn btn-ghost" id="copyBtn" style="display:none;">Copy text</button>
         <button class="btn btn-ghost" id="clearBtn">Clear</button>
+        <button class="btn btn-ghost" id="debugDownloadBtn" style="display:none;">Download debug column images</button>
       </div>
     </div>
 
@@ -473,6 +474,16 @@
       const colCanvas = document.createElement('canvas');
       colCanvas.width = colW; colCanvas.height = h;
       colCanvas.getContext('2d').drawImage(canvas, x0, 0, colW, h, 0, 0, colW, h);
+      // Diagnostic: log this exact column crop as a data URL so the actual pixel
+      // data the browser is feeding into Tesseract can be inspected directly,
+      // rather than assumed to match what a Node-based test produces.
+      console.log(`ConvertKoro Image-to-Text: column ${i} canvas (${colW}x${h}) data URL (copy and open in a new tab to view):`,
+        colCanvas.toDataURL('image/png'));
+      // Also stash the actual canvas for the debug-download button (see
+      // ?debug=1 handling near the bottom of this script) so the exact
+      // pixels can be saved as a real PNG file instead of a giant string.
+      window.__ckDebugColumnCanvases = window.__ckDebugColumnCanvases || [];
+      window.__ckDebugColumnCanvases[i] = colCanvas;
 
       const result = await Tesseract.recognize(colCanvas, lang, recognizeOpts);
       const words = (result.data.words || [])
@@ -721,6 +732,33 @@
     await navigator.clipboard.writeText(outputText.value);
     copyBtn.textContent = 'Copied!';
     setTimeout(() => copyBtn.textContent = 'Copy text', 1500);
+  });
+
+  // Debug-only: reveals a button that saves each per-column crop this run
+  // actually fed into Tesseract as real downloadable PNG files. Hidden by
+  // default — only shown with ?debug=1 in the URL, so ordinary visitors never
+  // see it. This exists specifically to inspect the real pixel data a live
+  // browser session produces, since that has been found to sometimes differ
+  // from what the same image produces in a non-browser test environment.
+  const debugDownloadBtn = document.getElementById('debugDownloadBtn');
+  if (new URLSearchParams(location.search).get('debug') === '1') {
+    debugDownloadBtn.style.display = 'inline-flex';
+  }
+  debugDownloadBtn.addEventListener('click', () => {
+    const canvases = window.__ckDebugColumnCanvases || [];
+    if (!canvases.length) {
+      alert('No column images captured yet — run Extract text on a table image first.');
+      return;
+    }
+    canvases.forEach((c, i) => {
+      if (!c) return;
+      const a = document.createElement('a');
+      a.href = c.toDataURL('image/png');
+      a.download = `debug-column-${i}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
   });
 
   window.addEventListener('dragover', (e) => e.preventDefault());
