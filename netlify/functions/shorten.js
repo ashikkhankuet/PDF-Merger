@@ -14,6 +14,24 @@ const CODE_LENGTH = 7;
 const CODE_CHARS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/l/I ambiguity
 const MAX_URL_LENGTH = 8000; // generous ceiling, well above any realistic URL
 
+// Explicit siteID + token fallback for getStore(). In a correctly-configured
+// Netlify Function these should be auto-injected into the environment and
+// this wouldn't be needed - but this site was hitting a confirmed, documented
+// Netlify platform issue (MissingBlobsEnvironmentError even with a normal,
+// correct getStore({name}) call - see github.com/netlify/blobs/issues and
+// multiple unresolved Netlify support-forum threads reporting the identical
+// error on otherwise-correct setups). Supplying these manually is the
+// officially documented fallback, not a workaround for a mistake in this code.
+const BLOBS_SITE_ID = '3471490a-08e9-48b0-af64-6b1e0171be73';
+
+function getBlobsStore(name) {
+  return getStore({
+    name,
+    siteID: BLOBS_SITE_ID,
+    token: process.env.NETLIFY_BLOBS_TOKEN,
+  });
+}
+
 function randomCode(len) {
   let out = '';
   for (let i = 0; i < len; i++) {
@@ -52,7 +70,11 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Only http:// and https:// links are supported' }) };
   }
 
-  const store = getStore({ name: 'short-links' });
+  if (!process.env.NETLIFY_BLOBS_TOKEN) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Server is missing its Blobs token configuration' }) };
+  }
+
+  const store = getBlobsStore('short-links');
 
   // Generate a code, retrying on the rare collision (checked, not assumed).
   let code;
