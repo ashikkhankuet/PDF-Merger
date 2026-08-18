@@ -2,8 +2,16 @@
 # Functions power the URL Shortener's server-backed short links
 # (the one tool on this site that stores data server-side, by design -
 # see url-shortener.html for the honest disclosure of why).
-[build]
-  functions = "netlify/functions"
+#
+# IMPORTANT: this uses the [functions] block (directory = "...") rather than
+# the older [build] functions = "..." key. Both are documented, but Netlify's
+# dashboard was showing a completely empty Functions tab (the "Build your
+# first function" onboarding screen, meaning zero functions were ever
+# detected) even with the [build] key set correctly and the files present in
+# the repo - switched to the unambiguous, currently-recommended syntax to
+# rule this out as the cause.
+[functions]
+  directory = "netlify/functions"
 
 # Clean path for the short-link creation API, called from url-shortener.html
 [[redirects]]
