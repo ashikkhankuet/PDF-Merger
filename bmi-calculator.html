@@ -48,9 +48,10 @@
     <div class="workspace">
       <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:36px;align-items:start;" id="bmiWorkspaceGrid">
         <div>
-          <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="radio" name="unit" value="metric" checked /> Metric (cm, kg)</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="radio" name="unit" value="imperial" /> Imperial (ft/in, lb)</label>
+          <div style="display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--ink);"><input type="radio" name="unit" value="metric" checked style="width:17px;height:17px;accent-color:var(--signal);" /> Metric (cm, kg)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--ink);"><input type="radio" name="unit" value="imperial" style="width:17px;height:17px;accent-color:var(--signal);" /> Imperial (ft/in, lb)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--ink);"><input type="radio" name="unit" value="custom" style="width:17px;height:17px;accent-color:var(--signal);" /> ft/in, kg</label>
           </div>
           <div id="metricInputs" style="display:flex;gap:16px;flex-wrap:wrap;">
             <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height (cm)</label>
@@ -69,6 +70,16 @@
             <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Weight (lb)</label>
               <input type="number" id="weightLb" placeholder="143" style="width:120px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
               <p id="weightLbConvert" class="mono" style="font-size:11.5px;color:var(--ink-soft);margin-top:5px;min-height:14px;"></p></div>
+          </div>
+          <div id="customInputs" style="display:none;gap:16px;flex-wrap:wrap;">
+            <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height (ft)</label>
+              <input type="number" id="heightFt2" placeholder="5" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" /></div>
+            <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Height (in)</label>
+              <input type="number" id="heightIn2" placeholder="7" style="width:100px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+              <p id="heightFtInConvert2" class="mono" style="font-size:11.5px;color:var(--ink-soft);margin-top:5px;min-height:14px;"></p></div>
+            <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Weight (kg)</label>
+              <input type="number" id="weightKg2" placeholder="65" style="width:120px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font-family:'IBM Plex Mono',monospace;background:var(--card);color:var(--ink);" />
+              <p id="weightKgConvert2" class="mono" style="font-size:11.5px;color:var(--ink-soft);margin-top:5px;min-height:14px;"></p></div>
           </div>
           <div class="side-card" id="resultCard" style="display:none;margin-top:20px;">
             <h3>Your BMI</h3>
@@ -103,12 +114,12 @@
     </div>
     
     <p class="tool-intro-copy">Body Mass Index is a widely used general health screening number based on height and weight. This calculates it in metric or imperial units and shows which BMI category the result falls into.</p>
-    <p class="tool-intro-bangla">বিএমআই হিসাব করতে চান? উচ্চতা ও ওজন দিয়ে সহজেই আপনার বিএমআই জেনে নিন — সম্পূর্ণ বিনামূল্যে, সরাসরি আপনার ব্রাউজারে।</p>
+    <p class="tool-intro-bangla">বিএমআই হিসাব করতে চান? উচ্চতা ও ওজন দিয়ে সহজেই আপনার বিএমআই জেনে নিন — সম্পূর্ণ বিনামূল্যে, সরাসরি <span class="bangla-nowrap">আপনার ব্রাউজারে।</span></p>
 <div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
-          <li><strong>Choose your unit system</strong><span>Metric (cm/kg) or Imperial (ft-in/lb).</span></li>
+          <li><strong>Choose your unit system</strong><span>Metric (cm/kg), Imperial (ft-in/lb), or ft/in + kg.</span></li>
           <li><strong>Enter height and weight</strong><span>The result updates live as you type.</span></li>
           <li><strong>Read your BMI and category</strong><span>Underweight, normal, overweight, or obese, per the standard WHO ranges.</span></li>
         </ol>
@@ -132,6 +143,7 @@
 (() => {
   const metricInputs = document.getElementById('metricInputs');
   const imperialInputs = document.getElementById('imperialInputs');
+  const customInputs = document.getElementById('customInputs');
   const resultCard = document.getElementById('resultCard');
   const bmiOut = document.getElementById('bmiOut');
   const bmiCategory = document.getElementById('bmiCategory');
@@ -139,12 +151,17 @@
   const weightKgConvert = document.getElementById('weightKgConvert');
   const heightFtInConvert = document.getElementById('heightFtInConvert');
   const weightLbConvert = document.getElementById('weightLbConvert');
+  const heightFtInConvert2 = document.getElementById('heightFtInConvert2');
+  const weightKgConvert2 = document.getElementById('weightKgConvert2');
   const rangeRows = document.querySelectorAll('#bmiRangeTable tr');
 
+  function currentUnit() { return document.querySelector('input[name="unit"]:checked').value; }
+
   document.querySelectorAll('input[name="unit"]').forEach(r => r.addEventListener('change', () => {
-    const isMetric = document.querySelector('input[name="unit"]:checked').value === 'metric';
-    metricInputs.style.display = isMetric ? 'flex' : 'none';
-    imperialInputs.style.display = isMetric ? 'none' : 'flex';
+    const unit = currentUnit();
+    metricInputs.style.display = unit === 'metric' ? 'flex' : 'none';
+    imperialInputs.style.display = unit === 'imperial' ? 'flex' : 'none';
+    customInputs.style.display = unit === 'custom' ? 'flex' : 'none';
     compute();
   }));
 
@@ -165,18 +182,24 @@
   function ftInToCm(ft, inch) { return `≈ ${((ft*12 + inch) * 2.54).toFixed(1)} cm`; }
   function lbToKg(lb) { return `≈ ${(lb / 2.20462).toFixed(1)} kg`; }
 
-  function updateConversions(isMetric) {
-    if (isMetric) {
+  function updateConversions(unit) {
+    if (unit === 'metric') {
       const cm = parseFloat(document.getElementById('heightCm').value);
       const kg = parseFloat(document.getElementById('weightKg').value);
       heightCmConvert.textContent = cm > 0 ? cmToFtIn(cm) : '';
       weightKgConvert.textContent = kg > 0 ? kgToLb(kg) : '';
-    } else {
+    } else if (unit === 'imperial') {
       const ft = parseFloat(document.getElementById('heightFt').value) || 0;
       const inch = parseFloat(document.getElementById('heightIn').value) || 0;
       const lb = parseFloat(document.getElementById('weightLb').value);
       heightFtInConvert.textContent = (ft > 0 || inch > 0) ? ftInToCm(ft, inch) : '';
       weightLbConvert.textContent = lb > 0 ? lbToKg(lb) : '';
+    } else {
+      const ft = parseFloat(document.getElementById('heightFt2').value) || 0;
+      const inch = parseFloat(document.getElementById('heightIn2').value) || 0;
+      const kg = parseFloat(document.getElementById('weightKg2').value);
+      heightFtInConvert2.textContent = (ft > 0 || inch > 0) ? ftInToCm(ft, inch) : '';
+      weightKgConvert2.textContent = kg > 0 ? kgToLb(kg) : '';
     }
   }
 
@@ -193,18 +216,27 @@
   }
 
   function compute() {
-    const isMetric = document.querySelector('input[name="unit"]:checked').value === 'metric';
-    updateConversions(isMetric);
+    const unit = currentUnit();
+    updateConversions(unit);
     let bmi = null;
-    if (isMetric) {
+    if (unit === 'metric') {
       const h = parseFloat(document.getElementById('heightCm').value) / 100;
       const w = parseFloat(document.getElementById('weightKg').value);
       if (h > 0 && w > 0) bmi = w / (h*h);
-    } else {
+    } else if (unit === 'imperial') {
       const ft = parseFloat(document.getElementById('heightFt').value) || 0;
       const inch = parseFloat(document.getElementById('heightIn').value) || 0;
       const totalIn = ft*12 + inch;
       const w = parseFloat(document.getElementById('weightLb').value);
+      if (totalIn > 0 && w > 0) bmi = (w / (totalIn*totalIn)) * 703;
+    } else {
+      // Custom: user enters ft/in + kg. Convert kg -> lb internally, then use the
+      // standard imperial BMI formula (kept consistent with the Imperial branch).
+      const ft = parseFloat(document.getElementById('heightFt2').value) || 0;
+      const inch = parseFloat(document.getElementById('heightIn2').value) || 0;
+      const totalIn = ft*12 + inch;
+      const kg = parseFloat(document.getElementById('weightKg2').value);
+      const w = kg > 0 ? kg * 2.20462 : NaN;
       if (totalIn > 0 && w > 0) bmi = (w / (totalIn*totalIn)) * 703;
     }
     if (bmi) {
@@ -218,7 +250,7 @@
       highlightRange(null);
     }
   }
-  ['heightCm','weightKg','heightFt','heightIn','weightLb'].forEach(id => document.getElementById(id).addEventListener('input', compute));
+  ['heightCm','weightKg','heightFt','heightIn','weightLb','heightFt2','heightIn2','weightKg2'].forEach(id => document.getElementById(id).addEventListener('input', compute));
 })();
 </script>
 </body>
