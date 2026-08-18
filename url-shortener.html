@@ -195,7 +195,19 @@
       btn.textContent = originalLabel;
     }
   });
-  document.getElementById('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText(shortOut.textContent).catch(() => {}); });
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const btn = document.getElementById('copyBtn');
+    const originalLabel = btn.textContent;
+    navigator.clipboard.writeText(shortOut.textContent)
+      .then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1800);
+      })
+      .catch(() => {
+        btn.textContent = 'Couldn\u2019t copy';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1800);
+      });
+  });
 
   function bufferToBase64Url(bytes) {
     let binary = '';
