@@ -461,6 +461,7 @@
   // image OCR pass silently drops.
   async function extractTableByColumns(canvas, lang, recognizeOpts) {
     const boundaries = detectTableColumns(canvas);
+    console.log('ConvertKoro Image-to-Text: detectTableColumns boundaries:', boundaries);
     if (!boundaries) return null;
 
     const h = canvas.height;
@@ -624,6 +625,13 @@
     // ordinary paragraphs/receipts/signs incur no extra cost.
     try {
       const tableText = await extractTableByColumns(processedCanvas, lang, recognizeOpts);
+      // Diagnostic logging: shows exactly what the table-split pass returned
+      // and why it was or wasn't used, so a real mismatch between "table
+      // detection ran fine" and "the wrong result still got shown" is
+      // actually visible instead of silently unexplained.
+      console.log('ConvertKoro Image-to-Text: table-split result:', tableText);
+      console.log('ConvertKoro Image-to-Text: table-split length vs whole-image length:',
+        tableText ? tableText.replace(/\s/g, '').length : null, 'vs', text.replace(/\s/g, '').length);
       if (tableText && tableText.replace(/\s/g, '').length > text.replace(/\s/g, '').length) {
         text = tableText.replace(/\t/g, '  |  ');
       }
