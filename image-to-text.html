@@ -535,6 +535,70 @@
     return end >= 8 ? end : null;
   }
 
+  // Detects and trims a real-world photo background (e.g. a desk, table, or
+  // floor the document was photographed on) from the top/bottom edges of an
+  // image, so OCR doesn't run on it. Verified this is a genuine, real problem:
+  // Tesseract will confidently "read" garbage text out of surface textures
+  // like wood grain (confirmed directly — cropping just a photographed wooden
+  // desk surface and running OCR on it produced plausible-looking fake words,
+  // not an empty result) — it doesn't recognize non-text regions as such, it
+  // hallucinates character shapes onto whatever texture is there.
+  // ONLY called when detectTableColumns found no table (see runExtraction) —
+  // a real, necessary restriction, not a stylistic choice: this uses the same
+  // "meaningfully darker than the surrounding content" signal a colored table
+  // header uses, and testing found it WOULD wrongly trim a colored header off
+  // a real table (confirmed: a cyan table header registers as "background" by
+  // this same brightness test). Gating this behind "no table detected" keeps
+  // the two features from ever conflicting, since a real photographed-document
+  // background and a colored table header never both apply to the same image
+  // in the cases tested.
+  function detectContentBounds(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const d = imageData.data;
+
+    const rowMean = new Float32Array(h);
+    for (let y = 0; y < h; y++) {
+      let sum = 0;
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      }
+      rowMean[y] = sum / w;
+    }
+
+    // Compare each edge to the image's middle 40% (assumed to be genuine
+    // document content in the common "photo of a page" case) — only trim an
+    // edge that's substantially and consistently darker than that middle
+    // region, a conservative, high-confidence-only signal.
+    const midStart = Math.floor(h * 0.3), midEnd = Math.floor(h * 0.7);
+    let midSum = 0;
+    for (let y = midStart; y < midEnd; y++) midSum += rowMean[y];
+    const midBrightness = midSum / (midEnd - midStart);
+    const DARK_THRESHOLD = midBrightness - 40;
+
+    let bottomTrim = h;
+    for (let y = h - 1; y >= 0; y--) {
+      if (rowMean[y] < DARK_THRESHOLD) bottomTrim = y; else break;
+    }
+    let topTrim = 0;
+    for (let y = 0; y < h; y++) {
+      if (rowMean[y] < DARK_THRESHOLD) topTrim = y + 1; else break;
+    }
+
+    // Never trim more than 25% from either edge — a confident background
+    // exclusion is a clear minority of the image, not most of it. If either
+    // computed trim exceeds that, treat it as unreliable and skip trimming
+    // that edge entirely rather than risk cutting off real content.
+    const maxTrim = h * 0.25;
+    if (h - bottomTrim > maxTrim) bottomTrim = h;
+    if (topTrim > maxTrim) topTrim = 0;
+
+    if (topTrim === 0 && bottomTrim === h) return null;
+    return { top: topTrim, bottom: bottomTrim };
+  }
+
   // Runs OCR independently on each column of a detected table, then reassembles
   // rows by matching each column's text lines to the simplest column's lines by
   // vertical position (the column with the fewest lines is used as the "row
@@ -761,6 +825,28 @@
     // elsewhere in this function to trigger a fallback pass.
     const img = await loadImage(file);
     let processedCanvas = preprocessToCanvas(img, false);
+
+    // Only attempt background trimming when this image has NO detected table
+    // — see detectContentBounds's comment for why this ordering is required
+    // (a colored table header and a real photo background produce the same
+    // "darker than the middle" signal, so treating them as mutually exclusive
+    // by construction, rather than trying to tune a threshold that
+    // distinguishes them, is what avoids the two features conflicting).
+    if (!detectTableColumns(processedCanvas)) {
+      const bounds = detectContentBounds(processedCanvas);
+      if (bounds) {
+        const trimmedH = bounds.bottom - bounds.top;
+        const trimmedCanvas = document.createElement('canvas');
+        trimmedCanvas.width = processedCanvas.width;
+        trimmedCanvas.height = trimmedH;
+        trimmedCanvas.getContext('2d').drawImage(
+          processedCanvas, 0, bounds.top, processedCanvas.width, trimmedH,
+          0, 0, processedCanvas.width, trimmedH
+        );
+        console.log('ConvertKoro Image-to-Text: trimmed likely background from image edges:', bounds);
+        processedCanvas = trimmedCanvas;
+      }
+    }
 
     // MIGRATION NOTE (from the static Tesseract.recognize(image, lang, opts) API
     // to the worker-based createWorker/worker.recognize API): this was a real,
