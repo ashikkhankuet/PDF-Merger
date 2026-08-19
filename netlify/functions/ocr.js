@@ -33,103 +33,142 @@
 // under Netlify's platform-level 10-second ceiling, so a slow upstream
 // response produces a clear, specific error message from this code instead
 // of an opaque platform-level 502 with no useful information.
+//
+// WHY THE WHOLE HANDLER IS WRAPPED IN ONE OUTER TRY/CATCH: a real, confirmed
+// bug in an earlier version of this file crashed with a bare 500 and ZERO
+// logged output - diagnosed via the actual Netlify function log showing a
+// suspiciously fast ~7ms duration (too fast to have even attempted a real
+// network call) and nothing printed, which is the signature of an exception
+// thrown before any of this code's own try/catch or console.error calls ran
+// (the network-call try/catch alone didn't cover it). Root cause: this
+// function's Node runtime did not have native fetch available (native fetch
+// only lands in Node 18+, and Netlify's default function runtime version is
+// tied to whatever Node version the SITE'S BUILD used, which was never
+// explicitly pinned for this project). Wrapping the entire handler body -
+// not just the network call - guarantees ANY unexpected failure (this one,
+// or a different one in the future) still returns a real, readable JSON
+// error and gets logged, rather than crashing silently again.
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  const apiKey = process.env.OCRSPACE_API_KEY;
-  if (!apiKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server is missing its OCR API key configuration' }),
-    };
-  }
-
-  let body;
   try {
-    body = JSON.parse(event.body || '{}');
-  } catch (e) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
-  }
-
-  const base64Image = (body.image || '').trim();
-  if (!base64Image) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'No image provided' }) };
-  }
-
-  // OCR.space's free tier caps uploads at 1MB - fail fast with a clear
-  // message rather than let a doomed request run out the clock.
-  const MAX_BASE64_LENGTH = 1_400_000; // ~1MB decoded, base64 adds ~33% overhead
-  if (base64Image.length > MAX_BASE64_LENGTH) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Image is too large for the enhanced OCR service (1MB limit) — try a smaller photo.' }),
-    };
-  }
-
-  // engine: 2 (fast/reliable, shorter language list) or 3 (best accuracy,
-  // 200+ languages incl. Bengali, but can be slow on some images). Defaults
-  // to 3 since accuracy/language coverage matters more than speed for this
-  // tool's actual use case - see the front end for the fallback-to-2 retry.
-  const engine = body.engine === 2 ? 2 : 3;
-
-  // Guessing the mime type from the data URL prefix the front end may have
-  // included; default to PNG (OCR.space auto-detects from content either way).
-  const mimeType = (body.mimeType || 'image/png').trim();
-
-  // AbortController timeout kept comfortably under Netlify's 10s ceiling for
-  // this function, so a slow OCR.space response is caught and reported by
-  // THIS code with a specific, honest message rather than Netlify killing
-  // the function first with a generic, unhelpful 502.
-  const controller = new AbortController();
-  const timeoutMs = 9000;
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const formBody = new URLSearchParams();
-    formBody.set('base64Image', `data:${mimeType};base64,${base64Image}`);
-    formBody.set('OCREngine', String(engine));
-    formBody.set('language', 'auto');
-    formBody.set('scale', 'true');
-    formBody.set('isTable', 'true');
-    formBody.set('detectOrientation', 'true');
-
-    const response = await fetch('https://api.ocr.space/parse/image', {
-      method: 'POST',
-      headers: {
-        'apikey': apiKey,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formBody.toString(),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-
-    const data = await response.json();
-
-    if (data.IsErroredOnProcessing) {
-      const message = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : (data.ErrorMessage || 'OCR service returned an error');
-      return { statusCode: 502, body: JSON.stringify({ error: message }) };
+    if (event.httpMethod !== 'POST') {
+      return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
-    const results = data.ParsedResults || [];
-    const text = results.map(r => r.ParsedText || '').join('\n').trim();
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, engine }),
-    };
-  } catch (e) {
-    clearTimeout(timeoutId);
-    if (e.name === 'AbortError') {
+    if (typeof fetch !== 'function') {
+      // This exact condition caused a real, confirmed silent-crash incident
+      // (see file header) - now caught explicitly with a clear, diagnosable
+      // message instead of an opaque platform crash.
+      console.error('ConvertKoro OCR function: global fetch is not available in this runtime.');
       return {
-        statusCode: 504,
-        body: JSON.stringify({ error: 'timeout', engine }),
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Server runtime is missing fetch support - needs AWS_LAMBDA_JS_RUNTIME set to nodejs18.x or later' }),
       };
     }
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to reach the OCR service, please try again' }) };
+
+    const apiKey = process.env.OCRSPACE_API_KEY;
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Server is missing its OCR API key configuration' }),
+      };
+    }
+
+    let body;
+    try {
+      body = JSON.parse(event.body || '{}');
+    } catch (e) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+
+    const base64Image = (body.image || '').trim();
+    if (!base64Image) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'No image provided' }) };
+    }
+
+    // OCR.space's free tier caps uploads at 1MB - fail fast with a clear
+    // message rather than let a doomed request run out the clock.
+    const MAX_BASE64_LENGTH = 1_400_000; // ~1MB decoded, base64 adds ~33% overhead
+    if (base64Image.length > MAX_BASE64_LENGTH) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Image is too large for the enhanced OCR service (1MB limit) — try a smaller photo.' }),
+      };
+    }
+
+    // engine: 2 (fast/reliable, shorter language list) or 3 (best accuracy,
+    // 200+ languages incl. Bengali, but can be slow on some images). Defaults
+    // to 3 since accuracy/language coverage matters more than speed for this
+    // tool's actual use case - see the front end for the fallback-to-2 retry.
+    const engine = body.engine === 2 ? 2 : 3;
+
+    // Guessing the mime type from the data URL prefix the front end may have
+    // included; default to PNG (OCR.space auto-detects from content either way).
+    const mimeType = (body.mimeType || 'image/png').trim();
+
+    // AbortController timeout kept comfortably under Netlify's 10s ceiling for
+    // this function, so a slow OCR.space response is caught and reported by
+    // THIS code with a specific, honest message rather than Netlify killing
+    // the function first with a generic, unhelpful 502.
+    const controller = new AbortController();
+    const timeoutMs = 9000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const formBody = new URLSearchParams();
+      formBody.set('base64Image', `data:${mimeType};base64,${base64Image}`);
+      formBody.set('OCREngine', String(engine));
+      formBody.set('language', 'auto');
+      formBody.set('scale', 'true');
+      formBody.set('isTable', 'true');
+      formBody.set('detectOrientation', 'true');
+
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody.toString(),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (data.IsErroredOnProcessing) {
+        const message = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : (data.ErrorMessage || 'OCR service returned an error');
+        return { statusCode: 502, body: JSON.stringify({ error: message }) };
+      }
+
+      const results = data.ParsedResults || [];
+      const text = results.map(r => r.ParsedText || '').join('\n').trim();
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, engine }),
+      };
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        return {
+          statusCode: 504,
+          body: JSON.stringify({ error: 'timeout', engine }),
+        };
+      }
+      console.error('ConvertKoro OCR function: request to OCR.space failed.', e);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to reach the OCR service, please try again' }) };
+    }
+  } catch (outerErr) {
+    // Final safety net: guarantees a real, logged, JSON error response no
+    // matter what goes wrong anywhere above - this is what should have
+    // caught the original silent-crash bug at the platform level even
+    // before the fetch-availability check was added.
+    console.error('ConvertKoro OCR function: unexpected top-level error.', outerErr);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Unexpected server error, please try again' }),
+    };
   }
 };
