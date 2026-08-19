@@ -1041,18 +1041,22 @@
 
       outputText.value = text;
       outputWrap.style.display = 'block'; copyBtn.style.display = 'inline-flex';
-      enhancedWrap.style.display = 'block';
       progressFill.style.width = '100%';
 
       // Automatic enhanced-accuracy fallback: if the on-device result looks
       // weak by the real signals above, silently also try the cloud OCR
-      // engine and use it if it's genuinely better — saves the user an extra
-      // click for the common "this photo was hard for Tesseract" case. This
-      // is disclosed here (progress label + a note in the result), not
-      // hidden, since it changes this run's actual privacy behavior for this
-      // one image — every other image that reads fine on-device is
-      // unaffected and never leaves the browser.
+      // engine and use it if it's genuinely better. This now runs
+      // automatically with no click required — the manual "Try enhanced
+      // accuracy" box only appears afterward if this automatic attempt did
+      // NOT run (the on-device result already looked fine) or did not
+      // improve on it, as an optional way to force a second opinion, not a
+      // required extra step. This is disclosed via the progress label and a
+      // note on the result, since it changes this run's actual privacy
+      // behavior for this one image — every image whose on-device result
+      // already looks fine is unaffected and never leaves the browser.
+      let autoRan = false;
       if (looksWeak(text, confidence) && file) {
+        autoRan = true;
         try {
           progressLabel.textContent = 'Trying a stronger OCR engine for a better result\u2026';
           const { base64, mimeType } = await prepareImageForCloudOcr(file);
@@ -1067,13 +1071,21 @@
             outputText.value = data.text;
             enhancedNote.textContent = 'This result was automatically improved using a cloud OCR service, since the on-device reading looked unreliable.';
             enhancedNote.style.display = 'block';
+          } else {
+            enhancedNote.textContent = 'Also tried a cloud OCR service automatically — the on-device result was kept since it wasn\u2019t clearly better.';
+            enhancedNote.style.display = 'block';
           }
         } catch (err) {
           // A failed automatic attempt is not a hard error - the on-device
-          // result is already shown and still usable; just leave it as is.
+          // result is already shown and still usable; just leave it as is,
+          // and let the manual button below offer another chance.
           console.warn('ConvertKoro Image-to-Text: automatic enhanced-accuracy attempt failed, keeping the on-device result.', err);
         }
       }
+      // Only show the manual "Try enhanced accuracy" box if the automatic
+      // attempt didn't already run for this image — avoids showing it as a
+      // redundant extra step right after the system already tried it.
+      enhancedWrap.style.display = autoRan ? 'none' : 'block';
 
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
