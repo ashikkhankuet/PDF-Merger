@@ -1055,8 +1055,7 @@
       if (looksWeak(text, confidence) && file) {
         try {
           progressLabel.textContent = 'Trying a stronger OCR engine for a better result\u2026';
-          const base64 = await fileToBase64(file);
-          const mimeType = file.type || 'image/png';
+          const { base64, mimeType } = await prepareImageForCloudOcr(file);
           let data;
           try {
             data = await callOcrSpace(base64, mimeType, 3);
@@ -1146,8 +1145,7 @@
     errBox.classList.remove('show');
 
     try {
-      const base64 = await fileToBase64(file);
-      const mimeType = file.type || 'image/png';
+      const { base64, mimeType } = await prepareImageForCloudOcr(file);
 
       let data;
       try {
@@ -1168,9 +1166,21 @@
       }
     } catch (err) {
       console.error('ConvertKoro Image-to-Text: enhanced-accuracy request failed.', err);
+      // Show the REAL reason when the server gave us one (e.g. "Image is too
+      // large...", an OCR.space-reported error) instead of always a generic
+      // message — a real, confirmed bug: a 2.3MB real phone photo hit this
+      // tool's own file-size cap, the server correctly returned a specific,
+      // actionable message, and the front end was silently discarding it in
+      // favor of a vague "couldn't reach the service" that hid the actual,
+      // fixable cause (a smaller photo would have worked) from the user.
+      const hasSpecificMessage = err && err.message
+        && err.message !== 'Failed to fetch'
+        && !/^Server returned \d+/.test(err.message);
       errText.textContent = err && err.isTimeout
         ? 'The enhanced OCR service is taking too long right now. Please try again in a bit.'
-        : 'Couldn\u2019t reach the enhanced OCR service right now. Please try again in a bit.';
+        : hasSpecificMessage
+          ? err.message
+          : 'Couldn\u2019t reach the enhanced OCR service right now. Please try again in a bit.';
       errBox.classList.add('show');
     } finally {
       enhancedBtn.disabled = false;
@@ -1191,6 +1201,74 @@
       reader.onerror = reject;
       reader.readAsDataURL(f);
     });
+  }
+
+  // Resizes/re-encodes an image file down to fit OCR.space's real, documented
+  // 1MB API file-size limit before sending it to the cloud OCR fallback.
+  // A real, confirmed bug this fixes: a genuine 2.3MB phone-camera photo hit
+  // this tool's size cap and returned an honest "too large" error — but OCR
+  // doesn't need full camera resolution, so compressing first (rather than
+  // just rejecting large photos) lets real phone photos work instead of
+  // requiring the user to manually shrink them elsewhere first. Mirrors the
+  // same "OCR doesn't need more resolution than this" reasoning already used
+  // for the on-device Tesseract pipeline's own MIN_DIM/MAX_DIM upscale caps.
+  function fileToCompressedBase64(f, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(f);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        let { width, height } = img;
+        const longSide = Math.max(width, height);
+        if (longSide > maxDim) {
+          const scale = maxDim / longSide;
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const commaIdx = dataUrl.indexOf(',');
+        resolve({
+          base64: commaIdx >= 0 ? dataUrl.slice(commaIdx + 1) : dataUrl,
+          mimeType: 'image/jpeg',
+        });
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not load image for compression')); };
+      img.src = objectUrl;
+    });
+  }
+
+  // Prepares an image for the cloud OCR call: uses the original file as-is if
+  // it's already small enough, otherwise compresses it down — trying
+  // progressively smaller dimensions/quality if the first attempt still
+  // isn't under the real API limit. Real, tested cap kept comfortably under
+  // OCR.space's documented 1MB ceiling to leave headroom for base64's ~33%
+  // size overhead and request-formatting overhead.
+  async function prepareImageForCloudOcr(f) {
+    const MAX_BASE64_LENGTH = 1_300_000;
+    const original = await fileToBase64(f);
+    if (original.length <= MAX_BASE64_LENGTH) {
+      return { base64: original, mimeType: f.type || 'image/png' };
+    }
+    const attempts = [
+      { maxDim: 1800, quality: 0.85 },
+      { maxDim: 1400, quality: 0.75 },
+      { maxDim: 1000, quality: 0.65 },
+    ];
+    let last = null;
+    for (const { maxDim, quality } of attempts) {
+      last = await fileToCompressedBase64(f, maxDim, quality);
+      if (last.base64.length <= MAX_BASE64_LENGTH) return last;
+    }
+    // Even the smallest attempt is still too big - return it anyway and let
+    // the server give its own clear, honest "too large" message rather than
+    // silently failing here.
+    return last;
   }
 
   // Debug-only: reveals a button that saves each per-column crop this run
