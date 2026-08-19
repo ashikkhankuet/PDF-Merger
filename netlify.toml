@@ -26,3 +26,14 @@
   from = "/s/*"
   to = "/.netlify/functions/redirect"
   status = 200
+
+# Server-side OCR via OCR.space, used as a fallback by image-to-text.html
+# specifically for cases the client-side Tesseract engine is known to
+# genuinely struggle with (skewed real-world photos, decorative script,
+# complex tables) - see image-to-text.html for the honest disclosure of why
+# this one tool also isn't 100% client-side. OCR.space chosen specifically
+# because its free tier requires no credit card to sign up.
+[[redirects]]
+  from = "/api/ocr"
+  to = "/.netlify/functions/ocr"
+  status = 200
