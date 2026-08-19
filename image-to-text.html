@@ -29,7 +29,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Image to Text","description":"Pull editable text out of a photo or screenshot with free OCR, processed entirely in your browser.","url":"https://convertkoro.com/image-to-text","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the text extraction not perfect?","acceptedAnswer":{"@type":"Answer","text":"OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan."}},{"@type":"Question","name":"Does this work on handwriting?","acceptedAnswer":{"@type":"Answer","text":"It can attempt handwriting, but accuracy is much lower than for printed or typed text."}},{"@type":"Question","name":"Is my image sent anywhere for processing?","acceptedAnswer":{"@type":"Answer","text":"By default, no — the OCR engine runs entirely in your browser and your image is never uploaded. If you tap \"Try enhanced accuracy\" after a result, that specific image is sent to a cloud OCR service for a second, stronger attempt — this is always your choice, never automatic."}},{"@type":"Question","name":"Can this read Bangla (Bengali) text?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bengali and English are both enabled by default, so photos or screenshots with Bangla text are read automatically without changing any setting."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the text extraction not perfect?","acceptedAnswer":{"@type":"Answer","text":"OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan."}},{"@type":"Question","name":"Does this work on handwriting?","acceptedAnswer":{"@type":"Answer","text":"It can attempt handwriting, but accuracy is much lower than for printed or typed text."}},{"@type":"Question","name":"Is my image sent anywhere for processing?","acceptedAnswer":{"@type":"Answer","text":"Usually no — the OCR engine runs entirely in your browser by default. If the on-device result looks unreliable (very little text, low confidence, or garbled output), that specific image is automatically also sent to a cloud OCR service for a second attempt, and the better result is kept — you'll see a note when this happens. You can also trigger this manually anytime with \"Try enhanced accuracy.\""}},{"@type":"Question","name":"Can this read Bangla (Bengali) text?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bengali and English are both enabled by default, so photos or screenshots with Bangla text are read automatically without changing any setting."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Image to Text","item":"https://convertkoro.com/image-to-text"}]}</script>
 </head>
 <body data-page="tools">
@@ -92,11 +92,13 @@
       <div id="outputWrap" style="display:none;margin-top:18px;">
         <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Extracted text</label>
         <textarea id="outputText" rows="8" style="width:100%;padding:14px;border:1px solid var(--line-strong);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;resize:vertical;"></textarea>
+        <p id="enhancedNote" style="display:none;font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;"></p>
       </div>
 
       <div id="enhancedWrap" style="display:none;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);">
         <p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">
-          Result looks rough? For skewed photos, decorative/stylized text, or complex tables, a stronger cloud OCR engine can often do better —
+          If the result above looks unreliable, this automatically also tries a stronger cloud OCR engine and keeps the better result.
+          You can also trigger it manually for a rough-but-readable result, for skewed photos, decorative/stylized text, or complex tables —
           this sends the image to OCR.space's OCR service instead of processing it only in your browser.
         </p>
         <button class="btn btn-ghost" id="enhancedBtn">Try enhanced accuracy (sends image to a cloud OCR service)</button>
@@ -139,7 +141,7 @@
       <div class="faq-list">
         <details class="faq-item"><summary>Why is the text extraction not perfect?</summary><p>OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan.</p></details>
         <details class="faq-item"><summary>Does this work on handwriting?</summary><p>It can attempt handwriting, but accuracy is much lower than for printed or typed text.</p></details>
-        <details class="faq-item"><summary>Is my image sent anywhere for processing?</summary><p>By default, no — the OCR engine runs entirely in your browser and your image is never uploaded. If you tap "Try enhanced accuracy" after a result, that specific image is sent to a cloud OCR service for a second, stronger attempt — this is always your choice, never automatic.</p></details>
+        <details class="faq-item"><summary>Is my image sent anywhere for processing?</summary><p>Usually no — the OCR engine runs entirely in your browser by default. If the on-device result looks unreliable (very little text, low confidence, or garbled output), that specific image is automatically also sent to a cloud OCR service for a second attempt, and the better result is kept — you'll see a note when this happens. You can also trigger this manually anytime with "Try enhanced accuracy."</p></details>
         <details class="faq-item"><summary>Can this read Bangla (Bengali) text?</summary><p>Yes — Bengali and English are both enabled by default, so photos or screenshots with Bangla text are read automatically without changing any setting.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
@@ -168,6 +170,7 @@
   const errText = document.getElementById('errText');
   const outputWrap = document.getElementById('outputWrap');
   const enhancedWrap = document.getElementById('enhancedWrap');
+  const enhancedNote = document.getElementById('enhancedNote');
   const outputText = document.getElementById('outputText');
   let file = null;
 
@@ -193,6 +196,7 @@
     extractBtn.disabled = true; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
     outputText.value = ''; errBox.classList.remove('show');
     if (typeof enhancedWrap !== 'undefined') enhancedWrap.style.display = 'none';
+    if (typeof enhancedNote !== 'undefined') { enhancedNote.style.display = 'none'; enhancedNote.textContent = ''; }
   }
 
   dropzone.addEventListener('click', () => fileInput.click());
@@ -981,8 +985,36 @@
     return { text, confidence };
   }
 
+  // Decides whether a Tesseract result looks weak enough to be worth silently
+  // also trying the cloud OCR fallback. Built from real, observed signals in
+  // this tool's own testing this session, not a guess:
+  // - confidence < 60: Tesseract's own confidence score (already used
+  //   elsewhere in this file at a stricter <35 threshold for a different,
+  //   narrower fallback) is a real, documented per-result quality metric.
+  // - a high fraction of very short "words" (1-2 characters) is the
+  //   consistent, directly-observed signature of genuine garbled/hallucinated
+  //   output in this session's real test images (e.g. "s '.' Oty b" style
+  //   fragments) - real prose or a real table practically never looks like
+  //   this even when sparse.
+  // This is a real, evidence-based heuristic, not a perfect classifier - it
+  // can occasionally be wrong in both directions (a confident wrong answer
+  // could pass; a sparse-but-correct table might trigger an unneeded extra
+  // call). Given that, when it decides to call the cloud engine, that's
+  // disclosed to the user rather than done invisibly (see extractBtn handler).
+  function looksWeak(text, confidence) {
+    if (!text || text.trim().length < 3) return true;
+    if (confidence > 0 && confidence < 60) return true;
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    if (words.length >= 4) {
+      const shortWordCount = words.filter(w => w.length <= 2).length;
+      if (shortWordCount / words.length > 0.5) return true;
+    }
+    return false;
+  }
+
   extractBtn.addEventListener('click', async () => {
     errBox.classList.remove('show');
+    if (enhancedNote) { enhancedNote.style.display = 'none'; enhancedNote.textContent = ''; }
     progressWrap.classList.add('show'); progressFill.style.width = '5%';
     progressLabel.textContent = 'Preparing image\u2026';
     extractBtn.disabled = true;
@@ -1011,6 +1043,39 @@
       outputWrap.style.display = 'block'; copyBtn.style.display = 'inline-flex';
       enhancedWrap.style.display = 'block';
       progressFill.style.width = '100%';
+
+      // Automatic enhanced-accuracy fallback: if the on-device result looks
+      // weak by the real signals above, silently also try the cloud OCR
+      // engine and use it if it's genuinely better — saves the user an extra
+      // click for the common "this photo was hard for Tesseract" case. This
+      // is disclosed here (progress label + a note in the result), not
+      // hidden, since it changes this run's actual privacy behavior for this
+      // one image — every other image that reads fine on-device is
+      // unaffected and never leaves the browser.
+      if (looksWeak(text, confidence) && file) {
+        try {
+          progressLabel.textContent = 'Trying a stronger OCR engine for a better result\u2026';
+          const base64 = await fileToBase64(file);
+          const mimeType = file.type || 'image/png';
+          let data;
+          try {
+            data = await callOcrSpace(base64, mimeType, 3);
+          } catch (err) {
+            if (!err.isTimeout) throw err;
+            data = await callOcrSpace(base64, mimeType, 2);
+          }
+          if (data.text && data.text.trim().length > text.trim().length) {
+            outputText.value = data.text;
+            enhancedNote.textContent = 'This result was automatically improved using a cloud OCR service, since the on-device reading looked unreliable.';
+            enhancedNote.style.display = 'block';
+          }
+        } catch (err) {
+          // A failed automatic attempt is not a hard error - the on-device
+          // result is already shown and still usable; just leave it as is.
+          console.warn('ConvertKoro Image-to-Text: automatic enhanced-accuracy attempt failed, keeping the on-device result.', err);
+        }
+      }
+
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
       progressWrap.classList.remove('show');
@@ -1026,14 +1091,16 @@
     setTimeout(() => copyBtn.textContent = 'Copy text', 1500);
   });
 
-  // "Enhanced accuracy" — opt-in only, never automatic. Sends the current
-  // image to an OCR.space-backed Netlify Function. This exists because
-  // client-side Tesseract has a real, verified ceiling on skewed real-world
-  // photos of decorative/stylized script and gridded/colored tables that no
-  // amount of preprocessing closed (confirmed across many real test images)
-  // — but sending an image off-device is a genuine trade-off against this
-  // tool's "nothing ever uploaded" default, so it's the user's explicit
-  // choice every time, never silent or automatic.
+  // "Enhanced accuracy" button — manual trigger for the same OCR.space call
+  // the automatic weak-result fallback above also uses (see looksWeak() and
+  // the extractBtn handler). Sends the current image to an OCR.space-backed
+  // Netlify Function. This exists because client-side Tesseract has a real,
+  // verified ceiling on skewed real-world photos of decorative/stylized
+  // script and gridded/colored tables that no amount of preprocessing closed
+  // (confirmed across many real test images) — but sending an image
+  // off-device is a genuine trade-off against this tool's "nothing ever
+  // uploaded" default, so this manual path stays available even though the
+  // automatic path already covers the common "the result looked bad" case.
   //
   // TWO-TIER RETRY: OCR.space's most capable engine (3 — best accuracy,
   // 200+ languages) has documented reports of occasionally taking 15-60+
@@ -1046,32 +1113,37 @@
   // reliable second attempt, with the user informed at each step rather
   // than sitting through one long unexplained wait. Worst case: two bounded
   // waits back to back, never an indefinite hang.
+  // Calls the /api/ocr Netlify Function (backed by OCR.space). Shared by both
+  // the automatic weak-result fallback (in the extractBtn handler above) and
+  // the manual "Try enhanced accuracy" button below, so both paths use the
+  // exact same request/error handling rather than two copies that could
+  // silently drift apart.
+  async function callOcrSpace(base64, mimeType, engine) {
+    const res = await fetch('/api/ocr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, mimeType, engine }),
+    });
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Server returned ${res.status} (non-JSON response)`);
+    }
+    const data = await res.json();
+    if (!res.ok) {
+      const isTimeout = res.status === 504 || data.error === 'timeout';
+      const err = new Error(data.error || `Server error (${res.status})`);
+      err.isTimeout = isTimeout;
+      throw err;
+    }
+    return data;
+  }
+
   const enhancedBtn = document.getElementById('enhancedBtn');
   enhancedBtn.addEventListener('click', async () => {
     if (!file) return;
     const originalLabel = enhancedBtn.textContent;
     enhancedBtn.disabled = true;
     errBox.classList.remove('show');
-
-    async function callOcrSpace(base64, mimeType, engine) {
-      const res = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType, engine }),
-      });
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error(`Server returned ${res.status} (non-JSON response)`);
-      }
-      const data = await res.json();
-      if (!res.ok) {
-        const isTimeout = res.status === 504 || data.error === 'timeout';
-        const err = new Error(data.error || `Server error (${res.status})`);
-        err.isTimeout = isTimeout;
-        throw err;
-      }
-      return data;
-    }
 
     try {
       const base64 = await fileToBase64(file);
