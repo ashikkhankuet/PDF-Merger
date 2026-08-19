@@ -1,13 +1,5 @@
 // Server-side OCR fallback using OCR.space's free API.
-//
-// WHY THIS EXISTS: client-side Tesseract.js (used everywhere else on this
-// tool) has a real, verified ceiling on skewed real-world photos of
-// decorative/stylized script and gridded/colored tables — confirmed
-// directly across many real test images this couldn't be fixed with
-// preprocessing, PSM tuning, or background-exclusion alone. OCR.space's
-// hosted engines are a genuinely different, often stronger OCR pipeline for
-// exactly these cases — this endpoint calls it as an enhancement path, not
-// a replacement for the always-available client-side engine.
+
 //
 // WHY OCR.space AND NOT A CLOUD PROVIDER API: OCR.space's free tier
 // (25,000 requests/month) requires NO credit card to sign up and get an API
