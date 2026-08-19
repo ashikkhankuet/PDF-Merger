@@ -134,10 +134,36 @@ exports.handler = async (event) => {
       });
       clearTimeout(timeoutId);
 
-      const data = await response.json();
+      const rawBody = await response.text();
+      let data;
+      try {
+        data = JSON.parse(rawBody);
+      } catch (parseErr) {
+        // A non-JSON response body (e.g. an HTML error page, or a plain-text
+        // rejection) was a real, previously-unhandled possibility here -
+        // response.json() would throw on this and land silently in the outer
+        // catch with no useful detail. Logging the raw body (truncated) makes
+        // this diagnosable instead of indistinguishable from a crash.
+        console.error('ConvertKoro OCR function: OCR.space returned a non-JSON response.',
+          'HTTP status:', response.status, 'Body (truncated):', rawBody.slice(0, 500));
+        return {
+          statusCode: 502,
+          body: JSON.stringify({ error: `OCR service returned an unexpected response (HTTP ${response.status})` }),
+        };
+      }
+      // Log the raw response status + a summary here, always - this was the
+      // real remaining gap after the fetch-availability fix: a genuine
+      // response FROM OCR.space (success, error, or malformed) was reaching
+      // this point but never getting logged, so a real 502/other failure
+      // here looked identical to a silent crash from the outside. Logging
+      // this unconditionally (not just on error) also means a genuine 200
+      // is now visible too, confirming the request really completed.
+      console.log('ConvertKoro OCR function: OCR.space HTTP status:', response.status,
+        'IsErroredOnProcessing:', data.IsErroredOnProcessing, 'OCRExitCode:', data.OCRExitCode);
 
       if (data.IsErroredOnProcessing) {
         const message = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : (data.ErrorMessage || 'OCR service returned an error');
+        console.error('ConvertKoro OCR function: OCR.space reported a processing error:', message);
         return { statusCode: 502, body: JSON.stringify({ error: message }) };
       }
 
