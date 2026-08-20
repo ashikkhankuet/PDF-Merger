@@ -1046,6 +1046,23 @@
   // (network error, function error, both engine tiers failing) — so a
   // genuine outage still degrades to a working result instead of a dead
   // end, it just isn't the default path anymore.
+  // OCR.space occasionally (not consistently, even on the same image across
+  // repeated runs) includes its own literal "--- OCR Start ---" / "--- OCR
+  // End ---" marker lines in the returned text — a quirk of that engine
+  // itself, not something introduced by our code. Strip only these exact
+  // marker lines when present, and leave everything else in the result
+  // completely untouched, since these markers are never genuine content
+  // from the user's image.
+  function stripOcrSpaceMarkers(text) {
+    if (!text) return text;
+    return text
+      .split('\n')
+      .filter(line => !/^-{2,}\s*OCR\s+(Start|End)\s*-{2,}$/i.test(line.trim()))
+      .join('\n')
+      .replace(/^\n+/, '')
+      .replace(/\n+$/, '');
+  }
+
   extractBtn.addEventListener('click', async () => {
     errBox.classList.remove('show');
     if (enhancedNote) { enhancedNote.style.display = 'none'; enhancedNote.textContent = ''; }
@@ -1068,7 +1085,7 @@
           progressLabel.textContent = 'That took too long \u2014 trying a faster method\u2026';
           data = await callOcrSpace(base64, mimeType, 2);
         }
-        text = data.text || '';
+        text = stripOcrSpaceMarkers(data.text || '');
       } catch (cloudErr) {
         // Cloud OCR failed outright (network/server issue, not just a weak
         // result) — fall back to on-device Tesseract so the tool still
