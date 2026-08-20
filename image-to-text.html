@@ -1081,19 +1081,25 @@
       if (usedFallback) {
         enhancedNote.textContent = 'Read using on-device OCR — the cloud OCR service was unavailable for this attempt.';
         enhancedNote.style.display = 'block';
-      } else {
-        // Cloud OCR is now the default path, so offer the on-device
-        // alternative afterward for anyone who'd rather this image never
-        // left the browser — not shown when the fallback already ran
-        // on-device above, since that'd be offering the same thing twice.
-        enhancedWrap.style.display = 'block';
       }
+      // No enhancedWrap shown here on a normal successful cloud result —
+      // that was a real, confirmed bug: it was appearing after EVERY
+      // successful extraction, not just as a rare opt-in, which is the
+      // exact "extra option showing up when it shouldn't" behavior flagged
+      // after testing. The on-device box now only ever appears via the
+      // errBox catch below (a genuine failure), never after a clean
+      // success.
 
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
       progressWrap.classList.remove('show');
       errText.textContent = 'Couldn\u2019t read this image. Try a clearer photo with good lighting and try again.';
       errBox.classList.add('show');
+      // Offer the manual on-device retry here — this catch only fires when
+      // BOTH the cloud call and the automatic on-device fallback above have
+      // already failed, so a manual second attempt is a genuinely useful
+      // option here, unlike after a normal success.
+      enhancedWrap.style.display = 'block';
     }
     extractBtn.disabled = false;
   });
