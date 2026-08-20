@@ -19,7 +19,11 @@
 <link rel="icon" href="icon-ck-v2.ico" sizes="any" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
+<style>
+  .download-menu-item:hover { background: var(--bg-soft, #f2f4f8); }
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
 <script>
@@ -105,6 +109,13 @@
       <div class="actions-row">
         <button class="btn btn-primary btn-lg" id="extractBtn" disabled>Extract text</button>
         <button class="btn btn-ghost" id="copyBtn" style="display:none;">Copy text</button>
+        <div id="downloadMenuWrap" style="display:none;position:relative;">
+          <button class="btn btn-ghost" id="downloadBtn" aria-haspopup="true" aria-expanded="false">Download &#9662;</button>
+          <div id="downloadMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--paper);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:150px;z-index:20;overflow:hidden;">
+            <button class="download-menu-item" id="downloadWordBtn" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:13.5px;cursor:pointer;">Word (.docx)</button>
+            <button class="download-menu-item" id="downloadTxtBtn" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:13.5px;cursor:pointer;">Text (.txt)</button>
+          </div>
+        </div>
         <button class="btn btn-ghost" id="clearBtn">Clear</button>
         <button class="btn btn-ghost" id="debugDownloadBtn" style="display:none;">Download debug column images</button>
       </div>
@@ -160,6 +171,9 @@
   const langSelect = document.getElementById('langSelect');
   const extractBtn = document.getElementById('extractBtn');
   const copyBtn = document.getElementById('copyBtn');
+  const downloadMenuWrap = document.getElementById('downloadMenuWrap');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadMenu = document.getElementById('downloadMenu');
   const clearBtn = document.getElementById('clearBtn');
   const progressWrap = document.getElementById('progressWrap');
   const progressFill = document.getElementById('progressFill');
@@ -184,6 +198,7 @@
     </div>`;
     preview.src = URL.createObjectURL(f); preview.style.display = 'block';
     extractBtn.disabled = false; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
+    downloadMenuWrap.style.display = 'none'; downloadMenu.style.display = 'none';
     errBox.classList.remove('show'); langRow.style.display = 'none';
     if (typeof enhancedWrap !== 'undefined') enhancedWrap.style.display = 'none';
   }
@@ -192,6 +207,7 @@
     file = null; fileList.innerHTML = ''; preview.style.display = 'none'; preview.src='';
     langRow.style.display = 'none';
     extractBtn.disabled = true; outputWrap.style.display = 'none'; copyBtn.style.display = 'none';
+    downloadMenuWrap.style.display = 'none'; downloadMenu.style.display = 'none';
     outputText.value = ''; errBox.classList.remove('show');
     if (typeof enhancedWrap !== 'undefined') enhancedWrap.style.display = 'none';
     if (typeof enhancedNote !== 'undefined') { enhancedNote.style.display = 'none'; enhancedNote.textContent = ''; }
@@ -1076,6 +1092,7 @@
 
       outputText.value = text;
       outputWrap.style.display = 'block'; copyBtn.style.display = 'inline-flex';
+      downloadMenuWrap.style.display = 'inline-block';
       progressFill.style.width = '100%';
 
       if (usedFallback) {
@@ -1108,6 +1125,103 @@
     await navigator.clipboard.writeText(outputText.value);
     copyBtn.textContent = 'Copied!';
     setTimeout(() => copyBtn.textContent = 'Copy text', 1500);
+  });
+
+  // Download menu: a small dropdown offering Word (.docx) or plain text
+  // (.txt) download of the extracted text. Both are generated entirely
+  // client-side, in keeping with this tool's no-upload design — nothing
+  // extra is sent anywhere to produce these files.
+  downloadBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = downloadMenu.style.display === 'block';
+    downloadMenu.style.display = isOpen ? 'none' : 'block';
+    downloadBtn.setAttribute('aria-expanded', String(!isOpen));
+  });
+  document.addEventListener('click', (e) => {
+    if (!downloadMenuWrap.contains(e.target)) {
+      downloadMenu.style.display = 'none';
+      downloadBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function outputFilenameBase() {
+    // Base the downloaded filename on the source image's name when
+    // available, so a batch of downloads stays distinguishable rather than
+    // every file being named identically.
+    const base = file && file.name ? file.name.replace(/\.[^.]+$/, '') : 'extracted-text';
+    return base || 'extracted-text';
+  }
+
+  document.getElementById('downloadTxtBtn').addEventListener('click', () => {
+    const blob = new Blob([outputText.value], { type: 'text/plain;charset=utf-8' });
+    triggerDownload(blob, `${outputFilenameBase()}.txt`);
+    downloadMenu.style.display = 'none';
+  });
+
+  // Builds a real, valid minimal .docx file from scratch (no external
+  // library) — a .docx is just a ZIP archive containing specific XML parts
+  // (a documented, stable open format), so this constructs those parts
+  // directly and zips them client-side using the JSZip-style approach
+  // already safe to rely on here since no server involvement is needed.
+  // Kept intentionally minimal: plain paragraphs only (one per line of the
+  // extracted text), no styling — this is a text-export convenience, not a
+  // rich-formatting feature.
+  async function buildDocxBlob(text) {
+    const escapeXml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const paragraphs = text.split('\n').map(line =>
+      `<w:p><w:r><w:t xml:space="preserve">${escapeXml(line)}</w:t></w:r></w:p>`
+    ).join('');
+
+    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>${paragraphs}<w:sectPr/></w:body>
+</w:document>`;
+
+    const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
+
+    const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', contentTypesXml);
+    zip.file('_rels/.rels', relsXml);
+    zip.file('word/document.xml', documentXml);
+    return await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+  }
+
+  document.getElementById('downloadWordBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('downloadWordBtn');
+    const original = btn.textContent;
+    btn.textContent = 'Preparing\u2026';
+    try {
+      const blob = await buildDocxBlob(outputText.value);
+      triggerDownload(blob, `${outputFilenameBase()}.docx`);
+    } catch (err) {
+      console.error('ConvertKoro Image-to-Text: Word download failed.', err);
+      errText.textContent = 'Couldn\u2019t create the Word file. Try the .txt download instead.';
+      errBox.classList.add('show');
+    } finally {
+      btn.textContent = original;
+      downloadMenu.style.display = 'none';
+    }
   });
 
   // "Enhanced accuracy" button — manual trigger for the same OCR.space call
