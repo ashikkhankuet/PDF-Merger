@@ -29,7 +29,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Image to Text","description":"Pull editable text out of a photo or screenshot with free OCR, processed entirely in your browser.","url":"https://convertkoro.com/image-to-text","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the text extraction not perfect?","acceptedAnswer":{"@type":"Answer","text":"OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan."}},{"@type":"Question","name":"Does this work on handwriting?","acceptedAnswer":{"@type":"Answer","text":"It can attempt handwriting, but accuracy is much lower than for printed or typed text."}},{"@type":"Question","name":"Is my image sent anywhere for processing?","acceptedAnswer":{"@type":"Answer","text":"Usually no — the OCR engine runs entirely in your browser by default. If the on-device result looks unreliable (very little text, low confidence, or garbled output), that specific image is automatically also sent to a cloud OCR service for a second attempt, and the better result is kept — you'll see a note when this happens. You can also trigger this manually anytime with \"Try enhanced accuracy.\""}},{"@type":"Question","name":"Can this read Bangla (Bengali) text?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bengali and English are both enabled by default, so photos or screenshots with Bangla text are read automatically without changing any setting."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the text extraction not perfect?","acceptedAnswer":{"@type":"Answer","text":"OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan."}},{"@type":"Question","name":"Does this work on handwriting?","acceptedAnswer":{"@type":"Answer","text":"It can attempt handwriting, but accuracy is much lower than for printed or typed text."}},{"@type":"Question","name":"Is my image sent anywhere for processing?","acceptedAnswer":{"@type":"Answer","text":"Yes, by default — each image is sent to a cloud OCR service for the most accurate result. If you'd rather it stayed entirely in your browser, use the \"Try on-device OCR instead\" option after extracting, or if the cloud service is briefly unavailable, the tool automatically falls back to reading it on-device."}},{"@type":"Question","name":"Can this read Bangla (Bengali) text?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bengali and English are both enabled by default, so photos or screenshots with Bangla text are read automatically without changing any setting."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Image to Text","item":"https://convertkoro.com/image-to-text"}]}</script>
 </head>
 <body data-page="tools">
@@ -97,11 +97,9 @@
 
       <div id="enhancedWrap" style="display:none;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);">
         <p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">
-          If the result above looks unreliable, this automatically also tries a stronger cloud OCR engine and keeps the better result.
-          You can also trigger it manually for a rough-but-readable result, for skewed photos, decorative/stylized text, or complex tables —
-          this sends the image to OCR.space's OCR service instead of processing it only in your browser.
+          Prefer this image processed entirely in your browser instead, with nothing sent anywhere? You can re-run it on-device.
         </p>
-        <button class="btn btn-ghost" id="enhancedBtn">Try enhanced accuracy (sends image to a cloud OCR service)</button>
+        <button class="btn btn-ghost" id="enhancedBtn">Try on-device OCR instead</button>
       </div>
 
       <div class="actions-row">
@@ -141,7 +139,7 @@
       <div class="faq-list">
         <details class="faq-item"><summary>Why is the text extraction not perfect?</summary><p>OCR accuracy depends heavily on image clarity, lighting, and font. Blurry, angled, or low-contrast photos will produce more errors than a clean scan.</p></details>
         <details class="faq-item"><summary>Does this work on handwriting?</summary><p>It can attempt handwriting, but accuracy is much lower than for printed or typed text.</p></details>
-        <details class="faq-item"><summary>Is my image sent anywhere for processing?</summary><p>Usually no — the OCR engine runs entirely in your browser by default. If the on-device result looks unreliable (very little text, low confidence, or garbled output), that specific image is automatically also sent to a cloud OCR service for a second attempt, and the better result is kept — you'll see a note when this happens. You can also trigger this manually anytime with "Try enhanced accuracy."</p></details>
+        <details class="faq-item"><summary>Is my image sent anywhere for processing?</summary><p>Yes, by default — each image is sent to a cloud OCR service for the most accurate result. If you'd rather it stayed entirely in your browser, use the "Try on-device OCR instead" option after extracting, or if the cloud service is briefly unavailable, the tool automatically falls back to reading it on-device.</p></details>
         <details class="faq-item"><summary>Can this read Bangla (Bengali) text?</summary><p>Yes — Bengali and English are both enabled by default, so photos or screenshots with Bangla text are read automatically without changing any setting.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
@@ -1012,23 +1010,60 @@
     return false;
   }
 
+  // Extraction now goes straight to the cloud OCR engine (OCR.space) and
+  // shows only that single, final result. This replaces the earlier
+  // two-step flow (on-device Tesseract shown first, then silently replaced
+  // by a cloud result if it looked weak) — that flow was correct in what it
+  // produced, but a real, confirmed UX problem: the user would briefly see
+  // the WRONG/garbled on-device text before it flipped to the corrected
+  // cloud result a moment later, which reads as broken even though the
+  // final answer was right. Going straight to the cloud call also removes
+  // the on-device Tesseract pass's own several-second runtime entirely
+  // (worker creation, language load, multi-pass recognition), so the
+  // overall wait to a single shown result is meaningfully shorter, not just
+  // less confusing — confirmed by inspecting runExtraction() above: it runs
+  // 2-4 separate Tesseract.recognize() calls per image before this handler
+  // even reaches the old cloud step.
+  //
+  // On-device Tesseract (runExtraction) is kept in the codebase and used
+  // ONLY as a last-resort fallback if the cloud call itself fails outright
+  // (network error, function error, both engine tiers failing) — so a
+  // genuine outage still degrades to a working result instead of a dead
+  // end, it just isn't the default path anymore.
   extractBtn.addEventListener('click', async () => {
     errBox.classList.remove('show');
     if (enhancedNote) { enhancedNote.style.display = 'none'; enhancedNote.textContent = ''; }
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
-    progressLabel.textContent = 'Preparing image\u2026';
+    progressWrap.classList.add('show'); progressFill.style.width = '10%';
+    progressLabel.textContent = 'Reading text\u2026';
     extractBtn.disabled = true;
-    try {
-      // Use the language picker's value if the user has explicitly chosen one
-      // (it only appears if extraction comes back empty — see below). Otherwise,
-      // default to the combined Bengali+English model with zero interaction
-      // required. Testing confirmed this produces byte-identical results to
-      // English-only on every pure-English test image (no accuracy cost), while
-      // also correctly reading Bengali script that an English-only model cannot —
-      // covering the two most common cases for this audience automatically.
-      const manualLang = langSelect && langRow.style.display !== 'none' ? langSelect.value : null;
+    enhancedWrap.style.display = 'none';
 
-      let { text, confidence } = await runExtraction(manualLang || 'ben+eng');
+    try {
+      const { base64, mimeType } = await prepareImageForCloudOcr(file);
+
+      let text = '';
+      let usedFallback = false;
+      try {
+        let data;
+        try {
+          data = await callOcrSpace(base64, mimeType, 3);
+        } catch (err) {
+          if (!err.isTimeout) throw err;
+          progressLabel.textContent = 'That took too long \u2014 trying a faster method\u2026';
+          data = await callOcrSpace(base64, mimeType, 2);
+        }
+        text = data.text || '';
+      } catch (cloudErr) {
+        // Cloud OCR failed outright (network/server issue, not just a weak
+        // result) — fall back to on-device Tesseract so the tool still
+        // produces something, rather than a hard failure.
+        console.warn('ConvertKoro Image-to-Text: cloud OCR failed, falling back to on-device OCR.', cloudErr);
+        progressLabel.textContent = 'Reading text on-device\u2026';
+        const manualLang = langSelect && langRow.style.display !== 'none' ? langSelect.value : null;
+        const onDevice = await runExtraction(manualLang || 'ben+eng');
+        text = onDevice.text;
+        usedFallback = true;
+      }
 
       if (!text || text.trim().length === 0) {
         progressWrap.classList.remove('show');
@@ -1043,49 +1078,16 @@
       outputWrap.style.display = 'block'; copyBtn.style.display = 'inline-flex';
       progressFill.style.width = '100%';
 
-      // Automatic enhanced-accuracy fallback: if the on-device result looks
-      // weak by the real signals above, silently also try the cloud OCR
-      // engine and use it if it's genuinely better. This now runs
-      // automatically with no click required — the manual "Try enhanced
-      // accuracy" box only appears afterward if this automatic attempt did
-      // NOT run (the on-device result already looked fine) or did not
-      // improve on it, as an optional way to force a second opinion, not a
-      // required extra step. This is disclosed via the progress label and a
-      // note on the result, since it changes this run's actual privacy
-      // behavior for this one image — every image whose on-device result
-      // already looks fine is unaffected and never leaves the browser.
-      let autoRan = false;
-      if (looksWeak(text, confidence) && file) {
-        autoRan = true;
-        try {
-          progressLabel.textContent = 'Trying a stronger OCR engine for a better result\u2026';
-          const { base64, mimeType } = await prepareImageForCloudOcr(file);
-          let data;
-          try {
-            data = await callOcrSpace(base64, mimeType, 3);
-          } catch (err) {
-            if (!err.isTimeout) throw err;
-            data = await callOcrSpace(base64, mimeType, 2);
-          }
-          if (data.text && data.text.trim().length > text.trim().length) {
-            outputText.value = data.text;
-            enhancedNote.textContent = 'This result was automatically improved using a cloud OCR service, since the on-device reading looked unreliable.';
-            enhancedNote.style.display = 'block';
-          } else {
-            enhancedNote.textContent = 'Also tried a cloud OCR service automatically — the on-device result was kept since it wasn\u2019t clearly better.';
-            enhancedNote.style.display = 'block';
-          }
-        } catch (err) {
-          // A failed automatic attempt is not a hard error - the on-device
-          // result is already shown and still usable; just leave it as is,
-          // and let the manual button below offer another chance.
-          console.warn('ConvertKoro Image-to-Text: automatic enhanced-accuracy attempt failed, keeping the on-device result.', err);
-        }
+      if (usedFallback) {
+        enhancedNote.textContent = 'Read using on-device OCR — the cloud OCR service was unavailable for this attempt.';
+        enhancedNote.style.display = 'block';
+      } else {
+        // Cloud OCR is now the default path, so offer the on-device
+        // alternative afterward for anyone who'd rather this image never
+        // left the browser — not shown when the fallback already ran
+        // on-device above, since that'd be offering the same thing twice.
+        enhancedWrap.style.display = 'block';
       }
-      // Only show the manual "Try enhanced accuracy" box if the automatic
-      // attempt didn't already run for this image — avoids showing it as a
-      // redundant extra step right after the system already tried it.
-      enhancedWrap.style.display = autoRan ? 'none' : 'block';
 
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
@@ -1149,50 +1151,34 @@
     return data;
   }
 
+  // Repurposed from its old role (manual trigger for the cloud OCR call —
+  // that's now the default path in extractBtn above, so a separate manual
+  // trigger for it would be redundant). Now offers the opposite: re-run
+  // this same image fully on-device, for anyone who'd rather it never left
+  // the browser than get the (usually more accurate) cloud result.
   const enhancedBtn = document.getElementById('enhancedBtn');
   enhancedBtn.addEventListener('click', async () => {
     if (!file) return;
     const originalLabel = enhancedBtn.textContent;
     enhancedBtn.disabled = true;
+    enhancedBtn.textContent = 'Reading on-device\u2026';
     errBox.classList.remove('show');
 
     try {
-      const { base64, mimeType } = await prepareImageForCloudOcr(file);
+      const manualLang = langSelect && langRow.style.display !== 'none' ? langSelect.value : null;
+      const { text } = await runExtraction(manualLang || 'ben+eng');
 
-      let data;
-      try {
-        enhancedBtn.textContent = 'Reading (best accuracy)\u2026';
-        data = await callOcrSpace(base64, mimeType, 3);
-      } catch (err) {
-        if (!err.isTimeout) throw err;
-        console.warn('ConvertKoro Image-to-Text: enhanced-accuracy engine 3 timed out, retrying with the faster engine.', err);
-        enhancedBtn.textContent = 'That took too long \u2014 trying a faster method\u2026';
-        data = await callOcrSpace(base64, mimeType, 2);
-      }
-
-      if (!data.text || !data.text.trim()) {
-        errText.textContent = 'The enhanced OCR service didn\u2019t find any text in this image either.';
+      if (!text || !text.trim()) {
+        errText.textContent = 'On-device OCR didn\u2019t find any text in this image either.';
         errBox.classList.add('show');
       } else {
-        outputText.value = data.text;
+        outputText.value = text;
+        enhancedNote.textContent = 'Read entirely on-device — this image was not sent anywhere.';
+        enhancedNote.style.display = 'block';
       }
     } catch (err) {
-      console.error('ConvertKoro Image-to-Text: enhanced-accuracy request failed.', err);
-      // Show the REAL reason when the server gave us one (e.g. "Image is too
-      // large...", an OCR.space-reported error) instead of always a generic
-      // message — a real, confirmed bug: a 2.3MB real phone photo hit this
-      // tool's own file-size cap, the server correctly returned a specific,
-      // actionable message, and the front end was silently discarding it in
-      // favor of a vague "couldn't reach the service" that hid the actual,
-      // fixable cause (a smaller photo would have worked) from the user.
-      const hasSpecificMessage = err && err.message
-        && err.message !== 'Failed to fetch'
-        && !/^Server returned \d+/.test(err.message);
-      errText.textContent = err && err.isTimeout
-        ? 'The enhanced OCR service is taking too long right now. Please try again in a bit.'
-        : hasSpecificMessage
-          ? err.message
-          : 'Couldn\u2019t reach the enhanced OCR service right now. Please try again in a bit.';
+      console.error('ConvertKoro Image-to-Text: on-device re-read failed.', err);
+      errText.textContent = 'Couldn\u2019t read this image on-device. Try a clearer photo with good lighting.';
       errBox.classList.add('show');
     } finally {
       enhancedBtn.disabled = false;
