@@ -264,7 +264,7 @@ function renderHeader(active) {
               <div class="dd-main">
                 <div class="dd-search">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <input type="text" id="ddSearch" placeholder="Search ${TOOLS.length} tools&hellip;" autocomplete="off" />
+                  <input type="text" id="ddSearch" placeholder="Search all tools&hellip;" autocomplete="off" />
                 </div>
                 <div class="dd-items" id="ddItems">${ddItemsAll}</div>
                 <div class="dd-empty" id="ddEmpty">No tools match that search.</div>
@@ -298,6 +298,9 @@ function renderHeader(active) {
           <input type="text" id="navSearchInput" placeholder="What are you looking for?" autocomplete="off" />
           <div class="qs-results" id="navSearchResults"></div>
         </div>
+        <button class="mob-search-toggle" id="mobSearchToggle" aria-label="Search tools">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
           <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
           <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
@@ -312,7 +315,7 @@ function renderHeader(active) {
     <div class="mob-panel-inner">
       <div class="mob-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="mobSearch" placeholder="Search ${TOOLS.length} tools&hellip;" autocomplete="off" />
+        <input type="text" id="mobSearch" placeholder="Search all tools&hellip;" autocomplete="off" />
       </div>
       <a class="mob-toplink ${active==='home'?'active':''}" href="/">Home</a>
       <div class="mob-cats" id="mobCats">${mobCatBlocks}</div>
@@ -517,6 +520,17 @@ function renderHeader(active) {
   if (mobToggle) {
     mobToggle.addEventListener('click', () => {
       if (mobPanel.classList.contains('open')) closeMobPanel(); else openMobPanel();
+    });
+  }
+  const mobSearchToggle = document.getElementById('mobSearchToggle');
+  if (mobSearchToggle) {
+    // Opens the same mobile panel used by the hamburger menu, but jumps
+    // straight to the search field and focuses it — a one-tap path to
+    // searching on mobile, instead of open menu -> scroll -> find search.
+    mobSearchToggle.addEventListener('click', () => {
+      openMobPanel();
+      const field = document.getElementById('mobSearch');
+      if (field) setTimeout(() => field.focus(), 50);
     });
   }
   if (mobPanel) {
