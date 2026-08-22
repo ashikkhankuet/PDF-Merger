@@ -625,8 +625,8 @@ function renderFooter() {
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; <span id="yr"></span> ConvertKoro. All rights reserved. ConvertKoro is built independently and has no affiliation with Adobe, Microsoft, or Google.</p>
-        <p class="mono" style="font-size:11.5px;">Built for people who'd rather not upload their files.</p>
+        <p>&copy; <span id="yr"></span> ConvertKoro. All rights reserved. Independently built for everyone, everywhere.</p>
+        <p>Simple tools. Better file work.</p>
       </div>
     </div>
   </footer>`;
