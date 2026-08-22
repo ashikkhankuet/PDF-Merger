@@ -37,3 +37,12 @@
   from = "/api/ocr"
   to = "/.netlify/functions/ocr"
   status = 200
+
+# Newsletter signup (footer "Stay updated" form). Stores the email in
+# Netlify Blobs and optionally syncs it to a Brevo contact list in real
+# time - see subscribe.js for why a Brevo sync failure still lets the
+# signup itself succeed.
+[[redirects]]
+  from = "/api/subscribe"
+  to = "/.netlify/functions/subscribe"
+  status = 200

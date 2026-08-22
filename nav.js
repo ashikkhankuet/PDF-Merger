@@ -604,7 +604,7 @@ function renderFooter() {
       <div class="footer-grid">
         <div class="footer-about">
           <a class="wordmark" href="/">`+BRAND_IMG+`<span class="wordmark-text">Convert<span class="koro">Koro</span></span></a>
-          <p>A free, no-login toolkit for everyday PDF and image conversions. Every file is processed on your own device &mdash; nothing is ever uploaded.</p>
+          <p>A free, no-login toolkit for everyday PDF and image conversions. Most tools process files right on your own device.</p>
         </div>
         <div><h4>PDF Tools</h4><ul>${toolLinksA}</ul></div>
         <div><h4>More Tools</h4><ul>${toolLinksB}</ul></div>
@@ -636,11 +636,42 @@ function renderFooter() {
   const newsBtn = document.getElementById('newsBtn');
   const newsEmail = document.getElementById('newsEmail');
   const newsMsg = document.getElementById('newsMsg');
-  if (newsBtn) newsBtn.addEventListener('click', () => {
+  if (newsBtn) newsBtn.addEventListener('click', async () => {
     const v = newsEmail.value.trim();
     if (!v || !v.includes('@')) { newsMsg.style.color = 'var(--err)'; newsMsg.textContent = 'Enter a valid email address.'; return; }
-    newsMsg.style.color = 'var(--ok)'; newsMsg.textContent = 'Thanks! This list isn\u2019t active yet, but we\u2019ll have it ready soon.';
-    newsEmail.value = '';
+
+    newsBtn.disabled = true;
+    const originalLabel = newsBtn.textContent;
+    newsBtn.textContent = 'Adding\u2026';
+    newsMsg.style.color = 'var(--ink-soft)'; newsMsg.textContent = '';
+
+    try {
+      const resp = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: v }),
+      });
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok) {
+        newsMsg.style.color = 'var(--err)';
+        newsMsg.textContent = data.error || 'Something went wrong. Please try again.';
+      } else {
+        // Same success message whether this is a fresh signup or a repeat
+        // one - so a person can't tell from the response whether they were
+        // already subscribed (see subscribe.js for why that's the case).
+        newsMsg.style.color = 'var(--ok)';
+        newsMsg.textContent = 'You\u2019re on the list \u2014 we\u2019ll email you when new tools launch.';
+        newsEmail.value = '';
+      }
+    } catch (err) {
+      console.warn('ConvertKoro newsletter signup failed.', err);
+      newsMsg.style.color = 'var(--err)';
+      newsMsg.textContent = 'Couldn\u2019t reach the server right now. Please try again in a bit.';
+    } finally {
+      newsBtn.disabled = false;
+      newsBtn.textContent = originalLabel;
+    }
   });
 }
 
