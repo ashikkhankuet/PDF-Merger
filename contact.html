@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Get in touch with ConvertKoro — report a bug, suggest an improvement, or request a new tool." />
+<meta name="robots" content="index, follow" />
+<meta property="og:title" content="Contact ConvertKoro | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.com/og-image.png" />
+<title>Contact ConvertKoro</title>
+<link rel="canonical" href="https://convertkoro.com/contact" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
+</head>
+<body data-page="contact">
+<div id="site-header"></div>
+<main class="doc-page">
+  <div class="wrap" style="max-width:640px;">
+    <h1>Contact us</h1>
+    <p class="updated">Found a bug, have a suggestion, or want a tool we don't have yet? Tell us below.</p>
+
+    <form id="contactForm" style="margin-top:28px;display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label for="cName" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Name (optional)</label>
+        <input type="text" id="cName" placeholder="Your name" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div>
+        <label for="cEmail" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Your email</label>
+        <input type="email" id="cEmail" required placeholder="you@email.com" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div>
+        <label for="cTopic" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">What's this about</label>
+        <select id="cTopic" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;">
+          <option value="bug">Something's broken</option>
+          <option value="suggestion">Suggestion or feedback</option>
+          <option value="tool-request">Request a new tool</option>
+          <option value="other">Something else</option>
+        </select>
+      </div>
+      <div>
+        <label for="cMessage" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Message</label>
+        <textarea id="cMessage" required rows="6" placeholder="What's on your mind?" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button type="submit" class="btn btn-primary" id="cSubmit">Send message</button>
+        <span id="cMsg" style="font-size:13.5px;"></span>
+      </div>
+    </form>
+
+    <p style="margin-top:32px;font-size:13.5px;color:var(--ink-faint);">You can also reach us directly at <strong>support.convertkoro@gmail.com</strong>.</p>
+  </div>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>
+  const form = document.getElementById('contactForm');
+  const submitBtn = document.getElementById('cSubmit');
+  const msgEl = document.getElementById('cMsg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const topic = document.getElementById('cTopic').value;
+    const message = document.getElementById('cMessage').value.trim();
+
+    if (!email || !email.includes('@')) {
+      msgEl.style.color = 'var(--err)';
+      msgEl.textContent = 'Enter a valid email address.';
+      return;
+    }
+    if (!message) {
+      msgEl.style.color = 'var(--err)';
+      msgEl.textContent = 'Please write a message.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const originalLabel = submitBtn.textContent;
+    submitBtn.textContent = 'Sending\u2026';
+    msgEl.style.color = 'var(--ink-soft)';
+    msgEl.textContent = '';
+
+    try {
+      const resp = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, topic, message }),
+      });
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok) {
+        msgEl.style.color = 'var(--err)';
+        msgEl.textContent = data.error || 'Something went wrong. Please try again.';
+      } else {
+        msgEl.style.color = 'var(--ok)';
+        msgEl.textContent = 'Sent! Check your inbox for a confirmation.';
+        form.reset();
+      }
+    } catch (err) {
+      console.warn('ConvertKoro contact form failed.', err);
+      msgEl.style.color = 'var(--err)';
+      msgEl.textContent = 'Couldn\u2019t reach the server right now. Please try again in a bit.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalLabel;
+    }
+  });
+</script>
+</body>
+</html>

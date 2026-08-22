@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Send announcement &mdash; ConvertKoro admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="admin-announce">
+<main class="doc-page">
+  <div class="wrap" style="max-width:560px;">
+    <h1>Send a new-tool announcement</h1>
+    <p class="updated">This page is not linked anywhere on the site and is not indexed. It sends real email to every subscribed address &mdash; double-check before submitting.</p>
+
+    <form id="annForm" style="margin-top:24px;display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Admin key</label>
+        <input type="password" id="aKey" required placeholder="Your ANNOUNCE_ADMIN_KEY" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Kind</label>
+        <select id="aKind" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;">
+          <option value="new">New tool</option>
+          <option value="enhanced">Tool enhanced</option>
+          <option value="campaign">General update</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Tool / update name</label>
+        <input type="text" id="aName" required placeholder="e.g. Video to GIF" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Description</label>
+        <textarea id="aDesc" required rows="4" placeholder="One or two sentences" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Link</label>
+        <input type="url" id="aUrl" required placeholder="https://convertkoro.com/your-tool" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button type="submit" class="btn btn-primary" id="aSubmit">Send to all subscribers</button>
+        <span id="aMsg" style="font-size:13.5px;"></span>
+      </div>
+    </form>
+  </div>
+</main>
+<script>
+  document.getElementById('annForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = document.getElementById('aKey').value.trim();
+    const kind = document.getElementById('aKind').value;
+    const toolName = document.getElementById('aName').value.trim();
+    const toolDescription = document.getElementById('aDesc').value.trim();
+    const toolUrl = document.getElementById('aUrl').value.trim();
+    const btn = document.getElementById('aSubmit');
+    const msg = document.getElementById('aMsg');
+
+    if (!key || !toolName || !toolDescription || !toolUrl) {
+      msg.style.color = 'var(--err)';
+      msg.textContent = 'Fill in every field.';
+      return;
+    }
+    if (!confirm(`Send this announcement to every subscriber now? This can't be undone.`)) return;
+
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Sending\u2026';
+    msg.style.color = 'var(--ink-soft)';
+    msg.textContent = '';
+
+    try {
+      const resp = await fetch('/api/announce-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+        body: JSON.stringify({ kind, toolName, toolDescription, toolUrl }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        msg.style.color = 'var(--err)';
+        msg.textContent = data.error || 'Send failed.';
+      } else {
+        msg.style.color = 'var(--ok)';
+        msg.textContent = `Sent to ${data.recipientCount} of ${data.totalSubscribers} subscribers.`;
+      }
+    } catch (err) {
+      msg.style.color = 'var(--err)';
+      msg.textContent = 'Couldn\u2019t reach the server.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+</script>
+</body>
+</html>

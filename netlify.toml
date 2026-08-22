@@ -46,3 +46,19 @@
   from = "/api/subscribe"
   to = "/.netlify/functions/subscribe"
   status = 200
+
+# Owner-triggered "new tool" announcement email, sent to every subscriber
+# via Brevo's batch API. Requires the ANNOUNCE_ADMIN_KEY header - see
+# announce-tool.js. Not called automatically by anything; the owner
+# triggers each send manually from /admin-announce.
+[[redirects]]
+  from = "/api/announce-tool"
+  to = "/.netlify/functions/announce-tool"
+  status = 200
+
+# Contact form (contact.html): forwards the message to the support inbox
+# and sends an auto-reply confirmation to the sender, both via Brevo.
+[[redirects]]
+  from = "/api/contact"
+  to = "/.netlify/functions/contact"
+  status = 200
