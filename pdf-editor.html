@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
+<meta name="description" content="Edit your PDF online — add text, images, highlights, shapes and a signature, then reorder, rotate or delete pages. Free, no sign-up, processed in your browser." />
+<meta name="keywords" content="pdf editor, edit pdf online, add text to pdf, annotate pdf, sign pdf, edit pdf free, পিডিএফ এডিট করা, pdf edit kivabe" />
+<meta name="robots" content="index, follow" />
+<meta property="og:title" content="PDF Editor — Edit, Annotate & Sign PDFs | ConvertKoro" />
+<meta property="og:image" content="https://convertkoro.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:description" content="Add text, images, highlights, shapes and a signature to any PDF, then organize pages — all free and processed in your browser." />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PDF Editor","applicationCategory":"UtilityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<title>PDF Editor — Edit, Annotate, Sign & Organize PDFs | ConvertKoro</title>
+<link rel="canonical" href="https://convertkoro.com/pdf-editor" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF Editor","description":"Edit your PDF online — add text, images, highlights, shapes and a signature, then reorder, rotate or delete pages. Free, no sign-up, processed in your browser.","url":"https://convertkoro.com/pdf-editor","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I edit text that's already in the PDF?","acceptedAnswer":{"@type":"Answer","text":"Not yet in this version — you can add new text anywhere on the page, but changing text that's already part of the PDF isn't supported. This is a genuinely hard problem (the original font and layout have to be preserved exactly), and we'd rather ship it properly than fake it. It's on our roadmap."}},{"@type":"Question","name":"Is my PDF uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No — your file is opened and edited entirely in your browser using PDF.js and pdf-lib. Nothing is sent to any server, including ours."}},{"@type":"Question","name":"Can I edit a password-protected PDF?","acceptedAnswer":{"@type":"Answer","text":"Not currently — encrypted or password-protected PDFs aren't supported. Remove the password first if you need to edit one."}},{"@type":"Question","name":"Does this support scanned PDFs (images of text)?","acceptedAnswer":{"@type":"Answer","text":"You can annotate, sign, and add content on top of a scanned PDF just like any other — but since a scan is really just a picture, there's no underlying text to select or edit. Use our Image to Text or PDF OCR tool first if you need the scanned words as real, editable text."}},{"@type":"Question","name":"Will my highlights and shapes be part of the actual PDF file?","acceptedAnswer":{"@type":"Answer","text":"Yes — everything you add is drawn directly into the saved PDF, not a separate overlay, so it will show up correctly in any PDF viewer, not just this one."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser. On smaller screens the toolbar and panels adapt to a more compact layout, though precise editing is easier with a mouse or a large touchscreen."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"PDF Editor","item":"https://convertkoro.com/pdf-editor"}]}</script>
+<style>
+  body[data-page="pdf-editor"] main { padding-bottom: 0; }
+  .pe-shell { display: none; }
+  .pe-shell.active { display: flex; flex-direction: column; height: calc(100vh - 64px); min-height: 560px; }
+  .pe-upload-wrap { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+
+  .pe-topbar {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line);
+    background: var(--card); flex-wrap: wrap;
+  }
+  .pe-topbar .pe-title { font-weight: 700; font-size: 14.5px; margin-right: auto; }
+  .pe-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px;
+    border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
+    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .pe-btn:hover { border-color: var(--signal); background: var(--signal-tint); }
+  .pe-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .pe-btn.primary { background: var(--signal); color: #fff; border-color: var(--signal); }
+  .pe-btn.primary:hover { background: var(--signal-dk); }
+  .pe-btn svg { width: 15px; height: 15px; }
+
+  .pe-toolbar {
+    display: flex; gap: 4px; padding: 8px 16px; border-bottom: 1px solid var(--line);
+    background: var(--paper); overflow-x: auto;
+  }
+  .pe-tab {
+    padding: 7px 13px; border-radius: 7px; border: none; background: none; color: var(--ink-soft);
+    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .pe-tab:hover { background: var(--bg-soft, #f2f4f8); }
+  .pe-tab.active { background: var(--signal-tint); color: var(--signal-dk); }
+
+  .pe-subtoolbar {
+    display: flex; gap: 6px; padding: 8px 16px; border-bottom: 1px solid var(--line);
+    background: var(--card); overflow-x: auto; align-items: center; flex-wrap: wrap;
+  }
+  .pe-subbtn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 7px;
+    border: 1px solid transparent; background: none; color: var(--ink); font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .pe-subbtn:hover { background: var(--bg-soft, #f2f4f8); }
+  .pe-subbtn.active { background: var(--signal); color: #fff; }
+  .pe-subbtn svg { width: 14px; height: 14px; }
+  .pe-color-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--line-strong); cursor: pointer; padding: 0; }
+  .pe-color-dot.active { box-shadow: 0 0 0 2px var(--signal); }
+
+  .pe-body { display: flex; flex: 1; min-height: 0; }
+  .pe-sidebar {
+    width: 148px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--card);
+    overflow-y: auto; padding: 10px;
+  }
+  .pe-thumb {
+    position: relative; margin-bottom: 10px; border: 2px solid var(--line); border-radius: 8px; overflow: hidden;
+    cursor: pointer; background: var(--paper);
+  }
+  .pe-thumb.active { border-color: var(--signal); }
+  .pe-thumb img { width: 100%; display: block; }
+  .pe-thumb .pe-thumb-num {
+    position: absolute; bottom: 3px; right: 5px; font-size: 10.5px; font-family: "IBM Plex Mono", monospace;
+    background: rgba(0,0,0,.55); color: #fff; padding: 1px 5px; border-radius: 4px;
+  }
+  .pe-thumb-menu-btn {
+    position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 5px; border: none;
+    background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .pe-thumb-menu { position: absolute; top: 26px; right: 3px; background: var(--paper); border: 1px solid var(--line-strong);
+    border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,.15); z-index: 30; display: none; min-width: 128px; overflow: hidden; }
+  .pe-thumb-menu.open { display: block; }
+  .pe-thumb-menu button { display: flex; align-items: center; gap: 7px; width: 100%; padding: 8px 11px; border: none;
+    background: none; font-size: 12.5px; font-weight: 500; cursor: pointer; text-align: left; color: var(--ink); }
+  .pe-thumb-menu button:hover { background: var(--bg-soft, #f2f4f8); }
+  .pe-thumb-menu button svg { width: 13px; height: 13px; }
+  .pe-add-page-btn {
+    width: 100%; padding: 10px; border: 2px dashed var(--line-strong); border-radius: 8px; background: none;
+    color: var(--ink-faint); font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px;
+  }
+  .pe-add-page-btn:hover { border-color: var(--signal); color: var(--signal-dk); }
+
+  .pe-canvas-wrap { flex: 1; min-width: 0; overflow: auto; background: #e9ecf2; display: flex; justify-content: center; padding: 24px; }
+  .pe-page-stage { position: relative; box-shadow: 0 4px 18px rgba(0,0,0,.18); background: #fff; flex-shrink: 0; }
+  .pe-page-stage canvas { display: block; }
+  .pe-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .pe-obj {
+    position: absolute; cursor: move; user-select: none; border: 1.5px dashed transparent;
+  }
+  .pe-obj.selected { border-color: var(--signal); }
+  .pe-obj .pe-handle {
+    position: absolute; width: 11px; height: 11px; background: var(--signal); border: 1.5px solid #fff;
+    border-radius: 50%; right: -6px; bottom: -6px; cursor: nwse-resize; display: none;
+  }
+  .pe-obj.selected .pe-handle { display: block; }
+  .pe-obj[data-type="text"] { padding: 2px 4px; white-space: pre-wrap; line-height: 1.25; }
+  .pe-obj[data-type="highlight"] { background: rgba(255,235,59,.45); }
+  .pe-obj[data-type="note"] { width: 26px !important; height: 26px !important; background: #FFD54A; border-radius: 5px 5px 5px 0;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .pe-obj[data-type="note"] svg { width: 14px; height: 14px; color: #7A5B00; }
+
+  .pe-rightbar { width: 216px; flex-shrink: 0; border-left: 1px solid var(--line); background: var(--card);
+    padding: 14px; overflow-y: auto; }
+  .pe-rightbar h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-faint); margin: 0 0 10px; }
+  .pe-field { margin-bottom: 12px; }
+  .pe-field label { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 5px; }
+  .pe-field input[type="number"], .pe-field select {
+    width: 100%; padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper);
+    color: var(--ink); font-size: 13px; box-sizing: border-box;
+  }
+  .pe-field input[type="color"] { width: 100%; height: 32px; border: 1px solid var(--line-strong); border-radius: 6px; cursor: pointer; padding: 2px; }
+  .pe-empty-hint { font-size: 12.5px; color: var(--ink-faint); line-height: 1.5; }
+
+  .pe-bottombar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-top: 1px solid var(--line);
+    background: var(--card); font-size: 12.5px; }
+  .pe-page-jump { font-family: "IBM Plex Mono", monospace; }
+
+  .pe-sig-pad-wrap { text-align: center; }
+  .pe-sig-canvas { border: 1px solid var(--line-strong); border-radius: 8px; cursor: crosshair; touch-action: none; background: #fff; }
+
+  @media (max-width: 900px) {
+    .pe-sidebar { width: 96px; }
+    .pe-rightbar { position: fixed; right: 0; top: 0; bottom: 0; z-index: 40; box-shadow: -6px 0 20px rgba(0,0,0,.15); display: none; }
+    .pe-rightbar.open { display: block; }
+    .pe-topbar .pe-title { display: none; }
+  }
+</style>
+</head>
+<body data-page="pdf-editor">
+<div id="site-header"></div>
+<main class="doc-page" style="padding-top:0;">
+
+  <div class="pe-upload-wrap" id="peUploadWrap">
+    <div style="text-align:center;margin-bottom:8px;">
+      <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--signal-dk);background:var(--signal-tint);padding:4px 11px;border-radius:999px;">New</span>
+    </div>
+    <h1 style="text-align:center;">PDF Editor</h1>
+    <p class="lead" style="text-align:center;">Add text, images, highlights, shapes and a signature to your PDF, then reorder, rotate or delete pages &mdash; all in your browser.</p>
+
+    <div class="dropzone" id="dropzone" style="margin-top:28px;">
+      <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <strong>Drop a PDF here</strong>
+      <div class="hint">PDF only &middot; stays on your device</div>
+      <input type="file" id="fileInput" accept="application/pdf" hidden />
+    </div>
+    <div class="err-box" id="errBox" style="display:none;"><span id="errText"></span></div>
+  </div>
+
+  <div class="pe-shell" id="peShell">
+    <div class="pe-topbar">
+      <a href="/pdf-editor" class="pe-btn" id="peBackBtn" title="Start over" style="padding:7px 9px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="pe-title">PDF Editor</span>
+      <button class="pe-btn" id="peUndoBtn" disabled title="Undo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+      </button>
+      <button class="pe-btn" id="peRedoBtn" disabled title="Redo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7L21 13"/></svg>
+      </button>
+      <button class="pe-btn primary" id="peDownloadBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+        Download
+      </button>
+    </div>
+
+    <div class="pe-toolbar" id="peToolbar">
+      <button class="pe-tab active" data-mode="select">Select</button>
+      <button class="pe-tab" data-mode="edit">Edit</button>
+      <button class="pe-tab" data-mode="annotate">Annotate</button>
+      <button class="pe-tab" data-mode="sign">Sign</button>
+    </div>
+    <div class="pe-subtoolbar" id="peSubtoolbar"></div>
+
+    <div class="pe-body">
+      <div class="pe-sidebar" id="peSidebar"></div>
+      <div class="pe-canvas-wrap" id="peCanvasWrap">
+        <div class="pe-page-stage" id="pePageStage">
+          <canvas id="pePageCanvas"></canvas>
+          <div class="pe-overlay" id="peOverlay"></div>
+        </div>
+      </div>
+      <div class="pe-rightbar" id="peRightbar">
+        <h4>Properties</h4>
+        <div id="pePropsBody"><p class="pe-empty-hint">Select an item on the page, or choose a tool above, to see its options here.</p></div>
+      </div>
+    </div>
+
+    <div class="pe-bottombar">
+      <button class="pe-btn" id="peZoomOut" style="padding:5px 9px;">&minus;</button>
+      <span id="peZoomLabel" style="font-family:'IBM Plex Mono',monospace;min-width:42px;text-align:center;">100%</span>
+      <button class="pe-btn" id="peZoomIn" style="padding:5px 9px;">+</button>
+      <span class="pe-page-jump" id="pePageJump" style="margin-left:auto;">Page 1 / 1</span>
+    </div>
+  </div>
+
+  <section class="section" id="peInfoSection">
+    <div class="container">
+      <div class="section-head"><h2>How it works</h2></div>
+      <ol class="hiw-list">
+        <li><strong>Drop your PDF</strong><span>It opens directly in the editor &mdash; nothing is uploaded anywhere.</span></li>
+        <li><strong>Edit, annotate or sign</strong><span>Add text, images, highlights, shapes, notes or a signature. Manage pages from the left sidebar.</span></li>
+        <li><strong>Download</strong><span>Your changes are drawn directly into a new PDF file, ready to save.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="section-head">
+        <h2>Common questions</h2>
+        <p>More detail in the <a href="/faq" style="color:var(--signal-dk);">full FAQ</a>.</p>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Can I edit text that's already in the PDF?</summary><p>Not yet in this version &mdash; you can add new text anywhere on the page, but changing text that's already part of the PDF isn't supported. This is a genuinely hard problem (the original font and layout have to be preserved exactly), and we'd rather ship it properly than fake it. It's on our roadmap.</p></details>
+        <details class="faq-item"><summary>Is my PDF uploaded anywhere?</summary><p>No &mdash; your file is opened and edited entirely in your browser using PDF.js and pdf-lib. Nothing is sent to any server, including ours.</p></details>
+        <details class="faq-item"><summary>Can I edit a password-protected PDF?</summary><p>Not currently &mdash; encrypted or password-protected PDFs aren't supported. Remove the password first if you need to edit one.</p></details>
+        <details class="faq-item"><summary>Does this support scanned PDFs (images of text)?</summary><p>You can annotate, sign, and add content on top of a scanned PDF just like any other &mdash; but since a scan is really just a picture, there's no underlying text to select or edit. Use our <a href="/image-to-text" style="color:var(--signal-dk);">Image to Text</a> or <a href="/pdf-ocr" style="color:var(--signal-dk);">PDF OCR</a> tool first if you need the scanned words as real, editable text.</p></details>
+        <details class="faq-item"><summary>Will my highlights and shapes be part of the actual PDF file?</summary><p>Yes &mdash; everything you add is drawn directly into the saved PDF, not a separate overlay, so it will show up correctly in any PDF viewer, not just this one.</p></details>
+        <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes &mdash; it runs in any modern browser. On smaller screens the toolbar and panels adapt to a more compact layout, though precise editing is easier with a mouse or a large touchscreen.</p></details>
+      </div>
+    </div>
+  </section>
+
+</main>
+<div id="site-footer"></div>
+<script src="drive-picker.js"></script>
+<script src="nav.js"></script>
+<script src="pdf-editor.js"></script>
+</body>
+</html>

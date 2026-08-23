@@ -178,7 +178,7 @@
       ffmpeg.FS('writeFile', inName, await fetchFile(file));
       const start = Math.max(0, parseFloat(startIn.value) || 0);
       const end = Math.max(start + 0.1, parseFloat(endIn.value) || start + 1);
-      await ffmpeg.run('-i', inName, '-ss', String(start), '-to', String(end), '-c', 'copy', 'output.' + ext);
+      await ffmpeg.run('-i', inName, '-ss', String(start), '-to', String(end), '-c', 'copy', '-avoid_negative_ts', 'make_zero', 'output.' + ext);
       const data = ffmpeg.FS('readFile', 'output.' + ext);
       const blob = new Blob([data.buffer], { type: file.type });
       const baseName = file.name.replace(/\.[^.]+$/, '');

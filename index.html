@@ -229,6 +229,7 @@
   function renderToolCard(t) {
     return `
       <a class="tool-card" href="${t.url}">
+        ${t.badge ? `<span class="tool-card-badge">${t.badge}</span>` : ''}
         <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
         <h3>${t.name}</h3>
         <p>${t.short}</p>

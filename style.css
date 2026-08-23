@@ -412,7 +412,12 @@ body.mob-panel-open { overflow: hidden; }
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
   padding: 14px; text-decoration: none; color: var(--ink);
   box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column; gap: 8px; position: relative;
+}
+.tool-card-badge {
+  position: absolute; top: -8px; right: 10px; font-size: 10px; font-weight: 700; letter-spacing: .03em;
+  text-transform: uppercase; color: var(--signal-dk); background: var(--signal-tint);
+  border: 1px solid rgba(22,145,90,.24); padding: 2px 8px; border-radius: 999px;
 }
 .tool-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--line-strong); }
 .tool-card-more { border-style: dashed; background: var(--paper); box-shadow: none; }
@@ -488,22 +493,26 @@ body.mob-panel-open { overflow: hidden; }
   border: 2px dashed var(--line-strong); border-radius: var(--radius-sm);
   padding: 46px 20px; text-align: center; cursor: pointer;
   transition: border-color .15s ease, background .15s ease;
+  background: linear-gradient(180deg, var(--signal-tint) 0%, var(--paper) 65%);
 }
 .dropzone:hover, .dropzone.drag { border-color: var(--signal); background: var(--signal-tint); }
-.dropzone svg.upload-ico { width: 34px; height: 34px; color: var(--ink-faint); margin: 0 auto 14px; }
+.dropzone svg.upload-ico { width: 34px; height: 34px; color: var(--signal-dk); margin: 0 auto 14px; opacity: .85; }
 .dropzone strong { font-size: 15.5px; }
 
 .source-btn-row {
   display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; position: relative; z-index: 2;
 }
 .source-btn {
-  display: flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 999px;
+  display: flex; align-items: center; gap: 7px; padding: 9px 15px; border-radius: 999px;
   border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
   font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
 }
 .source-btn:hover { border-color: var(--signal); background: var(--signal-tint); }
 .source-btn:disabled { opacity: .6; cursor: not-allowed; }
-.source-btn svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--ink-faint); }
+.source-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.source-btn[data-src="device"] svg { color: #2563eb; }
+.source-btn[data-src="drive"] svg { color: #16a34a; }
+.source-btn[data-src="paste"] svg { color: #d97706; }
 
 @media (max-width: 480px) {
   /* Wider tap targets on mobile - same three buttons, just roomier. */
@@ -629,7 +638,8 @@ body.mob-panel-open { overflow: hidden; }
 .site-footer .newsletter-row input::placeholder { color: #C7D0E0; }
 .site-footer .newsletter-row button { background: #5B9CFF; color: #0B1220; }
 .site-footer .newsletter-row button:hover { background: #82B4FF; }
-.site-footer .newsletter-msg { color: #4ADE80; }
+.site-footer .newsletter-msg.is-success { color: #4ADE80; }
+.site-footer .newsletter-msg.is-error { color: #FF8A8A; }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(4, 1fr); gap: 28px; }
 @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .footer-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
@@ -874,4 +884,6 @@ body.mob-panel-open { overflow: hidden; }
   font-size: 14.5px; font-weight: 600; cursor: pointer;
 }
 .newsletter-row button:hover { background: var(--signal-dk); }
-.newsletter-msg { font-size: 13px; color: var(--ok); margin-top: 8px; min-height: 16px; }
+.newsletter-msg { font-size: 14.5px; font-weight: 500; margin-top: 8px; min-height: 18px; }
+.newsletter-msg.is-success { color: var(--ok); }
+.newsletter-msg.is-error { color: var(--err); }

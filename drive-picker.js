@@ -66,6 +66,7 @@
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: '', // set per-call below
+        error_callback: '', // set per-call below - see requestAccessToken()
       });
       gisInited = true;
     }
@@ -73,14 +74,36 @@
 
   function requestAccessToken() {
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const settle = (fn, arg) => { if (!settled) { settled = true; clearTimeout(safetyTimer); fn(arg); } };
+
       tokenClient.callback = (response) => {
         if (response.error !== undefined) {
-          reject(response);
+          settle(reject, response);
           return;
         }
         accessToken = response.access_token;
-        resolve(accessToken);
+        settle(resolve, accessToken);
       };
+      // error_callback specifically covers the case the regular callback
+      // above does NOT: the person closing the sign-in popup window (the
+      // "X" icon) rather than actively denying access. This is a real,
+      // documented gap in Google Identity Services' initTokenClient - the
+      // main callback is simply never invoked when the popup is closed
+      // this way, so without this, the calling button would stay stuck
+      // on "Opening..." forever with no way to recover.
+      tokenClient.error_callback = (err) => {
+        settle(reject, err);
+      };
+
+      // Defense-in-depth: if neither callback fires within a reasonable
+      // window (an edge case beyond the documented popup-closed gap
+      // error_callback already covers above), don't leave the calling
+      // button stuck indefinitely - time out and let it recover.
+      const safetyTimer = setTimeout(() => {
+        settle(reject, { error: 'timeout' });
+      }, 60000);
+
       tokenClient.requestAccessToken({ prompt: accessToken === null ? 'consent' : '' });
     });
   }
@@ -116,6 +139,26 @@
       const picker = builder.build();
       picker.setVisible(true);
     });
+  }
+
+  // Handles a real keyboard paste event (Ctrl+V / Cmd+V). This is the
+  // reliable path for a file copied from an OS file manager (Explorer,
+  // Finder) - clipboardData.files carries the actual file with its real
+  // name, type, and bytes, unlike the async clipboard.read() API used by
+  // the Paste button, which is built mainly for images/text and often
+  // can't see an OS-level file copy at all.
+  function handlePasteEvent(e, pasteMimeCheck, onFiles) {
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    for (const item of items) {
+      if (item.kind === 'file' && pasteMimeCheck({ type: item.type })) {
+        const pastedFile = item.getAsFile();
+        if (pastedFile) {
+          e.preventDefault();
+          onFiles([pastedFile]);
+        }
+        break;
+      }
+    }
   }
 
   // Downloads the actual file bytes for a picked Drive document and
@@ -209,6 +252,30 @@
       // would also silently trigger that handler underneath.
       row.addEventListener('click', (e) => { e.stopPropagation(); });
 
+      // Keyboard paste (Ctrl+V / Cmd+V) - this is the RELIABLE path for
+      // anything copied from an OS file manager (Explorer, Finder): a
+      // Ctrl+C on a PDF/.docx/audio/video file there puts a real file
+      // handle on the clipboard, delivered here via the synchronous
+      // paste event's clipboardData.files. This is fundamentally
+      // different from (and more broadly supported than) the async
+      // clipboard.read() API the Paste button below uses, which is
+      // built mainly for images/text and often does NOT see an
+      // OS-level file copy at all - confirmed the real cause of PDFs
+      // failing through the button alone. Wiring both means: Ctrl+V
+      // works for every file type (the main ask), and the button
+      // remains as a click-based alternative that reliably covers
+      // images specifically, with an honest fallback message for
+      // anything it can't reach.
+      containerEl.addEventListener('paste', (e) => handlePasteEvent(e, pasteMimeCheck, onFiles));
+      document.addEventListener('paste', (e) => {
+        // Also listen at the document level so Ctrl+V works even when
+        // focus isn't literally inside the dropzone - matches how the
+        // original keyboard-paste implementation behaved before this
+        // button redesign, which is the behavior being restored here.
+        if (!containerEl.isConnected) return;
+        handlePasteEvent(e, pasteMimeCheck, onFiles);
+      });
+
       row.querySelector('[data-src="device"]').addEventListener('click', () => {
         if (fileInputEl) fileInputEl.click();
       });
@@ -224,6 +291,10 @@
         } catch (err) {
           console.warn('ConvertKoro Drive Picker: pick failed.', err);
         } finally {
+          // Always restore the button, including when the person closes
+          // the Google sign-in popup without picking anything - pick()
+          // resolving to null/empty is exactly that case, not an error,
+          // so this same finally block correctly covers it too.
           btn.disabled = false;
           btn.innerHTML = original;
         }
@@ -253,13 +324,6 @@
               if (pasteMimeCheck({ type })) {
                 const blob = await item.getType(type);
                 const ext = type.split('/')[1] || 'bin';
-                // The Clipboard API only ever returns a Blob here, never a
-                // File - the original filename genuinely isn't carried on
-                // the clipboard for a pasted image in the first place (a
-                // real OS/browser limitation, not something recoverable
-                // client-side). A timestamped name is at least distinct
-                // and identifiable, rather than a generic "pasted.png"
-                // that looks the same for every paste.
                 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
                 matched.push(new File([blob], `clipboard-${stamp}.${ext}`, { type }));
                 break;
@@ -271,15 +335,18 @@
             setTimeout(() => { btn.innerHTML = original; }, 1200);
             onFiles(matched);
           } else {
-            btn.innerHTML = 'Nothing to paste';
-            setTimeout(() => { btn.innerHTML = original; }, 2000);
+            // A real, common case for non-image files (PDF, .docx, audio,
+            // video): the async clipboard.read() API often cannot see an
+            // OS file-manager copy at all, even though Ctrl+V (handled
+            // above) can. Say so plainly instead of a generic "nothing to
+            // paste" that would be misleading here.
+            btn.innerHTML = 'Try Ctrl+V instead';
+            setTimeout(() => { btn.innerHTML = original; }, 2400);
           }
         } catch (err) {
-          // Most commonly a denied permission prompt, or a browser that
-          // blocks the read outside a sufficiently "fresh" user gesture.
           console.warn('ConvertKoro paste button: clipboard read failed.', err);
-          btn.innerHTML = 'Couldn\u2019t access clipboard';
-          setTimeout(() => { btn.innerHTML = original; }, 2200);
+          btn.innerHTML = 'Try Ctrl+V instead';
+          setTimeout(() => { btn.innerHTML = original; }, 2400);
         } finally {
           btn.disabled = false;
         }

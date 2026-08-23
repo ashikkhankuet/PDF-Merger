@@ -28,7 +28,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"JSON to CSV","description":"Convert a JSON array into a CSV spreadsheet, and back, in your browser.","url":"https://convertkoro.com/json-to-csv","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What JSON shape does this expect?","acceptedAnswer":{"@type":"Answer","text":"An array of flat objects with the same keys, like <code>[{\"a\":1,\"b\":2}]</code> &mdash; nested objects and arrays inside fields aren't flattened."}},{"@type":"Question","name":"Can I convert CSV back to JSON on this page?","acceptedAnswer":{"@type":"Answer","text":"Not on this page — it only converts JSON to CSV in this direction."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What JSON shape does this expect?","acceptedAnswer":{"@type":"Answer","text":"An array of flat objects with the same keys, like <code>[{\"a\":1,\"b\":2}]</code> &mdash; nested objects and arrays inside fields aren't flattened."}},{"@type":"Question","name":"Can I convert CSV back to JSON on this page?","acceptedAnswer":{"@type":"Answer","text":"Yes — use the CSV \u2192 JSON button to convert in that direction. Both directions work on this same page."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"JSON to CSV","item":"https://convertkoro.com/json-to-csv"}]}</script>
 </head>
 <body data-page="tools">
@@ -72,7 +72,7 @@
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
         <details class="faq-item"><summary>What JSON shape does this expect?</summary><p>An array of flat objects with the same keys, like <code>[{"a":1,"b":2}]</code> &mdash; nested objects and arrays inside fields aren't flattened.</p></details>
-        <details class="faq-item"><summary>Can I convert CSV back to JSON on this page?</summary><p>Not on this page — it only converts JSON to CSV in this direction.</p></details>
+        <details class="faq-item"><summary>Can I convert CSV back to JSON on this page?</summary><p>Yes — use the CSV &rarr; JSON button to convert in that direction. Both directions work on this same page.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
@@ -101,11 +101,42 @@
     return rows.join('\n');
   }
   function csvToJson(text) {
+    // A simple line.split(',') breaks on any comma that appears inside a
+    // quoted field (e.g. "Smith, John") - which jsonToCsv above correctly
+    // produces via its own esc() function, so this parser needs to
+    // understand that same quoting to correctly round-trip its own output.
+    // This performs a proper character-by-character CSV row parse: a
+    // quote toggles "inside a quoted field" mode (where commas and
+    // newlines are literal), and "" inside a quoted field is an escaped
+    // literal quote character.
+    function parseCsvLine(line) {
+      const cells = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (line[i + 1] === '"') { cur += '"'; i++; }
+            else { inQuotes = false; }
+          } else {
+            cur += ch;
+          }
+        } else {
+          if (ch === '"') inQuotes = true;
+          else if (ch === ',') { cells.push(cur); cur = ''; }
+          else cur += ch;
+        }
+      }
+      cells.push(cur);
+      return cells;
+    }
+
     const lines = text.trim().split(/\r?\n/);
     if (lines.length < 1) throw new Error('No CSV data found.');
-    const headers = lines[0].split(',').map(h => h.trim());
+    const headers = parseCsvLine(lines[0]).map(h => h.trim());
     const out = lines.slice(1).filter(l => l.trim()).map(line => {
-      const cells = line.split(',');
+      const cells = parseCsvLine(line);
       const obj = {};
       headers.forEach((h, i) => obj[h] = (cells[i] || '').trim());
       return obj;

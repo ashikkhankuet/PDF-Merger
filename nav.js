@@ -3,6 +3,7 @@
    ============================================================ */
 
 const ICONS = {
+  pdfedit: '<path d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v5h5"/><path d="M15.5 13.5a1.7 1.7 0 0 1 2.4 2.4L11 22l-3.3.7L8.4 19.4z"/>',
   merge: '<path d="M8 3v11a2 2 0 0 0 2 2h9"/><path d="M16 3v11a2 2 0 0 1-2 2H5"/><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/>',
   compress: '<path d="M8 3v4a1 1 0 0 1-1 1H3"/><path d="M21 8h-4a1 1 0 0 1-1-1V3"/><path d="M3 16h4a1 1 0 0 1 1 1v4"/><path d="M16 21v-4a1 1 0 0 1 1-1h4"/>',
   img2pdf: '<rect x="3" y="3" width="10" height="10" rx="1.6"/><circle cx="6.3" cy="6.3" r="1.1"/><path d="M4 11l2.4-2.4L9 11.5"/><path d="M16 5h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-1"/><path d="M15 3v4h4"/>',
@@ -57,6 +58,8 @@ const CATEGORIES = [
 ];
 
 const TOOLS = [
+  { id: 'pdfedit',  name: 'PDF Editor',       url: '/pdf-editor',   icon: 'pdfedit',
+    tag: 'PDF',   short: 'Add text, images, highlights, shapes and a signature, then organize pages.', badge: 'New' },
   { id: 'merge',    name: 'PDF Merger',       url: '/merge',        icon: 'merge',
     tag: 'PDF',   short: 'Combine multiple PDFs into one, in your chosen order.' },
   { id: 'compress', name: 'PDF Compressor',   url: '/compress',     icon: 'compress',
@@ -637,14 +640,19 @@ function renderFooter() {
   const newsBtn = document.getElementById('newsBtn');
   const newsEmail = document.getElementById('newsEmail');
   const newsMsg = document.getElementById('newsMsg');
+  function setNewsMsg(text, kind) {
+    newsMsg.textContent = text;
+    newsMsg.classList.remove('is-success', 'is-error', 'is-neutral');
+    if (kind) newsMsg.classList.add(kind);
+  }
   if (newsBtn) newsBtn.addEventListener('click', async () => {
     const v = newsEmail.value.trim();
-    if (!v || !v.includes('@')) { newsMsg.style.color = 'var(--err)'; newsMsg.textContent = 'Enter a valid email address.'; return; }
+    if (!v || !v.includes('@')) { setNewsMsg('Enter a valid email address.', 'is-error'); return; }
 
     newsBtn.disabled = true;
     const originalLabel = newsBtn.textContent;
     newsBtn.textContent = 'Adding\u2026';
-    newsMsg.style.color = 'var(--ink-soft)'; newsMsg.textContent = '';
+    setNewsMsg('', null);
 
     try {
       const resp = await fetch('/api/subscribe', {
@@ -655,19 +663,19 @@ function renderFooter() {
       const data = await resp.json().catch(() => ({}));
 
       if (!resp.ok) {
-        newsMsg.style.color = 'var(--err)';
-        newsMsg.textContent = data.error || 'Something went wrong. Please try again.';
+        setNewsMsg(data.error || 'Something went wrong. Please try again.', 'is-error');
       } else {
-        newsMsg.style.color = 'var(--ok)';
-        newsMsg.textContent = data.status === 'already-subscribed'
-          ? 'You\u2019re already on the list \u2014 no need to sign up again.'
-          : 'You\u2019re on the list \u2014 we\u2019ll email you when new tools launch.';
+        setNewsMsg(
+          data.status === 'already-subscribed'
+            ? 'Already subscribed \u2014 you\u2019re all set, no action needed.'
+            : 'You\u2019re subscribed \u2014 we\u2019ll keep you posted on everything new.',
+          'is-success'
+        );
         newsEmail.value = '';
       }
     } catch (err) {
       console.warn('ConvertKoro newsletter signup failed.', err);
-      newsMsg.style.color = 'var(--err)';
-      newsMsg.textContent = 'Couldn\u2019t reach the server right now. Please try again in a bit.';
+      setNewsMsg('Couldn\u2019t reach the server right now. Please try again in a bit.', 'is-error');
     } finally {
       newsBtn.disabled = false;
       newsBtn.textContent = originalLabel;
