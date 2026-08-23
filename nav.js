@@ -658,11 +658,10 @@ function renderFooter() {
         newsMsg.style.color = 'var(--err)';
         newsMsg.textContent = data.error || 'Something went wrong. Please try again.';
       } else {
-        // Same success message whether this is a fresh signup or a repeat
-        // one - so a person can't tell from the response whether they were
-        // already subscribed (see subscribe.js for why that's the case).
         newsMsg.style.color = 'var(--ok)';
-        newsMsg.textContent = 'You\u2019re on the list \u2014 we\u2019ll email you when new tools launch.';
+        newsMsg.textContent = data.status === 'already-subscribed'
+          ? 'You\u2019re already on the list \u2014 no need to sign up again.'
+          : 'You\u2019re on the list \u2014 we\u2019ll email you when new tools launch.';
         newsEmail.value = '';
       }
     } catch (err) {

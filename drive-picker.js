@@ -211,8 +211,25 @@
       // of exactly which element inside the menu was clicked.
       menu.addEventListener('click', (e) => { e.stopPropagation(); });
 
-      function closeMenu() { menu.classList.remove('open'); }
-      function openMenu() { menu.classList.add('open'); }
+      function closeMenu() { menu.classList.remove('open'); menu.style.left = ''; menu.style.transform = ''; }
+      function openMenu() {
+        menu.classList.add('open');
+        // Keep the menu fully on-screen horizontally on narrow viewports -
+        // the default CSS centers it under the browse link, which can
+        // push it partway off the left/right edge if that link sits near
+        // the edge of a narrow phone screen.
+        menu.style.left = '';
+        menu.style.transform = '';
+        const rect = menu.getBoundingClientRect();
+        const margin = 12;
+        if (rect.left < margin) {
+          const shift = margin - rect.left;
+          menu.style.transform = `translateX(calc(-50% + ${shift}px))`;
+        } else if (rect.right > window.innerWidth - margin) {
+          const shift = rect.right - (window.innerWidth - margin);
+          menu.style.transform = `translateX(calc(-50% - ${shift}px))`;
+        }
+      }
 
       browseEl.addEventListener('click', (e) => {
         e.preventDefault();
