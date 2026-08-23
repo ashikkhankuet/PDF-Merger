@@ -47,8 +47,8 @@
     <div class="workspace">
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <strong>Drop a JPG or PNG here, or <span class="browse" id="browseLink">browse</span></strong>
-        <div class="hint">Choose from device or paste <span class="paste-hint">with Ctrl+V</span> &middot; nothing uploaded</div>
+        <strong>Drop a JPG or PNG here</strong>
+        <div class="hint">Nothing uploaded</div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
       </div>
       <div id="previewWrap" style="display:none;margin-top:18px;">
@@ -110,10 +110,11 @@
   const fileInput = document.getElementById('fileInput');
 
   if (window.ConvertKoroDrivePicker) {
-    window.ConvertKoroDrivePicker.wireBrowseMenu({
-      browseEl: document.getElementById('browseLink'),
+    window.ConvertKoroDrivePicker.renderSourceButtons({
+      containerEl: dropzone,
       fileInputEl: fileInput,
       mimeTypes: 'image/jpeg,image/png,image/webp',
+      pasteMimeCheck: (item) => item.type && item.type.startsWith('image/'),
       onFiles: (files) => { setFile(files[0]); },
     });
   }
@@ -157,22 +158,6 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  // Paste support: Ctrl+V / Cmd+V an image copied from a screenshot tool,
-  // browser, or another app directly into the page. Not offered on mobile
-  // (see .paste-hint CSS) since there's no equivalent gesture there.
-  window.addEventListener('paste', (e) => {{
-    const items = (e.clipboardData && e.clipboardData.items) || [];
-    for (const item of items) {{
-      if (item.type && item.type.startsWith('image/')) {{
-        const pastedFile = item.getAsFile();
-        if (pastedFile) {{
-          e.preventDefault();
-          setFile(pastedFile);
-        }}
-        break;
-      }}
-    }}
-  }});
   qSlider.addEventListener('input', () => { qVal.textContent = qSlider.value + '%'; });
   clearBtn.addEventListener('click', () => { file=null; img=null; previewWrap.style.display='none'; compressBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
 

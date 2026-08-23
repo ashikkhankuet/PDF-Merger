@@ -57,8 +57,8 @@
     <div class="workspace">
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <strong>Drop an image here, or <span class="browse" id="browseLink">browse</span></strong>
-        <div class="hint">JPG, PNG, WEBP &middot; or paste with Ctrl+V &middot; nothing uploaded</div>
+        <strong>Drop an image here</strong>
+        <div class="hint">JPG, PNG, WEBP &middot; nothing uploaded</div>
         <input type="file" id="fileInput" accept="image/*" hidden />
       </div>
 
@@ -168,10 +168,11 @@
   const fileInput = document.getElementById('fileInput');
 
   if (window.ConvertKoroDrivePicker) {
-    window.ConvertKoroDrivePicker.wireBrowseMenu({
-      browseEl: document.getElementById('browseLink'),
+    window.ConvertKoroDrivePicker.renderSourceButtons({
+      containerEl: dropzone,
       fileInputEl: fileInput,
       mimeTypes: 'image/jpeg,image/png,image/webp',
+      pasteMimeCheck: (item) => item.type && item.type.startsWith('image/'),
       onFiles: (files) => { setFile(files[0]); },
     });
   }
@@ -231,21 +232,6 @@
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) reset(); });
   clearBtn.addEventListener('click', reset);
 
-  // Paste support: Ctrl+V / Cmd+V an image copied from a screenshot tool, browser,
-  // or another app directly into the page — no need to save it to a file first.
-  window.addEventListener('paste', (e) => {
-    const items = (e.clipboardData && e.clipboardData.items) || [];
-    for (const item of items) {
-      if (item.type && item.type.startsWith('image/')) {
-        const pastedFile = item.getAsFile();
-        if (pastedFile) {
-          e.preventDefault();
-          setFile(pastedFile);
-        }
-        break;
-      }
-    }
-  });
 
   // Load a File into an HTMLImageElement
   function loadImage(f) {

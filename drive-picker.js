@@ -167,93 +167,57 @@
       return files.length ? files : null;
     },
 
-    // Wires up the standard "browse" dropdown (From device / From Google
-    // Drive) used across ConvertKoro's tool pages, so each tool only
-    // needs to call this once with its own config rather than duplicate
-    // the dropdown open/close/outside-click logic 30+ times.
+    // Renders three always-visible source buttons (Device / Google Drive /
+    // Paste) inside a tool's dropzone - replacing the earlier "click
+    // browse to reveal a hidden menu" pattern, since all three sources
+    // should be visible up front rather than discovered by clicking.
     //
     // config:
-    //   browseEl      - the clickable "browse" span/link that opens the menu
+    //   containerEl    - element to render the buttons into (usually the dropzone)
     //   fileInputEl    - the hidden <input type="file"> to trigger for device browsing
-    //   mimeTypes      - comma-separated MIME filter string for the Picker (optional)
-    //   onFiles(files) - called with an array of File objects, from either source
-    wireBrowseMenu(config) {
-      const { browseEl, fileInputEl, mimeTypes, multiSelect, onFiles } = config;
-      if (!browseEl) return;
+    //   mimeTypes      - comma-separated MIME filter string for the Drive Picker (optional)
+    //   pasteMimeCheck(item) - function(clipboard item) => boolean, decides
+    //                    whether a given clipboard item matches this tool's
+    //                    accepted file type. Required for the Paste button.
+    //   multiSelect    - whether the Drive Picker allows selecting more than one file
+    //   onFiles(files) - called with an array of File objects, from any of the three sources
+    renderSourceButtons(config) {
+      const { containerEl, fileInputEl, mimeTypes, pasteMimeCheck, multiSelect, onFiles } = config;
+      if (!containerEl) return;
 
-      const wrap = document.createElement('span');
-      wrap.className = 'browse-wrap';
-      browseEl.parentNode.insertBefore(wrap, browseEl);
-      wrap.appendChild(browseEl);
-
-      const menu = document.createElement('div');
-      menu.className = 'browse-menu';
-      menu.innerHTML = `
-        <button type="button" class="browse-menu-item" data-src="device">
+      const row = document.createElement('div');
+      row.className = 'source-btn-row';
+      row.innerHTML = `
+        <button type="button" class="source-btn" data-src="device">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          From device
+          Device
         </button>
-        <button type="button" class="browse-menu-item" data-src="drive">
+        <button type="button" class="source-btn" data-src="drive">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 19h20L12 2z"/></svg>
-          From Google Drive
+          Google Drive
+        </button>
+        <button type="button" class="source-btn" data-src="paste">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/></svg>
+          Paste
         </button>
       `;
-      wrap.appendChild(menu);
+      containerEl.appendChild(row);
 
-      // Stop propagation for ANY click landing inside the menu - not just
-      // the initial browse-span click. This was the actual bug: clicking
-      // "From Google Drive" or "From device" inside the menu is itself a
-      // click event that bubbles up through .browse-wrap to the dropzone's
-      // own click-to-browse handler, silently firing fileInput.click() at
-      // the same time as (or instead of) the intended action. A single
-      // listener on the whole menu, registered before the more specific
-      // per-button handlers below, closes this off completely regardless
-      // of exactly which element inside the menu was clicked.
-      menu.addEventListener('click', (e) => { e.stopPropagation(); });
+      // Every button click must stop here - these buttons sit inside the
+      // dropzone, which itself has its own "click anywhere = open device
+      // picker" handler. Without this, clicking any of the three buttons
+      // would also silently trigger that handler underneath.
+      row.addEventListener('click', (e) => { e.stopPropagation(); });
 
-      function closeMenu() { menu.classList.remove('open'); menu.style.left = ''; menu.style.transform = ''; }
-      function openMenu() {
-        menu.classList.add('open');
-        // Keep the menu fully on-screen horizontally on narrow viewports -
-        // the default CSS centers it under the browse link, which can
-        // push it partway off the left/right edge if that link sits near
-        // the edge of a narrow phone screen.
-        menu.style.left = '';
-        menu.style.transform = '';
-        const rect = menu.getBoundingClientRect();
-        const margin = 12;
-        if (rect.left < margin) {
-          const shift = margin - rect.left;
-          menu.style.transform = `translateX(calc(-50% + ${shift}px))`;
-        } else if (rect.right > window.innerWidth - margin) {
-          const shift = rect.right - (window.innerWidth - margin);
-          menu.style.transform = `translateX(calc(-50% - ${shift}px))`;
-        }
-      }
-
-      browseEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (menu.classList.contains('open')) closeMenu(); else openMenu();
-      });
-      document.addEventListener('click', (e) => {
-        if (!wrap.contains(e.target)) closeMenu();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-      });
-
-      menu.querySelector('[data-src="device"]').addEventListener('click', () => {
-        closeMenu();
+      row.querySelector('[data-src="device"]').addEventListener('click', () => {
         if (fileInputEl) fileInputEl.click();
       });
 
-      menu.querySelector('[data-src="drive"]').addEventListener('click', async (e) => {
-        closeMenu();
+      row.querySelector('[data-src="drive"]').addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const original = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = 'Opening Drive&hellip;';
+        btn.innerHTML = 'Opening&hellip;';
         try {
           const files = await window.ConvertKoroDrivePicker.pick(mimeTypes, multiSelect);
           if (files && files.length) onFiles(files);
@@ -264,6 +228,53 @@
           btn.innerHTML = original;
         }
       });
+
+      row.querySelector('[data-src="paste"]').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const original = btn.innerHTML;
+
+        // Safari does not support navigator.clipboard.read() (only the
+        // narrower readText()), so this is a real, known gap - not a bug
+        // to silently swallow. Tell the person plainly rather than have
+        // the button do nothing with no explanation.
+        if (!navigator.clipboard || !navigator.clipboard.read) {
+          btn.innerHTML = 'Use Ctrl+V instead';
+          setTimeout(() => { btn.innerHTML = original; }, 2200);
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = 'Reading clipboard&hellip;';
+        try {
+          const clipboardItems = await navigator.clipboard.read();
+          const matched = [];
+          for (const item of clipboardItems) {
+            for (const type of item.types) {
+              if (pasteMimeCheck({ type })) {
+                const blob = await item.getType(type);
+                const ext = type.split('/')[1] || 'bin';
+                matched.push(new File([blob], `pasted.${ext}`, { type }));
+                break;
+              }
+            }
+          }
+          if (matched.length) {
+            onFiles(matched);
+          } else {
+            btn.innerHTML = 'Nothing to paste';
+            setTimeout(() => { btn.innerHTML = original; }, 2000);
+          }
+        } catch (err) {
+          // Most commonly a denied permission prompt, or a browser that
+          // blocks the read outside a sufficiently "fresh" user gesture.
+          console.warn('ConvertKoro paste button: clipboard read failed.', err);
+          btn.innerHTML = 'Couldn\u2019t access clipboard';
+          setTimeout(() => { btn.innerHTML = original; }, 2200);
+        } finally {
+          btn.disabled = false;
+        }
+      });
     },
   };
 })();
+
