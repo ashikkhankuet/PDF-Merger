@@ -190,6 +190,17 @@
       `;
       wrap.appendChild(menu);
 
+      // Stop propagation for ANY click landing inside the menu - not just
+      // the initial browse-span click. This was the actual bug: clicking
+      // "From Google Drive" or "From device" inside the menu is itself a
+      // click event that bubbles up through .browse-wrap to the dropzone's
+      // own click-to-browse handler, silently firing fileInput.click() at
+      // the same time as (or instead of) the intended action. A single
+      // listener on the whole menu, registered before the more specific
+      // per-button handlers below, closes this off completely regardless
+      // of exactly which element inside the menu was clicked.
+      menu.addEventListener('click', (e) => { e.stopPropagation(); });
+
       function closeMenu() { menu.classList.remove('open'); }
       function openMenu() { menu.classList.add('open'); }
 
