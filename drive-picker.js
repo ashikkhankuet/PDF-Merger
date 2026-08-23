@@ -253,12 +253,22 @@
               if (pasteMimeCheck({ type })) {
                 const blob = await item.getType(type);
                 const ext = type.split('/')[1] || 'bin';
-                matched.push(new File([blob], `pasted.${ext}`, { type }));
+                // The Clipboard API only ever returns a Blob here, never a
+                // File - the original filename genuinely isn't carried on
+                // the clipboard for a pasted image in the first place (a
+                // real OS/browser limitation, not something recoverable
+                // client-side). A timestamped name is at least distinct
+                // and identifiable, rather than a generic "pasted.png"
+                // that looks the same for every paste.
+                const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                matched.push(new File([blob], `clipboard-${stamp}.${ext}`, { type }));
                 break;
               }
             }
           }
           if (matched.length) {
+            btn.innerHTML = 'Pasted';
+            setTimeout(() => { btn.innerHTML = original; }, 1200);
             onFiles(matched);
           } else {
             btn.innerHTML = 'Nothing to paste';
