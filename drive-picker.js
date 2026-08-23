@@ -85,12 +85,12 @@
     });
   }
 
-  function showPicker(mimeTypes) {
+  function showPicker(mimeTypes, multiSelect) {
     return new Promise((resolve, reject) => {
       const view = new google.picker.View(google.picker.ViewId.DOCS);
       if (mimeTypes) view.setMimeTypes(mimeTypes);
 
-      const picker = new google.picker.PickerBuilder()
+      const builder = new google.picker.PickerBuilder()
         .enableFeature(google.picker.Feature.NAV_HIDDEN)
         .setDeveloperKey(API_KEY)
         .setAppId(APP_ID)
@@ -102,8 +102,18 @@
           } else if (data.action === google.picker.Action.CANCEL) {
             resolve(null);
           }
-        })
-        .build();
+        });
+
+      // Only enabled for tools that actually accept more than one file
+      // (merge, image-to-pdf, jpg-to-pdf) - passed in per-call from
+      // wireBrowseMenu's config below, not a blanket default, since a
+      // single-file tool letting someone pick 5 files and silently using
+      // only the first would be confusing, not a real feature.
+      if (multiSelect) {
+        builder.enableFeature(google.picker.Feature.MULTISELECT_ENABLED);
+      }
+
+      const picker = builder.build();
       picker.setVisible(true);
     });
   }
@@ -136,7 +146,7 @@
   // caller enables multi-select), or null if the user cancelled at any
   // step (auth prompt or picker itself).
   window.ConvertKoroDrivePicker = {
-    async pick(mimeTypes) {
+    async pick(mimeTypes, multiSelect) {
       await ensureLibrariesLoaded();
       try {
         await requestAccessToken();
@@ -144,7 +154,7 @@
         console.warn('ConvertKoro Drive Picker: sign-in was cancelled or failed.', err);
         return null;
       }
-      const docs = await showPicker(mimeTypes);
+      const docs = await showPicker(mimeTypes, multiSelect);
       if (!docs) return null;
       const files = [];
       for (const doc of docs) {
@@ -168,7 +178,7 @@
     //   mimeTypes      - comma-separated MIME filter string for the Picker (optional)
     //   onFiles(files) - called with an array of File objects, from either source
     wireBrowseMenu(config) {
-      const { browseEl, fileInputEl, mimeTypes, onFiles } = config;
+      const { browseEl, fileInputEl, mimeTypes, multiSelect, onFiles } = config;
       if (!browseEl) return;
 
       const wrap = document.createElement('span');
@@ -228,7 +238,7 @@
         btn.disabled = true;
         btn.innerHTML = 'Opening Drive&hellip;';
         try {
-          const files = await window.ConvertKoroDrivePicker.pick(mimeTypes);
+          const files = await window.ConvertKoroDrivePicker.pick(mimeTypes, multiSelect);
           if (files && files.length) onFiles(files);
         } catch (err) {
           console.warn('ConvertKoro Drive Picker: pick failed.', err);
