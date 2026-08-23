@@ -57,8 +57,8 @@
     <div class="workspace">
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <strong>Drop PDFs here, or <span class="browse">browse</span></strong>
-        <div class="hint">PDF only &middot; multiple files &middot; nothing uploaded</div>
+        <strong>Drop PDFs here, or <span class="browse" id="browseLink">browse</span></strong>
+        <div class="hint">PDF only &middot; multiple files &middot; paste <span class="paste-hint">with Ctrl+V</span> &middot; nothing uploaded</div>
         <input type="file" id="fileInput" accept="application/pdf" multiple hidden />
       </div>
 
@@ -122,12 +122,23 @@
 </main>
 
 <div id="site-footer"></div>
+<script src="drive-picker.js"></script>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('merge');</script>
 <script>
 (() => {
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
+
+  if (window.ConvertKoroDrivePicker) {
+    window.ConvertKoroDrivePicker.wireBrowseMenu({
+      browseEl: document.getElementById('browseLink'),
+      fileInputEl: fileInput,
+      mimeTypes: 'application/pdf',
+      onFiles: (files) => { addFiles(files); },
+    });
+  }
+
   const fileList = document.getElementById('fileList');
   const mergeBtn = document.getElementById('mergeBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -181,6 +192,24 @@
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault(); dropzone.classList.remove('drag');
     if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+
+  // Paste support: Ctrl+C a PDF (e.g. in File Explorer/Finder) then Ctrl+V
+  // on this page - appends to the existing file list, same as dropping an
+  // additional PDF would. Not offered on mobile (see .paste-hint CSS)
+  // since there's no reliable equivalent gesture there.
+  window.addEventListener('paste', (e) => {
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    for (const item of items) {
+      if (item.type === 'application/pdf') {
+        const pastedFile = item.getAsFile();
+        if (pastedFile) {
+          e.preventDefault();
+          addFiles([pastedFile]);
+        }
+        break;
+      }
+    }
   });
 
   fileList.addEventListener('click', (e) => {
