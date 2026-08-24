@@ -21,6 +21,10 @@
       <div>
         <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Admin key</label>
         <input type="password" id="aKey" required placeholder="Your ANNOUNCE_ADMIN_KEY" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+        <label style="display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;">
+          <input type="checkbox" id="aRemember" style="margin:0;" />
+          Remember on this device (saved only in this browser, never sent anywhere except this form)
+        </label>
       </div>
       <div>
         <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Kind</label>
@@ -50,6 +54,21 @@
   </div>
 </main>
 <script>
+  // Locally-remembered admin key, opt-in only via the checkbox below -
+  // deliberately NOT hardcoded into the page source (that would expose
+  // the key to anyone viewing source, defeating the whole point of it),
+  // and deliberately NOT on by default (a shared/borrowed machine
+  // shouldn't silently retain this). localStorage is scoped to this
+  // exact origin (convertkoro.com) and never transmitted anywhere
+  // except back into this same form's own request.
+  (function restoreKey() {
+    const saved = localStorage.getItem('ck_announce_key');
+    if (saved) {
+      document.getElementById('aKey').value = saved;
+      document.getElementById('aRemember').checked = true;
+    }
+  })();
+
   document.getElementById('annForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const key = document.getElementById('aKey').value.trim();
@@ -66,6 +85,12 @@
       return;
     }
     if (!confirm(`Send this announcement to every subscriber now? This can't be undone.`)) return;
+
+    if (document.getElementById('aRemember').checked) {
+      localStorage.setItem('ck_announce_key', key);
+    } else {
+      localStorage.removeItem('ck_announce_key');
+    }
 
     btn.disabled = true;
     const original = btn.textContent;

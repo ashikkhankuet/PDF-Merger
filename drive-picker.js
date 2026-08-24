@@ -257,6 +257,22 @@
       `;
       containerEl.appendChild(row);
 
+      // Mobile-only: hide the Paste button entirely for tools that don't
+      // accept images. Confirmed directly on a real Android device: the
+      // OS clipboard exposes copied *images* to the browser but never
+      // copied non-image files (PDF, docx, audio, video) - no code
+      // change can retrieve what the OS never makes available. Showing
+      // a button that can only ever report failure for these tools is
+      // worse than not showing it, so it's removed rather than kept
+      // and explained every time. Desktop is unaffected - Ctrl+V and
+      // the button both work there for every file type, so the button
+      // stays visible on desktop regardless of file type.
+      const acceptsOnlyImages = typeof mimeTypes === 'string' &&
+        mimeTypes.split(',').every((t) => t.trim().startsWith('image/'));
+      if (isTouchDevice() && !acceptsOnlyImages) {
+        row.querySelector('[data-src="paste"]').remove();
+      }
+
       // Every button click must stop here - these buttons sit inside the
       // dropzone, which itself has its own "click anywhere = open device
       // picker" handler. Without this, clicking any of the three buttons
@@ -311,60 +327,110 @@
         }
       });
 
-      row.querySelector('[data-src="paste"]').addEventListener('click', async (e) => {
+      // Hidden, off-screen contenteditable used purely to *receive* a
+      // real browser paste programmatically. Clicking the Paste button
+      // focuses this element and issues document.execCommand('paste')
+      // (still functional for this narrow purpose in Chromium/Firefox
+      // despite being deprecated for general use) - this routes through
+      // the exact same synchronous paste event / clipboardData.files
+      // path Ctrl+V already uses, which is the only path that reliably
+      // sees OS file-manager copies. That makes the button and Ctrl+V
+      // genuinely equivalent on desktop, instead of the button using
+      // the narrower clipboard.read() API that can't see those copies.
+      // Only needed when the Paste button itself is present.
+      const pasteBtnEl = row.querySelector('[data-src="paste"]');
+      let pasteSink = null;
+      if (pasteBtnEl) {
+        pasteSink = containerEl.querySelector('.paste-sink');
+        if (!pasteSink) {
+          pasteSink = document.createElement('div');
+          pasteSink.className = 'paste-sink';
+          pasteSink.contentEditable = 'true';
+          pasteSink.setAttribute('tabindex', '-1');
+          pasteSink.setAttribute('aria-hidden', 'true');
+          pasteSink.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;';
+          containerEl.appendChild(pasteSink);
+        }
+      }
+
+      if (pasteBtnEl) pasteBtnEl.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const original = btn.innerHTML;
         const touch = isTouchDevice();
 
-        // Safari (desktop or iOS) does not support navigator.clipboard.read()
-        // (only the narrower readText()) - a real, known gap, not a bug to
-        // silently swallow. The advice differs by device: a desktop user
-        // genuinely can press Ctrl+V; a touchscreen user has no such
-        // shortcut at all, so telling them to use one is actively wrong,
-        // not just unhelpful.
-        if (!navigator.clipboard || !navigator.clipboard.read) {
-          btn.innerHTML = touch ? 'Not supported here' : 'Use Ctrl+V instead';
-          setTimeout(() => { btn.innerHTML = original; }, 2200);
-          return;
-        }
+        // One-shot listener: whatever the upcoming execCommand('paste')
+        // or clipboard.read() call finds gets routed through the same
+        // handlePasteEvent matching logic Ctrl+V uses, so button and
+        // keyboard paste are handled identically once a file is found.
+        let settled = false;
+        const onSinkPaste = (ev) => {
+          settled = true;
+          handlePasteEvent(ev, pasteMimeCheck, onFiles);
+        };
+        pasteSink.addEventListener('paste', onSinkPaste, { once: true });
 
         btn.disabled = true;
-        btn.innerHTML = 'Reading clipboard&hellip;';
+        btn.innerHTML = 'Pasting&hellip;';
+
         try {
-          const clipboardItems = await navigator.clipboard.read();
-          const matched = [];
-          for (const item of clipboardItems) {
-            for (const type of item.types) {
-              if (pasteMimeCheck({ type })) {
-                const blob = await item.getType(type);
-                const ext = type.split('/')[1] || 'bin';
-                const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                matched.push(new File([blob], `clipboard-${stamp}.${ext}`, { type }));
-                break;
-              }
-            }
-          }
-          if (matched.length) {
+          pasteSink.focus();
+          const execWorked = document.execCommand && document.execCommand('paste');
+
+          // Give the synchronous paste event a tick to fire and call
+          // onFiles() via onSinkPaste above before deciding it failed.
+          await new Promise((r) => setTimeout(r, 60));
+
+          if (settled) {
             btn.innerHTML = 'Pasted';
             setTimeout(() => { btn.innerHTML = original; }, 1200);
-            onFiles(matched);
-          } else {
-            // A real, common case especially for non-image files (PDF,
-            // .docx, audio, video): the async clipboard.read() API often
-            // cannot see an OS file-manager copy at all, even though a
-            // real keyboard Ctrl+V (handled separately, see the paste
-            // event listener below) can. On a touch device there's no
-            // keyboard shortcut to fall back to, so the honest message
-            // there is simply that nothing was found - not a suggestion
-            // to use a key combination that doesn't exist on that device.
-            btn.innerHTML = touch ? 'Nothing found to paste' : 'Try Ctrl+V instead';
-            setTimeout(() => { btn.innerHTML = original; }, 2400);
+            return;
           }
+
+          // execCommand('paste') is blocked entirely in some browsers
+          // (Safari always; Chrome/Firefox when the page lacks the
+          // clipboard-read permission or isn't from a trusted script
+          // context) - when that happens, fall back to the async
+          // Clipboard API, which - despite missing OS file-manager
+          // copies - does reliably see clipboard *images*, so this
+          // fallback is genuinely useful on mobile rather than dead
+          // weight.
+          if (!execWorked && navigator.clipboard && navigator.clipboard.read) {
+            const clipboardItems = await navigator.clipboard.read();
+            const matched = [];
+            for (const item of clipboardItems) {
+              for (const type of item.types) {
+                if (pasteMimeCheck({ type })) {
+                  const blob = await item.getType(type);
+                  const ext = type.split('/')[1] || 'bin';
+                  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                  matched.push(new File([blob], `clipboard-${stamp}.${ext}`, { type }));
+                  break;
+                }
+              }
+            }
+            if (matched.length) {
+              btn.innerHTML = 'Pasted';
+              setTimeout(() => { btn.innerHTML = original; }, 1200);
+              onFiles(matched);
+              return;
+            }
+          }
+
+          // Nothing retrievable through either path. On mobile this is
+          // usually a real OS-level wall - confirmed directly (Android
+          // exposes copied images to the web clipboard but never
+          // exposes copied non-image files like PDFs, regardless of
+          // browser or code here) - so the honest message differs from
+          // desktop, where a permission prompt or focus issue is the
+          // more likely, retryable cause.
+          btn.innerHTML = touch ? 'Not available for this file type on mobile' : 'Clipboard is empty or blocked';
+          setTimeout(() => { btn.innerHTML = original; }, 2800);
         } catch (err) {
-          console.warn('ConvertKoro paste button: clipboard read failed.', err);
-          btn.innerHTML = touch ? 'Couldn\u2019t access clipboard' : 'Try Ctrl+V instead';
-          setTimeout(() => { btn.innerHTML = original; }, 2400);
+          console.warn('ConvertKoro paste button: paste failed.', err);
+          btn.innerHTML = touch ? 'Not available for this file type on mobile' : 'Clipboard access blocked';
+          setTimeout(() => { btn.innerHTML = original; }, 2800);
         } finally {
+          pasteSink.removeEventListener('paste', onSinkPaste);
           btn.disabled = false;
         }
       });
