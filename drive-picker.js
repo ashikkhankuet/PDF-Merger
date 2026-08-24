@@ -21,6 +21,17 @@
   const APP_ID = '606963353160';
   const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
+  // Used to pick correct, honest fallback wording for the Paste button -
+  // "Try Ctrl+V instead" is real, useful advice on desktop but flatly
+  // wrong on a touchscreen with no physical keyboard shortcut at all.
+  // A simple touch-capability check (not user-agent sniffing, which is
+  // unreliable) - matches the same real-world signal used elsewhere on
+  // the site for its mobile-only CSS behavior.
+  function isTouchDevice() {
+    return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+      ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  }
+
   let tokenClient = null;
   let accessToken = null;
   let pickerInited = false;
@@ -303,13 +314,16 @@
       row.querySelector('[data-src="paste"]').addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const original = btn.innerHTML;
+        const touch = isTouchDevice();
 
-        // Safari does not support navigator.clipboard.read() (only the
-        // narrower readText()), so this is a real, known gap - not a bug
-        // to silently swallow. Tell the person plainly rather than have
-        // the button do nothing with no explanation.
+        // Safari (desktop or iOS) does not support navigator.clipboard.read()
+        // (only the narrower readText()) - a real, known gap, not a bug to
+        // silently swallow. The advice differs by device: a desktop user
+        // genuinely can press Ctrl+V; a touchscreen user has no such
+        // shortcut at all, so telling them to use one is actively wrong,
+        // not just unhelpful.
         if (!navigator.clipboard || !navigator.clipboard.read) {
-          btn.innerHTML = 'Use Ctrl+V instead';
+          btn.innerHTML = touch ? 'Not supported here' : 'Use Ctrl+V instead';
           setTimeout(() => { btn.innerHTML = original; }, 2200);
           return;
         }
@@ -335,17 +349,20 @@
             setTimeout(() => { btn.innerHTML = original; }, 1200);
             onFiles(matched);
           } else {
-            // A real, common case for non-image files (PDF, .docx, audio,
-            // video): the async clipboard.read() API often cannot see an
-            // OS file-manager copy at all, even though Ctrl+V (handled
-            // above) can. Say so plainly instead of a generic "nothing to
-            // paste" that would be misleading here.
-            btn.innerHTML = 'Try Ctrl+V instead';
+            // A real, common case especially for non-image files (PDF,
+            // .docx, audio, video): the async clipboard.read() API often
+            // cannot see an OS file-manager copy at all, even though a
+            // real keyboard Ctrl+V (handled separately, see the paste
+            // event listener below) can. On a touch device there's no
+            // keyboard shortcut to fall back to, so the honest message
+            // there is simply that nothing was found - not a suggestion
+            // to use a key combination that doesn't exist on that device.
+            btn.innerHTML = touch ? 'Nothing found to paste' : 'Try Ctrl+V instead';
             setTimeout(() => { btn.innerHTML = original; }, 2400);
           }
         } catch (err) {
           console.warn('ConvertKoro paste button: clipboard read failed.', err);
-          btn.innerHTML = 'Try Ctrl+V instead';
+          btn.innerHTML = touch ? 'Couldn\u2019t access clipboard' : 'Try Ctrl+V instead';
           setTimeout(() => { btn.innerHTML = original; }, 2400);
         } finally {
           btn.disabled = false;

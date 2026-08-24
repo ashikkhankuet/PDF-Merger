@@ -76,10 +76,10 @@
 
     <div class="quick-start">
       <div class="qs-stack">
-        <span class="qs-chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M13 3v5h5"/></svg></span>
-        <span class="qs-chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
-        <span class="qs-chip c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>
-        <span class="qs-chip c4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="M4 16l4.5-4.5L12 15l3-3 5 5"/></svg></span>
+        <span class="qs-cat cat-pdf"><span class="qs-chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M13 3v5h5"/></svg></span><span class="qs-cat-label">PDF</span></span>
+        <span class="qs-cat cat-image"><span class="qs-chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="qs-cat-label">Image</span></span>
+        <span class="qs-cat cat-media"><span class="qs-chip c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg></span><span class="qs-cat-label">Media</span></span>
+        <span class="qs-cat cat-dev"><span class="qs-chip c4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><span class="qs-cat-label">Developer</span></span>
         <span class="qs-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14"/><path d="M6 13l6 6 6-6"/></svg></span>
       </div>
       <div class="qs-select-row">
@@ -119,26 +119,26 @@
         <h2>Why <span class="ink-word">Convert<span class="koro">Koro</span></span></h2>
         <p>Most free converters route your files through a server somewhere. Most of ours don't need to.</p>
       </div>
-      <div class="feat2-grid">
-        <div class="feat2">
+      <div class="feat-bar">
+        <div class="feat-item">
           <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
-          <h3>Privacy-focused</h3>
-          <p>Most tools process files locally in your browser. A couple (like Image-to-Text and URL Shortener) use a server by necessity &mdash; that's always disclosed on the tool itself.</p>
+          <span class="feat-text"><h3>Privacy-focused</h3><p>Most tools process files locally in your browser.</p></span>
         </div>
-        <div class="feat2">
-          <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
-          <h3>Genuinely fast</h3>
-          <p>Most tools need nothing to upload and nothing to wait on &mdash; conversions finish in under a second.</p>
+        <div class="feat-item">
+          <span class="ico" style="background:var(--highlight-tint);color:var(--highlight-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+          <span class="feat-text"><h3>Genuinely fast</h3><p>Nothing to upload &mdash; results in under a second.</p></span>
         </div>
-        <div class="feat2">
-          <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.5"/></svg></span>
-          <h3>Always free</h3>
-          <p>No premium tier, no watermark, no daily limit counting down.</p>
+        <div class="feat-item">
+          <span class="ico" style="background:var(--accent-plum-tint);color:var(--accent-plum);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.5"/></svg></span>
+          <span class="feat-text"><h3>Always free</h3><p>No premium tier, no watermark, no limits.</p></span>
         </div>
-        <div class="feat2">
-          <span class="ico" style="background:var(--signal-tint);color:var(--signal-dk);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
-          <h3>Works everywhere</h3>
-          <p>Runs in any modern browser, on desktop or mobile &mdash; nothing to install.</p>
+        <div class="feat-item">
+          <span class="ico" style="background:var(--accent-blue-tint);color:var(--accent-blue);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
+          <span class="feat-text"><h3>Works everywhere</h3><p>Any modern browser, desktop or mobile.</p></span>
+        </div>
+        <div class="feat-item">
+          <span class="ico" style="background:var(--ok-tint);color:var(--ok);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="14 6 21 6 21 13"/></svg></span>
+          <span class="feat-text"><h3>Constantly improving</h3><p>We add new tools regularly.</p></span>
         </div>
       </div>
     </div>
@@ -209,11 +209,14 @@
   <section class="section">
     <div class="container">
       <div class="cta-banner">
-        <h2>Pick a tool and try it &mdash; no sign-up needed</h2>
-        <p>Every conversion happens right here, right now, on your own device.</p>
+        <h2>Ready to get things done?</h2>
+        <p>Powerful file tools. Simple, fast, and free.</p>
         <div class="actions-row">
           <a href="/merge" class="btn btn-primary btn-lg">Start with PDF Merger</a>
-          <a href="#tools" class="btn btn-ghost btn-lg" id="seeAllBtn">See all tools</a>
+          <a href="#tools" class="btn btn-ghost btn-lg" id="seeAllBtn"><svg viewBox="0 0 24 24" fill="currentColor" style="margin-right:5px;"><polygon points="6 4 20 12 6 20 6 4"/></svg><span id="seeAllBtnText">See all tools</span></a>
+        </div>
+        <div class="cta-mini-stats">
+          <span id="ctaToolCount">52+ tools</span><span class="dot">&middot;</span><span>Free to use</span><span class="dot">&middot;</span><span>No complicated setup</span>
         </div>
       </div>
     </div>
@@ -328,8 +331,9 @@
 
   document.getElementById('qsHint').textContent = `${liveTools.length} tools \u00b7 free forever \u00b7 no account`;
   document.getElementById('hiwCount').textContent = `Drop it in or click browse \u2014 any of the ${liveTools.length} tools accepts what it needs.`;
-  document.getElementById('seeAllBtn').textContent = `See all ${liveTools.length} tools`;
+  document.getElementById('seeAllBtnText').textContent = `See all ${liveTools.length} tools`;
   document.getElementById('statToolCount').textContent = liveTools.length;
+  document.getElementById('ctaToolCount').textContent = `${liveTools.length}+ tools`;
 </script>
 </body>
 </html>

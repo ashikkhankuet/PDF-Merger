@@ -25,13 +25,14 @@
   --accent-plum-tint: rgba(124,58,237,.09);
   --accent-teal:    #0D9488;
   --accent-teal-tint: rgba(13,148,136,.09);
-  --grad-pdf:      linear-gradient(135deg, #FF7A7A, #E23636);
-  --grad-image:    linear-gradient(135deg, #3DD68C, #0E9F63);
+  --grad-pdf:      linear-gradient(135deg, #FE5059, #E52A32);
+  --grad-image:    linear-gradient(135deg, #2A8CFC, #0D6EFD);
   --grad-ocr:      linear-gradient(135deg, #A78BFA, #7C3AED);
-  --grad-dev:      linear-gradient(135deg, #5B9CFF, #2563EB);
+  --grad-dev:      linear-gradient(135deg, #24D08A, #08A362);
   --grad-document: linear-gradient(135deg, #FBBF54, #D97706);
   --grad-create:   linear-gradient(135deg, #F472B6, #DB2777);
   --grad-calc:     linear-gradient(135deg, #38BDF8, #0284C7);
+  --grad-media:    linear-gradient(135deg, #A25AF3, #6B21E8);
   --err:        #C0362B;
   --err-tint:   rgba(192,54,43,.08);
   --shadow:     0 1px 2px rgba(20,24,31,.05), 0 10px 28px rgba(20,24,31,.06);
@@ -423,10 +424,10 @@ body.mob-panel-open { overflow: hidden; }
 .tool-card-more { border-style: dashed; background: var(--paper); box-shadow: none; }
 .tool-card-more:hover { border-color: var(--accent-plum); }
 .tool-card .ico {
-  width: 32px; height: 32px; border-radius: 50%; background: var(--signal-tint); color: var(--signal-dk);
+  width: 34px; height: 34px; border-radius: 10px; color: #fff;
   display: flex; align-items: center; justify-content: center; position: relative;
 }
-.tool-card .ico svg { width: 16px; height: 16px; }
+.tool-card .ico svg { width: 17px; height: 17px; }
 .tool-card h3 { font-size: 13px; line-height: 1.25; }
 .tool-card p { font-size: 11.5px; color: var(--ink-soft); margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tool-card .tag {
@@ -686,8 +687,8 @@ body.mob-panel-open { overflow: hidden; }
    DARK MODE
    ============================================================ */
 :root[data-theme="dark"] {
-  --paper:      #10131A;
-  --card:       #171B24;
+  --paper:      #070C1A;
+  --card:       #0E1526;
   --ink:        #F1F3F8;
   --ink-soft:   #9BA3B4;
   --ink-faint:  #6B7385;
@@ -729,6 +730,14 @@ body.mob-panel-open { overflow: hidden; }
 .hero-split .eyebrow { }
 .hero-split h1 { font-size: clamp(34px, 4.6vw, 52px); line-height: 1.08; letter-spacing: -.02em; margin: 20px 0 0; max-width: 560px; }
 @media (max-width: 900px) { .hero-split h1 { max-width: none; margin-left: auto; margin-right: auto; } }
+.hero-split h1 .accent {
+  color: var(--signal); position: relative; display: inline-block;
+}
+.hero-split h1 .accent::after {
+  content: ''; position: absolute; left: 2px; right: 6px; bottom: -6px; height: 5px;
+  background: var(--signal); border-radius: 3px; opacity: .85;
+  transform: skewY(-1.5deg);
+}
 .hero-split p.lead { color: var(--ink-soft); font-size: 16.5px; line-height: 1.65; max-width: 480px; margin: 18px 0 0; }
 @media (max-width: 900px) { .hero-split p.lead { margin-left: auto; margin-right: auto; } }
 @media (max-width: 480px) { .hero-split { padding-left: 20px; padding-right: 20px; } .hero-split h1, .hero-split p.lead { padding: 0 4px; } }
@@ -744,24 +753,83 @@ body.mob-panel-open { overflow: hidden; }
 
 .quick-start {
   background: var(--card); border: 1px solid var(--line); border-radius: 18px;
-  box-shadow: var(--shadow-lg); padding: 28px; position: relative;
+  box-shadow: var(--shadow-lg); padding: 28px; position: relative; z-index: 1; overflow: visible;
+  min-width: 0;
 }
-.qs-stack { position: relative; height: 108px; margin-bottom: 20px; }
+/* Soft blurred color blobs behind the panel, matching the reference
+   design's decorative background - subtle in light mode, more visible
+   as a glow in dark mode. Purely decorative, pointer-events disabled so
+   they never interfere with the real, interactive panel content. */
+.quick-start::before, .quick-start::after {
+  content: ''; position: absolute; border-radius: 50%; z-index: -1; pointer-events: none;
+  filter: blur(50px); opacity: .35;
+}
+.quick-start::before {
+  width: 260px; height: 260px; background: var(--grad-image); top: -60px; right: -60px;
+}
+.quick-start::after {
+  width: 220px; height: 220px; background: var(--grad-media); bottom: -50px; left: -50px;
+}
+:root[data-theme="dark"] .quick-start::before, :root[data-theme="dark"] .quick-start::after { opacity: .5; }
+@media (max-width: 480px) {
+  /* The blobs' negative offsets (extending outside .quick-start's own
+     box) were pushing the page's real scrollable width past the
+     viewport on narrow phones - confirmed by toggling them off and
+     watching document.body.scrollWidth drop back to exactly the
+     viewport width. Pulling them fully inside the panel bounds on
+     small screens keeps the same visual glow without the extra
+     scrollable width. */
+  .quick-start::before { top: 10px; right: 10px; width: 160px; height: 160px; }
+  .quick-start::after { bottom: 10px; left: 10px; width: 140px; height: 140px; }
+}
+
+.qs-stack { display: flex; justify-content: center; gap: 26px; margin-bottom: 22px; position: relative; }
+.qs-cat { display: flex; flex-direction: column; align-items: center; gap: 7px; }
 .qs-chip {
-  position: absolute; width: 54px; height: 54px; border-radius: 50%; background: var(--card);
+  width: 54px; height: 54px; border-radius: 50%; color: #fff;
   border: none; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
 }
-.qs-chip svg { width: 22px; height: 22px; }
-.qs-chip.c1 { left: 6%;  top: 14px;  transform: rotate(-9deg);  color: #fff; background: var(--grad-pdf); z-index: 1; }
-.qs-chip.c2 { left: 30%; top: 0;     transform: rotate(4deg);   color: #fff; background: var(--grad-dev); z-index: 3; }
-.qs-chip.c3 { left: 54%; top: 10px;  transform: rotate(-4deg);  color: #fff; background: var(--grad-image); z-index: 2; }
-.qs-chip.c4 { left: 77%; top: 18px;  transform: rotate(8deg);   color: #fff; background: var(--grad-create); z-index: 1; }
-.qs-arrow { position: absolute; left: 50%; bottom: -2px; transform: translateX(-50%);
+.qs-chip svg { width: 23px; height: 23px; }
+.qs-cat-label { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.qs-cat-label::after {
+  content: ''; display: block; height: 3px; width: 26px; margin: 4px auto 0; border-radius: 2px;
+}
+.qs-cat.cat-pdf .qs-cat-label::after { background: var(--grad-pdf); }
+.qs-cat.cat-image .qs-cat-label::after { background: var(--grad-image); }
+.qs-cat.cat-media .qs-cat-label::after { background: var(--grad-media); }
+.qs-cat.cat-dev .qs-cat-label::after { background: var(--grad-dev); }
+.qs-chip.c1 { background: var(--grad-pdf); }
+.qs-chip.c2 { background: var(--grad-image); }
+.qs-chip.c3 { background: var(--grad-media); }
+.qs-chip.c4 { background: var(--grad-dev); }
+/* Icon glow, matching the reference's dark-mode treatment - kept off in
+   light mode since the reference shows it there too but far more subtly;
+   a strong glow on a white background would look like a rendering bug
+   rather than a deliberate effect. */
+:root[data-theme="dark"] .qs-chip.c1 { box-shadow: 0 0 22px rgba(229,42,50,.55); }
+:root[data-theme="dark"] .qs-chip.c2 { box-shadow: 0 0 22px rgba(13,110,253,.55); }
+:root[data-theme="dark"] .qs-chip.c3 { box-shadow: 0 0 22px rgba(107,33,232,.55); }
+:root[data-theme="dark"] .qs-chip.c4 { box-shadow: 0 0 22px rgba(8,163,98,.55); }
+.qs-arrow { position: absolute; left: 50%; bottom: -38px; transform: translateX(-50%);
   width: 40px; height: 40px; border-radius: 50%; background: var(--signal); color: #fff;
   display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); z-index: 4; }
 .qs-arrow svg { width: 18px; height: 18px; }
+@media (max-width: 480px) {
+  /* The 4-icon category row (56px circles + 34px gaps) was overflowing
+     the panel on narrow phones, clipping the last icon's label - real,
+     confirmed bug, not just tight spacing. Shrinking both the icon size
+     and the gap keeps all 4 comfortably within a 320-390px viewport.
+     Placed after the base .qs-chip rules (not earlier in the file) so
+     this override actually wins - an identical-specificity rule earlier
+     in source order was being silently overridden by the base rule
+     that came later, a real ordering bug caught by testing. */
+  .qs-chip { width: 46px; height: 46px; }
+  .qs-chip svg { width: 20px; height: 20px; }
+  .qs-stack { gap: 14px; }
+  .qs-cat-label { font-size: 11px; }
+}
 
-.qs-select-row { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.qs-select-row { display: flex; flex-direction: column; gap: 10px; margin-top: 48px; }
 .qs-search-wrap { position: relative; }
 .qs-search-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--ink-faint); pointer-events: none; }
 .qs-search-input {
@@ -807,15 +875,23 @@ body.mob-panel-open { overflow: hidden; }
 /* ============================================================
    FEATURE CIRCLES (replaces top-border feat grid on homepage)
    ============================================================ */
-.feat2-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-@media (max-width: 860px) { .feat2-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px) { .feat2-grid { grid-template-columns: 1fr; } }
-.feat2 { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 22px; text-align: center; transition: transform .15s ease, box-shadow .15s ease; }
-.feat2:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-.feat2 .ico { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
-.feat2 .ico svg { width: 23px; height: 23px; }
-.feat2 h3 { font-size: 15.5px; margin-bottom: 7px; }
-.feat2 p { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+/* Redesigned "Why ConvertKoro" bar - a single pill-shaped strip with
+   inline icon + title + description per item, matching the reference
+   layout exactly (was previously 4 separate boxed cards in a grid). */
+.feat-bar {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 22px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 22px 26px; box-shadow: var(--shadow);
+}
+.feat-item { display: flex; align-items: flex-start; gap: 11px; flex: 1 1 180px; min-width: 0; }
+.feat-item .ico {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.feat-item .ico svg { width: 18px; height: 18px; }
+.feat-item .feat-text h3 { font-size: 13.5px; margin: 0 0 3px; line-height: 1.2; }
+.feat-item .feat-text p { font-size: 12px; color: var(--ink-soft); margin: 0; line-height: 1.4; }
+@media (max-width: 860px) { .feat-bar { flex-direction: column; } .feat-item { flex: 1 1 auto; } }
 
 /* ============================================================
    HOW IT WORKS — horizontal with connectors
@@ -857,19 +933,30 @@ body.mob-panel-open { overflow: hidden; }
    CTA BANNER
    ============================================================ */
 .cta-banner {
-  background: linear-gradient(135deg, var(--ink) 0%, #1B2340 100%);
-  border-radius: 18px; padding: 36px 32px; text-align: center; color: #fff; position: relative; overflow: hidden;
-  max-width: 640px; margin: 0 auto;
+  background: linear-gradient(135deg, var(--signal-tint) 0%, var(--accent-plum-tint) 100%);
+  border: 1px solid var(--line); border-radius: 18px; padding: 40px 32px; text-align: center;
+  position: relative; overflow: hidden; margin: 0 auto;
 }
 .cta-banner::before {
-  content: ''; position: absolute; top: -80px; right: -60px; width: 240px; height: 240px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0,98,248,.35), transparent 72%);
+  content: ''; position: absolute; top: -70px; right: -50px; width: 220px; height: 220px; border-radius: 50%;
+  background: var(--grad-image); filter: blur(60px); opacity: .25; z-index: 0;
 }
-.cta-banner h2 { color: #fff; font-size: clamp(19px, 2.6vw, 24px); position: relative; z-index: 1; }
-.cta-banner p { color: rgba(244,245,242,.72); margin: 9px 0 20px; font-size: 13.5px; position: relative; z-index: 1; }
+.cta-banner::after {
+  content: ''; position: absolute; bottom: -70px; left: -50px; width: 200px; height: 200px; border-radius: 50%;
+  background: var(--grad-media); filter: blur(60px); opacity: .22; z-index: 0;
+}
+.cta-banner h2 { color: var(--ink); font-size: clamp(21px, 2.8vw, 27px); position: relative; z-index: 1; }
+.cta-banner p { color: var(--ink-soft); margin: 9px 0 22px; font-size: 14px; position: relative; z-index: 1; }
 .cta-banner .actions-row { justify-content: center; position: relative; z-index: 1; }
-.cta-banner .btn-ghost { background: transparent; border-color: rgba(244,245,242,.3); color: #fff; }
-.cta-banner .btn-ghost:hover { border-color: #fff; }
+.cta-banner .btn-ghost { background: var(--card); border-color: var(--line-strong); color: var(--ink); }
+.cta-banner .btn-ghost:hover { border-color: var(--signal); }
+.cta-banner .btn-ghost svg { width: 14px; height: 14px; }
+.cta-mini-stats {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 20px;
+  font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-faint); position: relative; z-index: 1;
+}
+.cta-mini-stats span:not(.dot) { }
+.cta-mini-stats .dot { opacity: .5; }
 
 /* ============================================================
    FOOTER NEWSLETTER

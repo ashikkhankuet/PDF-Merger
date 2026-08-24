@@ -182,8 +182,8 @@ const TAG_GRADIENT = {
   DEV:      'var(--grad-dev)',
   DOCUMENT: 'var(--grad-document)',
   CREATE:   'var(--grad-create)',
-  AUDIO:    'var(--grad-create)',
-  VIDEO:    'var(--grad-image)',
+  AUDIO:    'var(--grad-media)',
+  VIDEO:    'var(--grad-media)',
   CALC:     'var(--grad-calc)',
 };
 function tintStyle(tag) {
