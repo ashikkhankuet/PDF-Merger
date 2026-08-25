@@ -42,7 +42,7 @@
       <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Video Converter</span></div>
       <div class="tool-hero-top">
         <span class="ico" id="toolIco" style="background:var(--grad-media);color:#fff;"></span>
-        <div><h1>Video Converter</h1><p class="lead">Convert between MP4, WebM, and MOV.</p></div>
+        <div><h1>Video Converter</h1><p class="lead">Convert between MP4 and WebM.</p></div>
       </div>
     </div>
   </section>
@@ -148,7 +148,41 @@
     formatRow.style.display = 'block';
     convertBtn.disabled = false;
     resultBox.classList.remove('show'); errBox.classList.remove('show');
+    updateSameFormatWarning();
   }
+
+  // Same real gap fixed on Audio Converter: nothing previously stopped a
+  // user from uploading an MP4 and choosing "MP4" as the target, which
+  // would run a full, pointless, lossy re-encode (ffmpeg -c:v libx264
+  // over an already-H.264 file) for zero benefit and strictly worse
+  // quality. Detected via filename extension since a full container/codec
+  // inspection is out of scope for a quick pre-conversion check.
+  function sourceFormat() {
+    if (!file) return null;
+    const ext = (file.name.match(/\.([^.]+)$/) || [,''])[1].toLowerCase();
+    if (ext === 'mp4') return 'mp4';
+    if (ext === 'webm') return 'webm';
+    return null; // MOV, AVI, etc. - always a genuine conversion either way
+  }
+
+  const sameFormatNote = document.createElement('div');
+  sameFormatNote.className = 'callout';
+  sameFormatNote.style.cssText = 'margin-top:10px;display:none;font-size:13px;';
+  sameFormatNote.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="sameFormatText"></span>';
+  formatRow.appendChild(sameFormatNote);
+
+  function updateSameFormatWarning() {
+    const src = sourceFormat();
+    const target = document.querySelector('input[name="fmt"]:checked').value;
+    if (src && src === target) {
+      document.getElementById('sameFormatText').textContent = `This file is already ${target.toUpperCase()} \u2014 converting it to ${target.toUpperCase()} again means a full, pointless re-encode that can only lose quality, not gain anything. Pick the other format, or use this file as-is.`;
+      sameFormatNote.style.display = 'flex';
+    } else {
+      sameFormatNote.style.display = 'none';
+    }
+  }
+  document.querySelectorAll('input[name="fmt"]').forEach((el) => el.addEventListener('change', updateSameFormatWarning));
+
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
   dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });

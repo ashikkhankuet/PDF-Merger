@@ -183,9 +183,19 @@
       const start = Math.max(0, parseFloat(startIn.value) || 0);
       const dur = Math.max(0.5, Math.min(15, parseFloat(durIn.value) || 5));
       const width = Math.max(100, parseInt(widthIn.value) || 480);
+      // Custom palette generation (palettegen/paletteuse) rather than
+      // letting ffmpeg fall back to its default GIF encoder - GIF is
+      // limited to 256 colors, and ffmpeg's default palette is a fixed,
+      // generic one that doesn't account for the actual clip's colors at
+      // all, producing visible banding and poor dithering on anything
+      // with gradients or subtle color variation (confirmed via
+      // established, widely-documented ffmpeg practice for GIF output -
+      // this is the standard fix, not an experimental tweak). Done in a
+      // single ffmpeg invocation via split+filter_complex rather than two
+      // separate passes/files, since that's supported and simpler here.
       await ffmpeg.run(
         '-ss', String(start), '-t', String(dur), '-i', inName,
-        '-vf', `fps=10,scale=${width}:-1:flags=lanczos`,
+        '-filter_complex', `[0:v]fps=10,scale=${width}:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse`,
         'output.gif'
       );
       const data = ffmpeg.FS('readFile', 'output.gif');

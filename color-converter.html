@@ -150,7 +150,13 @@
     const rgb = parse(cIn.value);
     if (!rgb) { errText.textContent = 'Couldn\u2019t recognize that color format.'; errBox.classList.add('show'); return; }
     errBox.classList.remove('show');
-    const [r,g,b] = rgb;
+    // Clamp to the valid 0-255 range once, right after parsing - a real
+    // bug found here: rgbToHex() already clamped internally, but
+    // rgbToHsl() did not, so an out-of-range input (e.g. a typo like
+    // rgb(999,999,999)) produced a correctly-clamped HEX value sitting
+    // right next to a broken HSL value like hsl(0, 0%, 392%). Clamping
+    // once here keeps every output format consistent with each other.
+    const [r,g,b] = rgb.map(v => Math.max(0, Math.min(255, v)));
     const hex = rgbToHex(r,g,b);
     const [h,s,l] = rgbToHsl(r,g,b);
     swatch.style.background = hex;

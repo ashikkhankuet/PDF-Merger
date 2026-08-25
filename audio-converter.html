@@ -143,7 +143,43 @@
     formatRow.style.display = 'block';
     convertBtn.disabled = false;
     resultBox.classList.remove('show'); errBox.classList.remove('show');
+    updateSameFormatWarning();
   }
+
+  // Detects the source format from the actual filename extension - a
+  // real gap this tool had: nothing checked whether the chosen output
+  // format matched the input, so uploading an MP3 and picking "MP3" as
+  // the target silently ran a real MP3 -> raw PCM -> MP3 round trip,
+  // which is strictly lossy twice for zero benefit (the file is already
+  // MP3). Detected via extension rather than file.type, since browsers
+  // report inconsistent/generic MIME types for audio (e.g. some report
+  // "audio/mpeg" for both real MP3s and other formats).
+  function sourceFormat() {
+    if (!file) return null;
+    const ext = (file.name.match(/\.([^.]+)$/) || [,''])[1].toLowerCase();
+    if (ext === 'mp3') return 'mp3';
+    if (ext === 'wav') return 'wav';
+    return null; // M4A, OGG, etc. - always a genuine conversion either way
+  }
+
+  const sameFormatNote = document.createElement('div');
+  sameFormatNote.className = 'callout';
+  sameFormatNote.style.cssText = 'margin-top:10px;display:none;font-size:13px;';
+  sameFormatNote.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="sameFormatText"></span>';
+  formatRow.appendChild(sameFormatNote);
+
+  function updateSameFormatWarning() {
+    const src = sourceFormat();
+    const target = document.querySelector('input[name="fmt"]:checked').value;
+    if (src && src === target) {
+      document.getElementById('sameFormatText').textContent = `This file is already ${target.toUpperCase()} \u2014 converting it to ${target.toUpperCase()} again would re-encode it for no real benefit${target === 'mp3' ? ' and lose additional quality' : ''}. Pick the other format, or use this file as-is.`;
+      sameFormatNote.style.display = 'flex';
+    } else {
+      sameFormatNote.style.display = 'none';
+    }
+  }
+  document.querySelectorAll('input[name="fmt"]').forEach((el) => el.addEventListener('change', updateSameFormatWarning));
+
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
   dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });

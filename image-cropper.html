@@ -35,7 +35,7 @@
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Image Cropper","description":"Crop an image to the area you select, entirely in your browser.","url":"https://convertkoro.com/image-cropper","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Image Cropper","item":"https://convertkoro.com/image-cropper"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I crop to an exact pixel size?","acceptedAnswer":{"@type":"Answer","text":"The crop info shows live pixel dimensions as you drag, so you can fine-tune the selection precisely."}},{"@type":"Question","name":"What image formats are supported?","acceptedAnswer":{"@type":"Answer","text":"JPG, PNG, and WebP — the output matches your original format."}},{"@type":"Question","name":"How do I crop to a perfect square?","acceptedAnswer":{"@type":"Answer","text":"There's no aspect-lock toggle — drag the selection box and watch the live width/height numbers, keeping them equal for a square crop."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I crop to an exact pixel size?","acceptedAnswer":{"@type":"Answer","text":"The crop info shows live pixel dimensions as you drag, so you can fine-tune the selection precisely."}},{"@type":"Question","name":"What image formats are supported?","acceptedAnswer":{"@type":"Answer","text":"JPG, PNG, and WebP — the output matches your original format."}},{"@type":"Question","name":"How do I crop to a perfect square?","acceptedAnswer":{"@type":"Answer","text":"Pick \"Square (1:1)\" from the Aspect ratio dropdown before drawing your selection — the crop box will be locked to a perfect square as you drag."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -58,6 +58,16 @@
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
       </div>
       <div id="stageWrap" style="display:none;margin-top:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:12px;font-weight:600;color:var(--ink-soft);">Aspect ratio</label>
+          <select id="aspectSelect" style="padding:7px 10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:13px;">
+            <option value="free" selected>Free</option>
+            <option value="1:1">Square (1:1)</option>
+            <option value="4:5">Portrait (4:5)</option>
+            <option value="16:9">Widescreen (16:9)</option>
+            <option value="3:2">Photo (3:2)</option>
+          </select>
+        </div>
         <div id="cropStage"><img id="stageImg" alt="Image being cropped" /><div id="cropBox"></div></div>
         <p class="mono" id="cropInfo" style="font-size:12.5px;color:var(--ink-faint);margin-top:10px;">Click and drag on the image to select a crop area.</p>
       </div>
@@ -92,7 +102,7 @@
       <div class="faq-list">
         <details class="faq-item"><summary>Can I crop to an exact pixel size?</summary><p>The crop info shows live pixel dimensions as you drag, so you can fine-tune the selection precisely.</p></details>
         <details class="faq-item"><summary>What image formats are supported?</summary><p>JPG, PNG, and WebP — the output matches your original format.</p></details>
-        <details class="faq-item"><summary>How do I crop to a perfect square?</summary><p>There's no aspect-lock toggle — drag the selection box and watch the live width/height numbers, keeping them equal for a square crop.</p></details>
+        <details class="faq-item"><summary>How do I crop to a perfect square?</summary><p>Pick "Square (1:1)" from the Aspect ratio dropdown before drawing your selection — the crop box will be locked to a perfect square as you drag.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
@@ -124,9 +134,22 @@
   const clearBtn = document.getElementById('clearBtn');
   const resultBox = document.getElementById('resultBox');
   const downloadBtn = document.getElementById('downloadBtn');
+  const aspectSelect = document.getElementById('aspectSelect');
   let file = null, img = null;
   let sel = null; // {x,y,w,h} in displayed px
   let mode = null, startX, startY, startSel;
+
+  // Real gap this tool's own FAQ used to call out directly ("There's no
+  // aspect-lock toggle") - added real presets rather than leaving it as
+  // a documented limitation, since aspect-locked cropping (square,
+  // portrait, widescreen) is a standard, expected cropper feature.
+  // Returns null for "Free" (no constraint) or a numeric ratio otherwise.
+  function currentAspectRatio() {
+    const v = aspectSelect.value;
+    if (v === 'free') return null;
+    const [w, h] = v.split(':').map(Number);
+    return w / h;
+  }
 
   function setFile(f) {
     if (!f || !f.type.startsWith('image/')) return;
@@ -184,8 +207,26 @@
     const r = stageRect();
     const x = clamp(e.clientX - r.left, 0, r.width);
     const y = clamp(e.clientY - r.top, 0, r.height);
+    const ratio = currentAspectRatio();
     if (mode === 'draw') {
-      sel = { x: Math.min(startX, x), y: Math.min(startY, y), w: Math.abs(x - startX), h: Math.abs(y - startY) };
+      let w = Math.abs(x - startX), h = Math.abs(y - startY);
+      // When a ratio is locked, derive height from width so the drawn
+      // box always matches the chosen ratio rather than free-form -
+      // using width as the driving dimension keeps behavior predictable
+      // regardless of drag direction.
+      if (ratio) h = w / ratio;
+      const dirX = x < startX ? -1 : 1, dirY = y < startY ? -1 : 1;
+      let newX = dirX < 0 ? startX - w : startX;
+      let newY = dirY < 0 ? startY - h : startY;
+      // Clamp against the stage bounds - if the ratio-derived box would
+      // overflow, shrink it proportionally rather than letting it clip
+      // silently, so the box the user sees always matches the box that
+      // gets cropped.
+      if (newX < 0) { w += newX; newX = 0; if (ratio) h = w / ratio; }
+      if (newY < 0) { h += newY; newY = 0; if (ratio) w = h * ratio; }
+      if (newX + w > r.width) { w = r.width - newX; if (ratio) h = w / ratio; }
+      if (newY + h > r.height) { h = r.height - newY; if (ratio) w = h * ratio; }
+      sel = { x: newX, y: newY, w, h };
     } else if (mode === 'move') {
       const dx = x - startX, dy = y - startY;
       sel = {
@@ -197,7 +238,20 @@
     paintSel();
   });
   stage.addEventListener('pointerup', () => { mode = null; });
-
+  aspectSelect.addEventListener('change', () => {
+    // Switching ratio while a selection already exists: re-derive height
+    // from the current width around the same top-left corner, rather
+    // than discarding the selection - keeps the workflow smooth instead
+    // of forcing a redraw every time the ratio changes.
+    if (!sel) return;
+    const ratio = currentAspectRatio();
+    if (!ratio) { paintSel(); return; }
+    const r = stageRect();
+    let h = sel.w / ratio;
+    if (sel.y + h > r.height) h = r.height - sel.y;
+    sel = { x: sel.x, y: sel.y, w: sel.w, h };
+    paintSel();
+  });
   cropBtn.addEventListener('click', () => {
     const scaleX = img.naturalWidth / stage.clientWidth;
     const scaleY = img.naturalHeight / stage.clientHeight;
@@ -206,8 +260,8 @@
     const canvas = document.createElement('canvas');
     canvas.width = sw; canvas.height = sh;
     canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-    const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-    const ext = mime === 'image/png' ? 'png' : 'jpg';
+    const mime = file.type === 'image/png' ? 'image/png' : (file.type === 'image/webp' ? 'image/webp' : 'image/jpeg');
+    const ext = mime === 'image/png' ? 'png' : (mime === 'image/webp' ? 'webp' : 'jpg');
     canvas.toBlob((blob) => {
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);

@@ -168,13 +168,29 @@
     ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(img, 0, 0);
     canvas.toBlob((blob) => {
-      lastBlob = blob;
       const baseName = file.name.replace(/\.[^.]+$/, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}-compressed.jpg`);
-      const savedPct = Math.max(0, Math.round((1 - blob.size/file.size) * 100));
-      resultTitle.textContent = `${baseName}-compressed.jpg is ready`;
-      resultMeta.textContent = `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${savedPct}% smaller)`;
+      // A real, confirmed bug (same root cause as the PDF Compressor):
+      // re-encoding as JPEG at a high quality setting can produce a
+      // LARGER file than the original, especially for already-compressed
+      // or simple/flat-color source images - the old code clamped the
+      // DISPLAYED percentage to 0% via Math.max(0, ...) but still handed
+      // the user the actual, bigger file regardless, silently hiding the
+      // real outcome rather than fixing it. "Compress" should never
+      // download something bigger than what came in.
+      const compressionActuallyHelped = blob.size < file.size;
+      const finalBlob = compressionActuallyHelped ? blob : file;
+      lastBlob = finalBlob;
+      downloadBtn.href = URL.createObjectURL(finalBlob);
+      if (compressionActuallyHelped) {
+        downloadBtn.setAttribute('download', `${baseName}-compressed.jpg`);
+        const savedPct = Math.round((1 - blob.size/file.size) * 100);
+        resultTitle.textContent = `${baseName}-compressed.jpg is ready`;
+        resultMeta.textContent = `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${savedPct}% smaller)`;
+      } else {
+        downloadBtn.setAttribute('download', file.name);
+        resultTitle.textContent = 'Already about as small as it gets';
+        resultMeta.textContent = `${fmtSize(file.size)} \u2014 re-encoding at this quality would have made the file larger, so your original image is ready to download unchanged. Try a lower quality setting for real savings.`;
+      }
       resultBox.classList.add('show');
     }, 'image/jpeg', qSlider.value / 100);
   });

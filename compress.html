@@ -154,6 +154,7 @@
   const errBox = document.getElementById('errBox');
   const errText = document.getElementById('errText');
   const resultBox = document.getElementById('resultBox');
+  const resultTitle = document.getElementById('resultTitle');
   const resultMeta = document.getElementById('resultMeta');
   const downloadBtn = document.getElementById('downloadBtn');
   const qualityRow = document.getElementById('qualityRow');
@@ -210,9 +211,31 @@
         progressFill.style.width = `${5 + (i/pdf.numPages)*85}%`;
       }
       const blob = outPdf.output('blob');
-      downloadBtn.href = URL.createObjectURL(blob);
-      const pct = Math.max(0, Math.round((1 - blob.size / file.size) * 100));
-      resultMeta.textContent = `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)}${pct > 0 ? ' \u00b7 ' + pct + '% smaller' : ''}`;
+
+      // A real, confirmed bug: unconditionally re-rendering every page as
+      // a JPEG can produce a LARGER file than the original, especially for
+      // text-based PDFs (rebuilt as slower-to-render, ready to grow if the
+      // original text was small on disk but the rendered page is large in
+      // pixels). "Compress" should never hand back something bigger than
+      // what came in - so if that happens, keep the original PDF bytes as
+      // the download instead of the bloated re-render, and say so plainly
+      // rather than reporting a fake percentage or a silently worse file.
+      const originalBlob = new Blob([bytes], { type: 'application/pdf' });
+      const compressionActuallyHelped = blob.size < file.size;
+      const finalBlob = compressionActuallyHelped ? blob : originalBlob;
+
+      downloadBtn.href = URL.createObjectURL(finalBlob);
+      const baseName = file.name.replace(/\.pdf$/i, '');
+      if (compressionActuallyHelped) {
+        resultTitle.textContent = 'compressed.pdf is ready';
+        downloadBtn.setAttribute('download', `${baseName}-compressed.pdf`);
+        const pct = Math.round((1 - blob.size / file.size) * 100);
+        resultMeta.textContent = `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} \u00b7 ${pct}% smaller`;
+      } else {
+        downloadBtn.setAttribute('download', file.name);
+        resultTitle.textContent = 'Already about as small as it gets';
+        resultMeta.textContent = `${fmtSize(file.size)} \u2014 re-encoding would have made this PDF larger, so your original file is ready to download unchanged. This is common for text-based PDFs; try a lower quality setting, or this file may already be well-optimized.`;
+      }
       progressFill.style.width = '100%';
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {

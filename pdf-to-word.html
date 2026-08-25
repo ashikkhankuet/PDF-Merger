@@ -374,15 +374,29 @@ ${body}
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {
       progressWrap.classList.remove('show');
+      // Only these two messages contain a real link (to Compress PDF for
+      // an oversized file), so only they're HTML - built from a fixed,
+      // hardcoded string here, never from err.message or any other
+      // runtime value, so this can never become an XSS vector even
+      // though errBox is set via innerHTML for this case.
+      const knownHtmlMessages = {
+        'too-large': 'This PDF is larger than the 8MB limit for format-preserving conversion \u2014 try <a href="/compress" style="color:var(--signal-dk);text-decoration:underline;">compressing it first</a>, or switch to Text only mode.',
+      };
       const knownMessages = {
-        'too-large': 'This PDF is larger than the 8MB limit for format-preserving conversion \u2014 try a smaller file, or switch to Text only mode.',
         'timeout': 'The conversion is taking longer than expected. Please try again \u2014 large or complex PDFs can occasionally time out.',
         'read-failed': 'Couldn\u2019t read this file. Please try again.',
         'conversion-failed': 'Couldn\u2019t convert this PDF. Make sure it isn\u2019t password-protected, then try again.',
         'quota-exhausted': 'This tool has hit its daily conversion limit for formatting-preserving mode. Please try again in a few hours, or switch to Text only mode.',
         'no-text': 'No selectable text was found in this PDF \u2014 it\u2019s likely a scanned image. Try the Image to Text tool instead.',
       };
-      errText.textContent = knownMessages[err.message] || err.message || knownMessages['conversion-failed'];
+      if (knownHtmlMessages[err.message]) {
+        errText.innerHTML = knownHtmlMessages[err.message];
+      } else {
+        // Everything else, including any raw server-supplied text, stays
+        // as plain text via textContent - never rendered as HTML, so an
+        // unexpected server error message can never inject markup.
+        errText.textContent = knownMessages[err.message] || err.message || knownMessages['conversion-failed'];
+      }
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;

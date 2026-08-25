@@ -146,8 +146,15 @@
       downloadBtn.href = URL.createObjectURL(blob);
       downloadBtn.setAttribute('download', `${baseName}.webp`);
       resultTitle.textContent = `${baseName}.webp is ready`;
-      const savedPct = Math.max(0, Math.round((1 - blob.size/file.size) * 100));
-      resultMeta.textContent = `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${savedPct}% smaller)`;
+      // Format converter, not a compressor - keeps the real WebP output
+      // even if this particular image doesn't shrink, but reports the
+      // size change honestly rather than flooring a real increase to a
+      // claimed "0% smaller" (the same bug fixed across this site's
+      // compressors and jpg-to-webp this session).
+      const sizeChangePct = Math.round((1 - blob.size/file.size) * 100);
+      resultMeta.textContent = sizeChangePct >= 0
+        ? `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${sizeChangePct}% smaller)`
+        : `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger)`;
       resultBox.classList.add('show');
     }, 'image/webp', 0.85);
   });

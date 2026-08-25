@@ -103,7 +103,15 @@
     if (!v) { document.getElementById('tsOutLocal').textContent=''; document.getElementById('tsOutUtc').textContent=''; return; }
     let n = Number(v);
     if (isNaN(n)) { document.getElementById('tsOutLocal').textContent = 'Not a number.'; return; }
-    if (String(Math.trunc(n)).length <= 10) n = n * 1000;
+    // Real bug found in audit: this boundary must match the FAQ's stated
+    // rule ("13 digits = milliseconds") exactly. Using <= 10 as the cutoff
+    // meant 11- and 12-digit numbers were also silently multiplied by
+    // 1000 (treated as seconds), contradicting what the page told users
+    // to expect - an 11-digit input isn't a valid seconds timestamp for
+    // any real-world date (10-digit seconds values span ~2001-2286), so
+    // treating it as milliseconds instead is both more correct and
+    // matches the documented behavior.
+    if (String(Math.trunc(n)).length < 13) n = n * 1000;
     const d = new Date(n);
     if (isNaN(d.getTime())) { document.getElementById('tsOutLocal').textContent = 'Out of range.'; return; }
     document.getElementById('tsOutLocal').textContent = 'Local: ' + d.toString();

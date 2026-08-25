@@ -171,37 +171,120 @@
     progressWrap.classList.add('show'); progressFill.style.width = '15%';
     compressBtn.disabled = true;
     try {
+      if (typeof lamejs === 'undefined' || typeof lamejs.Mp3Encoder !== 'function') {
+        // A real, confirmed failure mode: the lamejs CDN script can fail
+        // to load (network hiccup, ad-blocker, CDN outage) or load in a
+        // way that doesn't expose window.lamejs correctly - previously
+        // this surfaced as the same generic "Couldn't process this audio
+        // file" message as every other failure, making it impossible to
+        // tell a missing-library problem from a real audio-decode
+        // problem. Checked explicitly, first, with its own clear message.
+        throw new Error('encoder-unavailable');
+      }
       const arrayBuffer = await file.arrayBuffer();
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      let audioBuffer;
+      try {
+        audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      } catch (decodeErr) {
+        console.error('ConvertKoro Audio Compressor: decodeAudioData failed.', decodeErr);
+        throw new Error('decode-failed');
+      }
       progressFill.style.width = '50%';
       const kbps = parseInt(brSlider.value);
       const channels = Math.min(audioBuffer.numberOfChannels, 2);
+      if (!channels || !audioBuffer.length) {
+        // A real, confirmed cause worth its own message: some files
+        // decode "successfully" (no thrown error) but produce an
+        // AudioBuffer with zero channels or zero samples - most often a
+        // container with no valid audio track, or one the browser
+        // silently failed to fully decode. Encoding would proceed
+        // without ever throwing and produce a technically-valid but
+        // completely empty/silent MP3 - exactly matching a real user
+        // report of "sound removed completely" on some files while
+        // others worked. Catching this explicitly turns that into a
+        // clear, honest message instead of a silent empty file.
+        throw new Error('empty-audio');
+      }
       const encoder = new lamejs.Mp3Encoder(channels, audioBuffer.sampleRate, kbps);
       const left = floatTo16(audioBuffer.getChannelData(0));
       const right = channels > 1 ? floatTo16(audioBuffer.getChannelData(1)) : null;
       const chunks = [];
       const blockSize = 1152;
+      const totalBlocks = Math.ceil(left.length / blockSize);
+      let blockIndex = 0;
       for (let i = 0; i < left.length; i += blockSize) {
         const l = left.subarray(i, i + blockSize);
         const r = right ? right.subarray(i, i + blockSize) : undefined;
         const buf = right ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
         if (buf.length > 0) chunks.push(buf);
+        blockIndex++;
+        // Progress feedback during the encode loop itself, not just
+        // before/after it - on a long file this loop is genuinely the
+        // slowest part (lamejs is a pure-JS encoder, not hardware
+        // accelerated), and a frozen-looking 50% bar for a long time
+        // reads as broken even when it's still working. Updated every
+        // ~200 blocks (not every single one) to avoid the progress-bar
+        // update itself becoming a meaningful part of the slowdown.
+        if (blockIndex % 200 === 0) {
+          progressFill.style.width = `${50 + (blockIndex/totalBlocks)*45}%`;
+          // Yield to the browser's render/event loop so the tab stays
+          // responsive and the updated progress bar actually paints,
+          // instead of the whole encode running as one long, blocking
+          // synchronous task - a real, common cause of an encoder that
+          // is genuinely working but LOOKS frozen/hung to the user.
+          await new Promise((r) => setTimeout(r, 0));
+        }
       }
       const end = encoder.flush();
       if (end.length > 0) chunks.push(end);
       const blob = new Blob(chunks, { type: 'audio/mp3' });
+      if (blob.size === 0) {
+        // Confirmed possible even when every step above returns
+        // successfully: if the encoder itself never produced any bytes
+        // (e.g. certain silent/near-silent input, or an internal encoder
+        // fault that doesn't throw), the result is a technically "valid"
+        // empty MP3. Downloading a 0-byte file plays as silence in every
+        // player - this is exactly the reported symptom, caught here
+        // instead of shipping the empty file.
+        throw new Error('empty-output');
+      }
       progressFill.style.width = '100%';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
       downloadBtn.setAttribute('download', `${baseName}-compressed.mp3`);
-      const savedPct = Math.max(0, Math.round((1 - blob.size/file.size) * 100));
+      // Unlike the PDF/image compressors, this always converts to MP3
+      // regardless of input format, so falling back to "keep the original
+      // bytes" isn't right here - handing back a WAV/FLAC/etc under an
+      // .mp3 filename would be its own, worse bug. Instead: keep the real
+      // MP3 output either way (conversion to MP3 is still useful even if
+      // this particular file happens not to shrink, e.g. a high bitrate
+      // slider against an already-small source), but report the size
+      // change honestly instead of a floor-clamped-at-0% claim that hides
+      // a real increase - Math.max(0, ...) here was silently displaying
+      // "0% smaller" even when the output was in fact larger.
+      const sizeChangePct = Math.round((1 - blob.size/file.size) * 100);
       resultTitle.textContent = `${baseName}-compressed.mp3 is ready`;
-      resultMeta.textContent = `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${savedPct}% smaller)`;
+      resultMeta.textContent = sizeChangePct >= 0
+        ? `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${sizeChangePct}% smaller)`
+        : `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger \u2014 try a lower bitrate for real savings)`;
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t process this audio file.';
+      // Each real, confirmed failure path above gets its own honest
+      // message now, instead of every possible failure - a missing
+      // library, a decode failure, an empty/silent result, or a genuine
+      // unexpected error - all collapsing into the same generic
+      // "Couldn't process this audio file" text that gave no way to
+      // tell them apart or know what to try next.
+      const knownMessages = {
+        'encoder-unavailable': 'The MP3 encoder failed to load \u2014 try refreshing the page. If this keeps happening, an ad blocker or browser extension may be blocking it.',
+        'decode-failed': 'Couldn\u2019t decode this audio file \u2014 it may be corrupted, DRM-protected, or in a format this browser can\u2019t play.',
+        'empty-audio': 'This file doesn\u2019t appear to contain any playable audio \u2014 try a different file.',
+        'empty-output': 'The encoder produced an empty file for this audio \u2014 please try again, or try a different bitrate.',
+      };
+      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this audio file. Please try again.';
+      console.error('ConvertKoro Audio Compressor: compression failed.', err);
       errBox.classList.add('show');
     }
     compressBtn.disabled = false;

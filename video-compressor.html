@@ -184,9 +184,18 @@
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
       downloadBtn.setAttribute('download', `${baseName}-compressed.mp4`);
-      const savedPct = Math.max(0, Math.round((1 - blob.size/file.size) * 100));
+      // Always transcodes to H.264/MP4 regardless of input format, so
+      // (like the audio compressor) keeping the real converted output is
+      // still correct even on the rare file that doesn't shrink - but the
+      // displayed size change must be honest. Math.max(0, ...) here
+      // previously floored a real increase to a claimed "0% smaller",
+      // which is the same class of bug fixed across the other
+      // compressors this session.
+      const sizeChangePct = Math.round((1 - blob.size/file.size) * 100);
       resultTitle.textContent = `${baseName}-compressed.mp4 is ready`;
-      resultMeta.textContent = `${ckFmtSize(file.size)} \u2192 ${ckFmtSize(blob.size)} (${savedPct}% smaller)`;
+      resultMeta.textContent = sizeChangePct >= 0
+        ? `${ckFmtSize(file.size)} \u2192 ${ckFmtSize(blob.size)} (${sizeChangePct}% smaller)`
+        : `${ckFmtSize(file.size)} \u2192 ${ckFmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger \u2014 try a higher CRF value for real savings)`;
       progressFill.style.width = '100%';
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
