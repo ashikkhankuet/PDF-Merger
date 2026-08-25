@@ -13,6 +13,17 @@
 [functions]
   directory = "netlify/functions"
 
+# Format-preserving PDF -> Word conversion (via Adobe PDF Services)
+# genuinely needs more than the platform default 10s - a full pipeline
+# (auth, upload, start job, poll for completion, download result) is real
+# work beyond a single API call. 26s is the documented maximum obtainable
+# on the Pro plan (this site's current plan), and setting it here is
+# necessary but NOT sufficient - Netlify requires a separate support
+# request to actually enable it per-site even with this config present.
+# See the message shown to the user for that concrete action.
+[functions."pdf-to-word"]
+  timeout = 26
+
 # Clean path for the short-link creation API, called from url-shortener.html
 [[redirects]]
   from = "/api/shorten"
@@ -61,4 +72,19 @@
 [[redirects]]
   from = "/api/contact"
   to = "/.netlify/functions/contact"
+  status = 200
+
+# Format-preserving PDF -> Word conversion via Adobe PDF Services (real
+# paragraphs/headings/tables/images reconstructed server-side, not plain
+# text extraction). Only used by pdf-to-word.html's "Keep formatting"
+# mode - its default "Text only" mode is pure client-side pdf.js and
+# never calls this endpoint at all, so this service being down or over
+# its free-tier quota can never break basic text extraction. See
+# pdf-to-word.js for the full rationale and pdf-to-word.html for the
+# on-page disclosure that this mode sends the file to a third-party
+# conversion service, matching the same honesty pattern as the OCR
+# fallback and URL Shortener.
+[[redirects]]
+  from = "/api/pdf-to-word"
+  to = "/.netlify/functions/pdf-to-word"
   status = 200

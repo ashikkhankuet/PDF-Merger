@@ -279,26 +279,19 @@
       // would also silently trigger that handler underneath.
       row.addEventListener('click', (e) => { e.stopPropagation(); });
 
-      // Keyboard paste (Ctrl+V / Cmd+V) - this is the RELIABLE path for
-      // anything copied from an OS file manager (Explorer, Finder): a
-      // Ctrl+C on a PDF/.docx/audio/video file there puts a real file
-      // handle on the clipboard, delivered here via the synchronous
-      // paste event's clipboardData.files. This is fundamentally
-      // different from (and more broadly supported than) the async
-      // clipboard.read() API the Paste button below uses, which is
-      // built mainly for images/text and often does NOT see an
-      // OS-level file copy at all - confirmed the real cause of PDFs
-      // failing through the button alone. Wiring both means: Ctrl+V
-      // works for every file type (the main ask), and the button
-      // remains as a click-based alternative that reliably covers
-      // images specifically, with an honest fallback message for
-      // anything it can't reach.
-      containerEl.addEventListener('paste', (e) => handlePasteEvent(e, pasteMimeCheck, onFiles));
+      // Keyboard paste (Ctrl+V / Cmd+V) - the reliable path for anything
+      // copied from an OS file manager (Explorer, Finder): a Ctrl+C on a
+      // PDF/.docx/audio/video file there puts a real file handle on the
+      // clipboard, delivered here via the synchronous paste event's
+      // clipboardData.files. Wired ONLY at the document level (not also
+      // on containerEl) - a real, confirmed bug in the prior version had
+      // BOTH listeners active, so a single Ctrl+V bubbling from inside
+      // the dropzone up to document fired handlePasteEvent twice,
+      // adding the same file to the tool twice. Document-level alone
+      // still covers every case containerEl-level did (isConnected
+      // guard below limits it to the active tool's own dropzone) while
+      // firing exactly once per real paste.
       document.addEventListener('paste', (e) => {
-        // Also listen at the document level so Ctrl+V works even when
-        // focus isn't literally inside the dropzone - matches how the
-        // original keyboard-paste implementation behaved before this
-        // button redesign, which is the behavior being restored here.
         if (!containerEl.isConnected) return;
         handlePasteEvent(e, pasteMimeCheck, onFiles);
       });
@@ -327,110 +320,84 @@
         }
       });
 
-      // Hidden, off-screen contenteditable used purely to *receive* a
-      // real browser paste programmatically. Clicking the Paste button
-      // focuses this element and issues document.execCommand('paste')
-      // (still functional for this narrow purpose in Chromium/Firefox
-      // despite being deprecated for general use) - this routes through
-      // the exact same synchronous paste event / clipboardData.files
-      // path Ctrl+V already uses, which is the only path that reliably
-      // sees OS file-manager copies. That makes the button and Ctrl+V
-      // genuinely equivalent on desktop, instead of the button using
-      // the narrower clipboard.read() API that can't see those copies.
-      // Only needed when the Paste button itself is present.
+      // Paste button: uses ONLY navigator.clipboard.read() - the real,
+      // supported async Clipboard API. An earlier version of this tried
+      // routing the button through document.execCommand('paste') via a
+      // hidden focusable sink, on the theory that it would trigger the
+      // same reliable clipboardData.files path Ctrl+V uses. Verified via
+      // direct research this was fundamentally broken, not just flaky:
+      // Chrome deliberately returns false and does nothing for
+      // execCommand('paste') on ordinary web pages (confirmed via
+      // Chromium's own bug tracker/spec discussion - this is intentional
+      // browser security behavior, not a bug to work around), and in
+      // some Chrome/Firefox versions calling it can *still* dispatch a
+      // real paste event to the focused element inconsistently - which,
+      // combined with a since-fixed duplicate document+container paste
+      // listener bug, was the confirmed cause of files being pasted
+      // twice (once via the button's sink, again if the user then also
+      // pressed Ctrl+V because the button appeared to do nothing).
+      //
+      // The honest, correct scope for this button: it can retrieve
+      // clipboard IMAGES reliably (real OS-copied files like PDFs are
+      // simply not exposed to any web clipboard API on any platform,
+      // confirmed via research and directly on a real Android device
+      // earlier in this project - not something any code change here
+      // can fix). Messaging reflects that honestly instead of promising
+      // Ctrl+V-equivalent behavior the browser won't actually allow.
       const pasteBtnEl = row.querySelector('[data-src="paste"]');
-      let pasteSink = null;
-      if (pasteBtnEl) {
-        pasteSink = containerEl.querySelector('.paste-sink');
-        if (!pasteSink) {
-          pasteSink = document.createElement('div');
-          pasteSink.className = 'paste-sink';
-          pasteSink.contentEditable = 'true';
-          pasteSink.setAttribute('tabindex', '-1');
-          pasteSink.setAttribute('aria-hidden', 'true');
-          pasteSink.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;';
-          containerEl.appendChild(pasteSink);
-        }
-      }
-
       if (pasteBtnEl) pasteBtnEl.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const original = btn.innerHTML;
         const touch = isTouchDevice();
 
-        // One-shot listener: whatever the upcoming execCommand('paste')
-        // or clipboard.read() call finds gets routed through the same
-        // handlePasteEvent matching logic Ctrl+V uses, so button and
-        // keyboard paste are handled identically once a file is found.
-        let settled = false;
-        const onSinkPaste = (ev) => {
-          settled = true;
-          handlePasteEvent(ev, pasteMimeCheck, onFiles);
-        };
-        pasteSink.addEventListener('paste', onSinkPaste, { once: true });
+        if (!navigator.clipboard || !navigator.clipboard.read) {
+          btn.innerHTML = touch ? 'Not supported here' : 'Use Ctrl+V instead';
+          setTimeout(() => { btn.innerHTML = original; }, 2200);
+          return;
+        }
 
         btn.disabled = true;
-        btn.innerHTML = 'Pasting&hellip;';
-
+        btn.innerHTML = 'Reading clipboard&hellip;';
         try {
-          pasteSink.focus();
-          const execWorked = document.execCommand && document.execCommand('paste');
-
-          // Give the synchronous paste event a tick to fire and call
-          // onFiles() via onSinkPaste above before deciding it failed.
-          await new Promise((r) => setTimeout(r, 60));
-
-          if (settled) {
-            btn.innerHTML = 'Pasted';
-            setTimeout(() => { btn.innerHTML = original; }, 1200);
-            return;
-          }
-
-          // execCommand('paste') is blocked entirely in some browsers
-          // (Safari always; Chrome/Firefox when the page lacks the
-          // clipboard-read permission or isn't from a trusted script
-          // context) - when that happens, fall back to the async
-          // Clipboard API, which - despite missing OS file-manager
-          // copies - does reliably see clipboard *images*, so this
-          // fallback is genuinely useful on mobile rather than dead
-          // weight.
-          if (!execWorked && navigator.clipboard && navigator.clipboard.read) {
-            const clipboardItems = await navigator.clipboard.read();
-            const matched = [];
-            for (const item of clipboardItems) {
-              for (const type of item.types) {
-                if (pasteMimeCheck({ type })) {
-                  const blob = await item.getType(type);
-                  const ext = type.split('/')[1] || 'bin';
-                  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                  matched.push(new File([blob], `clipboard-${stamp}.${ext}`, { type }));
-                  break;
-                }
+          const clipboardItems = await navigator.clipboard.read();
+          const matched = [];
+          for (const item of clipboardItems) {
+            for (const type of item.types) {
+              if (pasteMimeCheck({ type })) {
+                const blob = await item.getType(type);
+                const ext = type.split('/')[1] || 'bin';
+                const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                matched.push(new File([blob], `clipboard-${stamp}.${ext}`, { type }));
+                break;
               }
             }
-            if (matched.length) {
-              btn.innerHTML = 'Pasted';
-              setTimeout(() => { btn.innerHTML = original; }, 1200);
-              onFiles(matched);
-              return;
-            }
           }
-
-          // Nothing retrievable through either path. On mobile this is
-          // usually a real OS-level wall - confirmed directly (Android
-          // exposes copied images to the web clipboard but never
-          // exposes copied non-image files like PDFs, regardless of
-          // browser or code here) - so the honest message differs from
-          // desktop, where a permission prompt or focus issue is the
-          // more likely, retryable cause.
-          btn.innerHTML = touch ? 'Not available for this file type on mobile' : 'Clipboard is empty or blocked';
-          setTimeout(() => { btn.innerHTML = original; }, 2800);
+          if (matched.length) {
+            btn.innerHTML = 'Pasted';
+            setTimeout(() => { btn.innerHTML = original; }, 1200);
+            onFiles(matched);
+          } else {
+            // A real, common case especially for non-image files (PDF,
+            // .docx, audio, video): the async clipboard.read() API
+            // cannot see an OS file-manager copy at all, even though a
+            // real keyboard Ctrl+V (the document-level listener above)
+            // can. On a touch device there's no keyboard shortcut to
+            // fall back to, so the honest message there is simply that
+            // nothing was found - not a suggestion to use a key
+            // combination that doesn't exist on that device.
+            btn.innerHTML = touch ? 'Nothing to paste' : 'Try Ctrl+V instead';
+            setTimeout(() => { btn.innerHTML = original; }, 2400);
+          }
         } catch (err) {
-          console.warn('ConvertKoro paste button: paste failed.', err);
-          btn.innerHTML = touch ? 'Not available for this file type on mobile' : 'Clipboard access blocked';
-          setTimeout(() => { btn.innerHTML = original; }, 2800);
+          // A rejected clipboard.read() this way (as opposed to simply
+          // finding zero matching items above) reliably means either
+          // the clipboard is genuinely empty/inaccessible or the page
+          // lacks clipboard-read permission at this moment - both real,
+          // retryable states, not a code fault.
+          console.warn('ConvertKoro paste button: clipboard read failed.', err);
+          btn.innerHTML = touch ? 'Nothing to paste' : 'Try Ctrl+V instead';
+          setTimeout(() => { btn.innerHTML = original; }, 2400);
         } finally {
-          pasteSink.removeEventListener('paste', onSinkPaste);
           btn.disabled = false;
         }
       });

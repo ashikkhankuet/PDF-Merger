@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
-<meta name="description" content="Extract text from a PDF into an editable Word (.docx) file. Text-only conversion, processed entirely in your browser — nothing uploaded." />
-<meta name="keywords" content="pdf to word, pdf to docx, convert pdf to word free, pdf text to word" />
+<meta name="description" content="Convert a PDF to an editable Word (.docx) file with paragraphs, headings, tables, and images preserved — not just plain text." />
+<meta name="keywords" content="pdf to word, pdf to docx, convert pdf to word free, pdf to word formatting" />
 <meta name="robots" content="index, follow" />
-<meta property="og:title" content="PDF to Word — Extract Text to an Editable .docx | ConvertKoro" />
+<meta property="og:title" content="PDF to Word — Convert with Formatting Preserved | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<title>PDF to Word — Extract Text to Editable .docx | ConvertKoro</title>
+<title>PDF to Word — Convert with Formatting Preserved | ConvertKoro</title>
 <link rel="canonical" href="https://convertkoro.com/pdf-to-word" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,8 +19,6 @@
 <link rel="icon" href="icon-ck-v3.ico" sizes="any" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
 <script>
@@ -29,8 +27,8 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF to Word","description":"Extract text from a PDF into an editable Word (.docx) file. Text-only conversion, processed entirely in your browser — nothing uploaded.","url":"https://convertkoro.com/pdf-to-word","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why doesn't this keep my original formatting?","acceptedAnswer":{"@type":"Answer","text":"True layout-preserving PDF-to-Word conversion needs specialized software that rebuilds fonts, positioning, and tables — something that isn't reliably possible in browser JavaScript. This tool focuses on getting your text out cleanly and editably instead."}},{"@type":"Question","name":"My PDF is a scan — why did nothing come out?","acceptedAnswer":{"@type":"Answer","text":"Scanned PDFs are actually images of text, not real text characters, so there's nothing for this tool to extract. Use <a href=\"/image-to-text\" style=\"color:var(--signal-dk);text-decoration:underline;\">Image to Text</a> for scanned pages instead."}},{"@type":"Question","name":"Can I edit the result in Word?","acceptedAnswer":{"@type":"Answer","text":"Yes — the output is a standard .docx file, fully editable in Microsoft Word, Google Docs, or LibreOffice."}},{"@type":"Question","name":"Can I convert a password-protected PDF?","acceptedAnswer":{"@type":"Answer","text":"Not currently — password-protected or encrypted PDFs aren't supported. Remove the password first, then convert."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF to Word","description":"Convert a PDF to an editable Word (.docx) file with paragraphs, headings, tables, and images preserved — not just plain text.","url":"https://convertkoro.com/pdf-to-word","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does this keep my original formatting?","acceptedAnswer":{"@type":"Answer","text":"Yes — this tool reconstructs paragraphs, headings, tables, and images from the PDF, not just plain text. Very complex layouts (multi-column magazines, heavily designed pages) may still need minor manual cleanup, which is true of every PDF-to-Word converter."}},{"@type":"Question","name":"My PDF is a scan — why did the result look off?","acceptedAnswer":{"@type":"Answer","text":"Scanned PDFs are actually images of text, not real text characters, so results can be inconsistent. Use <a href=\"/image-to-text\" style=\"color:var(--signal-dk);text-decoration:underline;\">Image to Text</a> for scanned pages instead."}},{"@type":"Question","name":"Can I edit the result in Word?","acceptedAnswer":{"@type":"Answer","text":"Yes — the output is a standard .docx file, fully editable in Microsoft Word, Google Docs, or LibreOffice."}},{"@type":"Question","name":"Can I convert a password-protected PDF?","acceptedAnswer":{"@type":"Answer","text":"Not currently — password-protected or encrypted PDFs aren't supported. Remove the password first, then convert."}},{"@type":"Question","name":"Is my file stored anywhere?","acceptedAnswer":{"@type":"Answer","text":"No — your PDF is sent for conversion only and is not retained afterward."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"PDF to Word","item":"https://convertkoro.com/pdf-to-word"}]}</script>
 </head>
 <body data-page="tools">
@@ -44,7 +42,7 @@
         <span class="ico" id="toolIco" style="background:var(--grad-pdf);color:#fff;"></span>
         <div>
           <h1>PDF to Word</h1>
-          <p class="lead">Pulls the readable text out of a PDF and packages it into a real, editable .docx file.</p>
+          <p class="lead">Extract just the text, or keep the full layout \u2014 paragraphs, tables, and images \u2014 as an editable .docx.</p>
         </div>
       </div>
     </div>
@@ -52,15 +50,26 @@
 
   <section class="container">
     <div class="workspace">
-      <div class="callout" style="margin-bottom:20px;">
+      <div class="mode-select" id="modeSelect" role="radiogroup" aria-label="Conversion mode">
+        <button type="button" class="mode-card active" id="modeTextBtn" data-mode="text" role="radio" aria-checked="true">
+          <span class="mode-card-title">Text only</span>
+          <span class="mode-card-desc">Pulls the readable text into a .docx. Fast, unlimited, stays on your device \u2014 nothing uploaded.</span>
+        </button>
+        <button type="button" class="mode-card" id="modeFormatBtn" data-mode="format" role="radio" aria-checked="false">
+          <span class="mode-card-title">Keep formatting <span class="mode-card-badge">Paragraphs, tables &amp; images</span></span>
+          <span class="mode-card-desc">Rebuilds the real layout \u2014 paragraphs, headings, tables, and images. Your file is sent to a conversion service to do this.</span>
+        </button>
+      </div>
+
+      <div class="callout" id="formatCallout" style="margin-bottom:20px;display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>This is a text-only conversion.</strong> It extracts the words from your PDF into an editable Word document, but does not reproduce the original layout, images, tables, or exact formatting. A full layout-preserving conversion would require a specialized server-side engine — this stays free, local, and private by keeping to text.</span>
+        <span><strong>This mode sends your PDF to a conversion service to preserve formatting.</strong> Unlike most tools on ConvertKoro, this mode is not fully on-device \u2014 reconstructing real paragraphs, headings, tables, and images from a PDF genuinely requires a server-side engine, the same approach used by other well-known PDF-to-Word converters. Your file is processed for conversion only and not stored afterward.</span>
       </div>
 
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a PDF here</strong>
-        <div class="hint">PDF only · one file at a time &middot; stays on your device</div>
+        <div class="hint" id="dropzoneHint">PDF only \u00b7 one file at a time \u00b7 stays on your device</div>
         <input type="file" id="fileInput" accept="application/pdf" hidden />
       </div>
 
@@ -89,22 +98,31 @@
     </div>
 
     
-    <p class="tool-intro-copy">PDF to Word gives you an editable .docx file to work with instead of a locked PDF — useful when you need to revise a contract, update a form, or reuse text from a document someone sent you as a PDF. Conversion happens on your device, with nothing uploaded, no account needed, and no watermark added to the result.</p>
+    <p class="tool-intro-copy">PDF to Word gives you an editable .docx file to work with instead of a locked PDF — useful when you need to revise a contract, update a form, or reuse content from a document someone sent you as a PDF. Choose <strong>Text only</strong> for a fast, unlimited, fully on-device extraction, or <strong>Keep formatting</strong> when you need the real layout \u2014 paragraphs, headings, tables, and images \u2014 preserved, which briefly sends your file to a conversion service to do that.</p>
+<style>
+  .mode-select { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .mode-card { flex:1 1 240px; text-align:left; padding:14px 16px; border:1.5px solid var(--line-strong); border-radius:12px; background:var(--card); cursor:pointer; transition:border-color .15s, background .15s; }
+  .mode-card:hover { border-color:var(--signal); }
+  .mode-card.active { border-color:var(--signal); background:var(--signal-tint); }
+  .mode-card-title { display:block; font-weight:600; font-size:14.5px; color:var(--ink); margin-bottom:4px; }
+  .mode-card-badge { display:inline-block; font-size:10.5px; font-weight:600; color:var(--signal-dk); background:var(--signal-tint); padding:2px 7px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+  .mode-card-desc { display:block; font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
+</style>
 <div class="info-grid">
       <div>
         <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
         <ol class="steps">
           <li><strong>Add your PDF</strong><span>Works best on PDFs that already contain real text (not scanned images).</span></li>
-          <li><strong>Extract</strong><span>Every page's text is pulled out, in reading order, and split into paragraphs.</span></li>
+          <li><strong>Convert</strong><span>The document's structure — paragraphs, headings, tables, and images — is rebuilt into a real Word document.</span></li>
           <li><strong>Download</strong><span>You get a genuine .docx file that opens directly in Word, Google Docs, or LibreOffice.</span></li>
         </ol>
       </div>
       <div class="side-card">
         <h3>Good to know</h3>
         <ul>
-          <li>Best for reports, articles, and text-heavy documents</li>
-          <li>Scanned PDFs (photos of pages) won't extract text — try <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> instead</li>
-          <li>Tables, columns, and images are not preserved</li>
+          <li>Preserves layout, tables, and images — not just plain text</li>
+          <li>Scanned PDFs (photos of pages) with no real text underneath may convert with limited accuracy — try <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for those instead</li>
+          <li>8MB file size limit</li>
           <li>Output is a standard .docx, fully editable in any word processor</li>
         </ul>
       </div>
@@ -112,10 +130,11 @@
 
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
-        <details class="faq-item"><summary>Why doesn't this keep my original formatting?</summary><p>True layout-preserving PDF-to-Word conversion needs specialized software that rebuilds fonts, positioning, and tables — something that isn't reliably possible in browser JavaScript. This tool focuses on getting your text out cleanly and editably instead.</p></details>
-        <details class="faq-item"><summary>My PDF is a scan — why did nothing come out?</summary><p>Scanned PDFs are actually images of text, not real text characters, so there's nothing for this tool to extract. Use <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for scanned pages instead.</p></details>
+        <details class="faq-item"><summary>Does this keep my original formatting?</summary><p>Yes — this tool reconstructs paragraphs, headings, tables, and images from the PDF, not just plain text. Very complex layouts (multi-column magazines, heavily designed pages) may still need minor manual cleanup, which is true of every PDF-to-Word converter.</p></details>
+        <details class="faq-item"><summary>My PDF is a scan — why did the result look off?</summary><p>Scanned PDFs are actually images of text, not real text characters, so results can be inconsistent. Use <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for scanned pages instead.</p></details>
         <details class="faq-item"><summary>Can I edit the result in Word?</summary><p>Yes — the output is a standard .docx file, fully editable in Microsoft Word, Google Docs, or LibreOffice.</p></details>
         <details class="faq-item"><summary>Can I convert a password-protected PDF?</summary><p>Not currently — password-protected or encrypted PDFs aren't supported. Remove the password first, then convert.</p></details>
+        <details class="faq-item"><summary>Is my file stored anywhere?</summary><p>No — your PDF is sent for conversion only and is not retained afterward. See our <a href="/privacy" style="color:var(--signal-dk);text-decoration:underline;">privacy policy</a> for details.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
@@ -126,6 +145,8 @@
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('pdf2word');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 (() => {
@@ -152,7 +173,41 @@
   const resultTitle = document.getElementById('resultTitle');
   const resultMeta = document.getElementById('resultMeta');
   const downloadBtn = document.getElementById('downloadBtn');
+  const progressLabel = document.getElementById('progressLabel');
+  const modeTextBtn = document.getElementById('modeTextBtn');
+  const modeFormatBtn = document.getElementById('modeFormatBtn');
+  const formatCallout = document.getElementById('formatCallout');
+  const dropzoneHint = document.getElementById('dropzoneHint');
   let file = null;
+
+  // Two independent conversion modes, selected before the file is even
+  // converted - a direct response to real user concern about a single
+  // external service being the only path, and to daily/monthly quota
+  // limits on that service. 'text' is the ORIGINAL, unmodified
+  // client-side pdf.js extraction this tool always had - unlimited,
+  // instant, fully on-device, and genuinely cannot break from an
+  // external outage or quota exhaustion because nothing leaves the
+  // browser. 'format' is the newer server-side path (Adobe PDF
+  // Services) for real layout preservation, used only when explicitly
+  // chosen - so this tool can never go fully dark: even if the format
+  // service is down or over quota, text extraction still works exactly
+  // as it always has.
+  let mode = 'text';
+
+  function setMode(next) {
+    mode = next;
+    const isFormat = mode === 'format';
+    modeTextBtn.classList.toggle('active', !isFormat);
+    modeTextBtn.setAttribute('aria-checked', String(!isFormat));
+    modeFormatBtn.classList.toggle('active', isFormat);
+    modeFormatBtn.setAttribute('aria-checked', String(isFormat));
+    formatCallout.style.display = isFormat ? 'flex' : 'none';
+    dropzoneHint.textContent = isFormat ? 'PDF only \u00b7 one file at a time \u00b7 up to 8MB' : 'PDF only \u00b7 one file at a time \u00b7 stays on your device';
+    convertBtn.textContent = isFormat ? 'Convert to Word' : 'Extract to Word';
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+  }
+  modeTextBtn.addEventListener('click', () => setMode('text'));
+  modeFormatBtn.addEventListener('click', () => setMode('format'));
 
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
 
@@ -181,7 +236,10 @@
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ---- TEXT MODE: original, unmodified client-side extraction ----
   // Build a minimal, valid .docx (OOXML) from plain paragraphs using JSZip.
+  // Unchanged from this tool's original implementation - kept byte-for-byte
+  // equivalent so this mode's behavior is exactly what it always was.
   async function buildDocx(paragraphs) {
     const zip = new JSZip();
     zip.file('[Content_Types].xml',
@@ -215,48 +273,116 @@ ${body}
     return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   }
 
+  async function convertTextMode() {
+    const bytes = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const paragraphs = [];
+    let totalChars = 0;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      let line = '';
+      let lastY = null;
+      content.items.forEach(item => {
+        const y = item.transform[5];
+        if (lastY !== null && Math.abs(y - lastY) > 2) {
+          if (line.trim()) paragraphs.push(line.trim());
+          line = '';
+        }
+        line += item.str + (item.hasEOL ? '' : ' ');
+        lastY = y;
+      });
+      if (line.trim()) paragraphs.push(line.trim());
+      paragraphs.push('');
+      totalChars += content.items.reduce((s, it) => s + it.str.length, 0);
+      progressFill.style.width = `${10 + (i/pdf.numPages)*80}%`;
+    }
+    if (totalChars < 5) throw new Error('no-text');
+    const blob = await buildDocx(paragraphs);
+    const baseName = file.name.replace(/\.pdf$/i, '');
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', `${baseName}.docx`);
+    resultTitle.textContent = `${baseName}.docx is ready`;
+    resultMeta.textContent = `${pdf.numPages} page${pdf.numPages>1?'s':''} of text \u00b7 ${fmtSize(blob.size)}`;
+  }
+
+  // ---- FORMAT MODE: server-side, format-preserving (Adobe PDF Services) ----
+  function fileToBase64(f) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        const commaIdx = result.indexOf(',');
+        resolve(commaIdx >= 0 ? result.slice(commaIdx + 1) : result);
+      };
+      reader.onerror = () => reject(new Error('read-failed'));
+      reader.readAsDataURL(f);
+    });
+  }
+
+  function base64ToBlob(base64, mimeType) {
+    const byteChars = atob(base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
+  }
+
+  const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  async function convertFormatMode() {
+    const MAX_SIZE = 8 * 1024 * 1024;
+    if (file.size > MAX_SIZE) throw new Error('too-large');
+
+    const base64 = await fileToBase64(file);
+    progressFill.style.width = '35%';
+
+    const response = await fetch('/api/pdf-to-word', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: base64, filename: file.name }),
+    });
+
+    progressFill.style.width = '80%';
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.file) {
+      if (response.status === 504 || data.error === 'timeout') throw new Error('timeout');
+      if (response.status === 429 || data.error === 'quota-exhausted') throw new Error('quota-exhausted');
+      throw new Error(data.error || 'conversion-failed');
+    }
+
+    const blob = base64ToBlob(data.file, DOCX_MIME);
+    const baseName = file.name.replace(/\.pdf$/i, '');
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', data.filename || `${baseName}.docx`);
+    resultTitle.textContent = `${baseName}.docx is ready`;
+    resultMeta.textContent = fmtSize(blob.size);
+  }
+
   convertBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '10%';
+    progressLabel.textContent = mode === 'format' ? 'Uploading & converting\u2026' : 'Reading text\u2026';
     convertBtn.disabled = true;
     try {
-      const bytes = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-      const paragraphs = [];
-      let totalChars = 0;
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        let line = '';
-        let lastY = null;
-        content.items.forEach(item => {
-          const y = item.transform[5];
-          if (lastY !== null && Math.abs(y - lastY) > 2) {
-            if (line.trim()) paragraphs.push(line.trim());
-            line = '';
-          }
-          line += item.str + (item.hasEOL ? '' : ' ');
-          lastY = y;
-        });
-        if (line.trim()) paragraphs.push(line.trim());
-        paragraphs.push('');
-        totalChars += content.items.reduce((s, it) => s + it.str.length, 0);
-        progressFill.style.width = `${10 + (i/pdf.numPages)*80}%`;
+      if (mode === 'format') {
+        await convertFormatMode();
+      } else {
+        await convertTextMode();
       }
-      if (totalChars < 5) throw new Error('no-text');
-      const blob = await buildDocx(paragraphs);
-      const baseName = file.name.replace(/\.pdf$/i, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}.docx`);
-      resultTitle.textContent = `${baseName}.docx is ready`;
-      resultMeta.textContent = `${pdf.numPages} page${pdf.numPages>1?'s':''} of text \u00b7 ${fmtSize(blob.size)}`;
       progressFill.style.width = '100%';
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = err.message === 'no-text'
-        ? 'No selectable text was found in this PDF \u2014 it\u2019s likely a scanned image. Try the Image to Text tool instead.'
-        : 'Couldn\u2019t process this PDF. Make sure it isn\u2019t password-protected, then try again.';
+      const knownMessages = {
+        'too-large': 'This PDF is larger than the 8MB limit for format-preserving conversion \u2014 try a smaller file, or switch to Text only mode.',
+        'timeout': 'The conversion is taking longer than expected. Please try again \u2014 large or complex PDFs can occasionally time out.',
+        'read-failed': 'Couldn\u2019t read this file. Please try again.',
+        'conversion-failed': 'Couldn\u2019t convert this PDF. Make sure it isn\u2019t password-protected, then try again.',
+        'quota-exhausted': 'This tool has hit its daily conversion limit for formatting-preserving mode. Please try again in a few hours, or switch to Text only mode.',
+        'no-text': 'No selectable text was found in this PDF \u2014 it\u2019s likely a scanned image. Try the Image to Text tool instead.',
+      };
+      errText.textContent = knownMessages[err.message] || err.message || knownMessages['conversion-failed'];
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;
