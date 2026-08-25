@@ -55,8 +55,8 @@
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a video file here</strong>
-        <div class="hint">MP4, WebM, MOV &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="video/*" hidden />
+        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; stays on your device</div>
+        <input type="file" id="fileInput" accept="video/*,.mp4,.webm,.mov,.avi,.mpeg,.mpg,.mkv" hidden />
       </div>
       <div class="file-list" id="fileList"></div>
       <div class="progress-wrap" id="progressWrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div class="progress-label" id="progressLabel">Loading video engine&hellip;</div></div>
@@ -110,7 +110,7 @@
     window.ConvertKoroDrivePicker.renderSourceButtons({
       containerEl: dropzone,
       fileInputEl: fileInput,
-      mimeTypes: 'video/mp4,video/webm,video/quicktime',
+      mimeTypes: 'video/mp4,video/webm,video/quicktime,video/x-msvideo,video/mpeg,video/x-matroska',
       pasteMimeCheck: (item) => item.type && item.type.startsWith('video/'),
       onFiles: (files) => { setFile(files[0]); },
     });
