@@ -20,7 +20,8 @@
     <form id="annForm" style="margin-top:24px;display:flex;flex-direction:column;gap:16px;">
       <div>
         <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Admin key</label>
-        <input type="password" id="aKey" required placeholder="Your ANNOUNCE_ADMIN_KEY" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+        <input type="password" id="aKey" required autocomplete="off" placeholder="Your ANNOUNCE_ADMIN_KEY" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
+        <div id="aKeyLen" style="font-size:11.5px;color:var(--ink-faint);margin-top:4px;">0 characters</div>
         <label style="display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;">
           <input type="checkbox" id="aRemember" style="margin:0;" />
           Remember on this device (saved only in this browser, never sent anywhere except this form)
@@ -39,7 +40,7 @@
         <input type="text" id="aName" required placeholder="e.g. Video to GIF" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;" />
       </div>
       <div>
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Description</label>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Description <span style="font-weight:400;color:var(--ink-faint);">(auto-filled by Kind &mdash; edit freely)</span></label>
         <textarea id="aDesc" required rows="4" placeholder="One or two sentences" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
       </div>
       <div>
@@ -61,13 +62,67 @@
   // shouldn't silently retain this). localStorage is scoped to this
   // exact origin (convertkoro.com) and never transmitted anywhere
   // except back into this same form's own request.
+  // Character counter next to the key field - a real, concrete way to
+  // catch the exact bug the user hit: a browser's own password manager
+  // silently substituting a DIFFERENT saved credential into this field
+  // via autofill (dots displayed don't reveal length or content, so this
+  // can go unnoticed until the server correctly rejects the wrong key
+  // as Unauthorized). Autocomplete="off" above discourages this, but
+  // some browsers ignore that attribute for password fields specifically
+  // - this counter is the reliable fallback: if the number here doesn't
+  // match what you expect your real key's length to be, autofill
+  // substituted something else.
+  function updateKeyLen() {
+    document.getElementById('aKeyLen').textContent = `${document.getElementById('aKey').value.length} characters`;
+  }
+  document.getElementById('aKey').addEventListener('input', updateKeyLen);
+
   (function restoreKey() {
     const saved = localStorage.getItem('ck_announce_key');
     if (saved) {
       document.getElementById('aKey').value = saved;
       document.getElementById('aRemember').checked = true;
     }
+    updateKeyLen();
   })();
+
+  // Preloaded, editable description per announcement Kind - real request:
+  // rather than starting from a blank textarea every time, pick the Kind
+  // first and get a genuinely well-written starting point that only
+  // needs the tool name dropped in, still fully editable afterward.
+  // {name} is replaced live as the Tool/update name field is typed, so
+  // the preview in the textarea stays accurate without the admin having
+  // to manually swap it in themselves.
+  const DESC_TEMPLATES = {
+    new: 'We just added {name} to ConvertKoro \u2014 free, no sign-up, and ready to use right now. Give it a try and let us know what you think!',
+    enhanced: '{name} just got better. We\u2019ve made real improvements based on how people are actually using it \u2014 same tool, noticeably smoother experience.',
+    campaign: 'A quick update on {name} \u2014 here\u2019s what\u2019s new and what it means for you.',
+  };
+
+  const aKind = document.getElementById('aKind');
+  const aName = document.getElementById('aName');
+  const aDesc = document.getElementById('aDesc');
+  let descIsTemplateGenerated = true; // becomes false the moment the admin edits it directly
+
+  function currentTemplateFor(kind, name) {
+    const tpl = DESC_TEMPLATES[kind] || DESC_TEMPLATES.campaign;
+    return tpl.replace('{name}', name || '(tool name)');
+  }
+
+  function applyTemplate() {
+    if (!descIsTemplateGenerated) return; // admin already started editing by hand - never overwrite that
+    aDesc.value = currentTemplateFor(aKind.value, aName.value.trim());
+  }
+
+  aKind.addEventListener('change', () => { descIsTemplateGenerated = true; applyTemplate(); });
+  aName.addEventListener('input', applyTemplate);
+  // Any direct edit to the description itself means the admin has taken
+  // over authorship - stop auto-overwriting it on further name/kind
+  // changes, exactly like the requirement that it stay "loaded but
+  // editable" rather than fighting the admin's own typing.
+  aDesc.addEventListener('input', () => { descIsTemplateGenerated = false; });
+
+  applyTemplate(); // seed the textarea with the default Kind's template on page load
 
   document.getElementById('annForm').addEventListener('submit', async (e) => {
     e.preventDefault();
