@@ -28,9 +28,10 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Converter","description":"Convert audio files to MP3 or WAV, entirely in your browser.","url":"https://convertkoro.com/audio-converter","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What formats can I convert from?","acceptedAnswer":{"@type":"Answer","text":"Anything your browser can decode &mdash; MP3, WAV, M4A, OGG, and most common formats."}},{"@type":"Question","name":"Why choose WAV over MP3?","acceptedAnswer":{"@type":"Answer","text":"WAV is lossless and instant to produce, but larger. MP3 is much smaller and takes a bit longer to encode, since it runs a real MP3 encoder in your browser."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What formats can I convert from?","acceptedAnswer":{"@type":"Answer","text":"MP3, WAV, M4A, OGG, FLAC, AAC, and WMA all convert reliably \u2014 a real audio engine runs in your browser, not just native browser decoding."}},{"@type":"Question","name":"Why choose WAV over MP3?","acceptedAnswer":{"@type":"Answer","text":"WAV is lossless and instant to produce, but larger. MP3 is much smaller and takes a bit longer to encode, since it runs a real MP3 encoder in your browser."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Audio Converter","item":"https://convertkoro.com/audio-converter"}]}</script>
 </head>
 <body data-page="tools">
@@ -47,11 +48,15 @@
   </section>
   <section class="container">
     <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads a ~25MB audio engine</strong> to your browser (one-time, cached after). This runs the same reliable engine used by this site's video tools.</span>
+      </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop an audio file here</strong>
-        <div class="hint">MP3, WAV, M4A, OGG, FLAC &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" hidden />
+        <div class="hint">MP3, WAV, M4A, OGG, FLAC, AAC, WMA &middot; stays on your device</div>
+        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.mpeg,.mpga,.aac,.wma" hidden />
       </div>
       <div class="file-list" id="fileList"></div>
       <div id="formatRow" style="display:none;margin-top:16px;">
@@ -91,7 +96,7 @@
   </section>
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
-        <details class="faq-item"><summary>What formats can I convert from?</summary><p>Anything your browser can decode &mdash; MP3, WAV, M4A, OGG, and most common formats.</p></details>
+        <details class="faq-item"><summary>What formats can I convert from?</summary><p>MP3, WAV, M4A, OGG, FLAC, AAC, and WMA all convert reliably — a real audio engine runs in your browser, not just native browser decoding.</p></details>
         <details class="faq-item"><summary>Why choose WAV over MP3?</summary><p>WAV is lossless and instant to produce, but larger. MP3 is much smaller and takes a bit longer to encode, since it runs a real MP3 encoder in your browser.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
@@ -111,7 +116,7 @@
     window.ConvertKoroDrivePicker.renderSourceButtons({
       containerEl: dropzone,
       fileInputEl: fileInput,
-      mimeTypes: 'audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac,audio/x-flac',
+      mimeTypes: 'audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac,audio/x-flac,audio/aac,audio/x-ms-wma',
       pasteMimeCheck: (item) => item.type && item.type.startsWith('audio/'),
       onFiles: (files) => { setFile(files[0]); },
     });
@@ -133,7 +138,9 @@
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(2)+' MB'; }
 
   function setFile(f) {
-    if (!f || !f.type.startsWith('audio/')) return;
+    const ext = (f && f.name || '').split('.').pop().toLowerCase();
+    const knownAudioExt = ['mp3','wav','m4a','ogg','flac','mpeg','mpga','aac','wma'];
+    if (!f || (!f.type.startsWith('audio/') && !knownAudioExt.includes(ext))) return;
     file = f;
     fileList.innerHTML = `<div class="file-row">
       <span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span>
@@ -189,87 +196,66 @@
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; fileList.innerHTML=''; formatRow.style.display='none'; convertBtn.disabled=true; } });
   clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; formatRow.style.display='none'; convertBtn.disabled=true; resultBox.classList.remove('show'); });
 
-  function bufferToWav(abuffer) {
-    const numOfChan = abuffer.numberOfChannels;
-    const length = abuffer.length * numOfChan * 2 + 44;
-    const buffer = new ArrayBuffer(length);
-    const view = new DataView(buffer);
-    const channels = [];
-    let pos = 0;
-    function setUint16(d) { view.setUint16(pos, d, true); pos += 2; }
-    function setUint32(d) { view.setUint32(pos, d, true); pos += 4; }
-    setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
-    setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
-    setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
-    setUint16(numOfChan * 2); setUint16(16);
-    setUint32(0x61746164); setUint32(length - pos - 4);
-    for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
-    let offset = 0;
-    while (pos < length) {
-      for (let i = 0; i < numOfChan; i++) {
-        let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-        sample = (sample < 0 ? sample * 32768 : sample * 32767) | 0;
-        view.setInt16(pos, sample, true); pos += 2;
-      }
-      offset++;
-    }
-    return buffer;
-  }
-  function floatTo16(input) {
-    const out = new Int16Array(input.length);
-    for (let i = 0; i < input.length; i++) {
-      const s = Math.max(-1, Math.min(1, input[i]));
-      out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-    }
-    return out;
-  }
-  function bufferToMp3(abuffer) {
-    const channels = Math.min(abuffer.numberOfChannels, 2);
-    const encoder = new lamejs.Mp3Encoder(channels, abuffer.sampleRate, 128);
-    const left = floatTo16(abuffer.getChannelData(0));
-    const right = channels > 1 ? floatTo16(abuffer.getChannelData(1)) : null;
-    const chunks = [];
-    const blockSize = 1152;
-    for (let i = 0; i < left.length; i += blockSize) {
-      const l = left.subarray(i, i + blockSize);
-      const r = right ? right.subarray(i, i + blockSize) : undefined;
-      const buf = right ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
-      if (buf.length > 0) chunks.push(buf);
-    }
-    const end = encoder.flush();
-    if (end.length > 0) chunks.push(end);
-    return new Blob(chunks, { type: 'audio/mp3' });
-  }
-
   convertBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '15%';
+    progressWrap.classList.add('show'); progressFill.style.width = '5%';
     convertBtn.disabled = true;
     const targetFmt = document.querySelector('input[name="fmt"]:checked').value;
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      progressFill.style.width = '55%';
+      // Rebuilt on ffmpeg.wasm, replacing the previous
+      // AudioContext.decodeAudioData() + lamejs pipeline - same real bug
+      // class confirmed and fixed on Audio Compressor: files with
+      // embedded ID3 album art (a common, valid MP3 feature) could
+      // silently decode to near-total silence via the browser's native
+      // decoder, while ffmpeg correctly handles them. See
+      // audio-compressor.html for the full root-cause writeup and the
+      // real user file this was verified against.
+      progressFill.style.width = '10%';
+      progressLabel.textContent = 'Loading audio engine\u2026';
+      const ffmpeg = await ckGetFFmpeg((ratio) => {
+        progressFill.style.width = `${20 + ratio * 70}%`;
+        progressLabel.textContent = targetFmt === 'mp3' ? 'Encoding MP3\u2026' : 'Encoding WAV\u2026';
+      });
+      progressFill.style.width = '20%';
       progressLabel.textContent = targetFmt === 'mp3' ? 'Encoding MP3\u2026' : 'Encoding WAV\u2026';
-      let blob, ext;
+      const { fetchFile } = FFmpeg;
+      const inExt = ckExt(file.name) || 'mp3';
+      const inName = 'input.' + inExt;
+      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+
+      const outName = targetFmt === 'wav' ? 'output.wav' : 'output.mp3';
       if (targetFmt === 'wav') {
-        blob = new Blob([bufferToWav(audioBuffer)], { type: 'audio/wav' });
-        ext = 'wav';
+        await ffmpeg.run('-i', inName, '-vn', '-acodec', 'pcm_s16le', outName);
       } else {
-        blob = bufferToMp3(audioBuffer);
-        ext = 'mp3';
+        await ffmpeg.run('-i', inName, '-vn', '-acodec', 'libmp3lame', '-b:a', '128k', outName);
       }
+
+      let data;
+      try {
+        data = ffmpeg.FS('readFile', outName);
+      } catch (readErr) {
+        throw new Error('encode-failed');
+      }
+      if (!data || data.length === 0) {
+        throw new Error('empty-output');
+      }
+
+      const blob = new Blob([data.buffer], { type: targetFmt === 'wav' ? 'audio/wav' : 'audio/mp3' });
       progressFill.style.width = '100%';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}.${ext}`);
-      resultTitle.textContent = `${baseName}.${ext} is ready`;
+      downloadBtn.setAttribute('download', `${baseName}.${targetFmt}`);
+      resultTitle.textContent = `${baseName}.${targetFmt} is ready`;
       resultMeta.textContent = fmtSize(blob.size);
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t process this audio file \u2014 try a different format.';
+      const knownMessages = {
+        'encode-failed': 'Couldn\u2019t find playable audio in this file \u2014 it may be corrupted or contain no audio track.',
+        'empty-output': 'The encoder produced an empty file for this audio \u2014 please try again.',
+      };
+      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this audio file \u2014 try a different format.';
+      console.error('ConvertKoro Audio Converter: conversion failed.', err);
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;

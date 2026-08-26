@@ -58,7 +58,7 @@
   <section class="container">
     
     <p class="tool-intro-copy">Messy, minified, or hard-to-read JSON is a daily annoyance for developers — this formats and validates JSON instantly, catching syntax errors and producing clean, indented output for debugging API responses or config files.</p>
-<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
+<div class="info-grid" style="max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
@@ -66,6 +66,15 @@
           <li><strong>Format or minify</strong><span>Format pretty-prints it with indentation; Minify strips it down to the smallest valid form.</span></li>
           <li><strong>Copy the result</strong><span>Any syntax error is called out immediately, with a description.</span></li>
         </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Uses the browser's own built-in JSON parser, so error messages match what your code would actually throw</li>
+          <li>Format output uses 2-space indentation</li>
+          <li>Comments and trailing commas aren't valid JSON and will be flagged as errors, even though some tools tolerate them</li>
+          <li>No size limit beyond what your browser's memory can hold</li>
+        </ul>
       </div>
     </div>
   </section>

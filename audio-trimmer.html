@@ -28,6 +28,8 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Trimmer","description":"Trim an audio file to the section you need, entirely in your browser.","url":"https://convertkoro.com/audio-trimmer","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the output always WAV?","acceptedAnswer":{"@type":"Answer","text":"WAV keeps this tool fast and dependency-free. Run the result through the Audio Converter afterward if you need MP3."}},{"@type":"Question","name":"What audio formats can I trim?","acceptedAnswer":{"@type":"Answer","text":"Any format your browser can play — MP3, WAV, M4A, OGG, and most common audio files."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Audio Trimmer","item":"https://convertkoro.com/audio-trimmer"}]}</script>
@@ -46,11 +48,15 @@
   </section>
   <section class="container">
     <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads a ~25MB audio engine</strong> to your browser (one-time, cached after). This runs the same reliable engine used by this site's video tools.</span>
+      </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop an audio file here</strong>
-        <div class="hint">MP3, WAV, M4A, OGG, FLAC &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" hidden />
+        <div class="hint">MP3, WAV, M4A, OGG, FLAC, AAC, WMA &middot; stays on your device</div>
+        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.mpeg,.mpga,.aac,.wma" hidden />
       </div>
       <div id="editWrap" style="display:none;margin-top:18px;">
         <audio id="preview" controls style="width:100%;margin-bottom:16px;"></audio>
@@ -116,7 +122,7 @@
     window.ConvertKoroDrivePicker.renderSourceButtons({
       containerEl: dropzone,
       fileInputEl: fileInput,
-      mimeTypes: 'audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac,audio/x-flac',
+      mimeTypes: 'audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac,audio/x-flac,audio/aac,audio/x-ms-wma',
       pasteMimeCheck: (item) => item.type && item.type.startsWith('audio/'),
       onFiles: (files) => { setFile(files[0]); },
     });
@@ -135,26 +141,39 @@
   const resultBox = document.getElementById('resultBox');
   const resultMeta = document.getElementById('resultMeta');
   const downloadBtn = document.getElementById('downloadBtn');
-  let file = null, audioBuffer = null;
+  let file = null, duration = null;
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(2)+' MB'; }
 
-  async function setFile(f) {
-    if (!f || !f.type.startsWith('audio/')) return;
+  function setFile(f) {
+    const ext = (f && f.name || '').split('.').pop().toLowerCase();
+    const knownAudioExt = ['mp3','wav','m4a','ogg','flac','mpeg','mpga','aac','wma'];
+    if (!f || (!f.type.startsWith('audio/') && !knownAudioExt.includes(ext))) return;
     file = f;
     preview.src = URL.createObjectURL(f);
     editWrap.style.display = 'block';
     resultBox.classList.remove('show'); errBox.classList.remove('show');
-    try {
-      const arrayBuffer = await f.arrayBuffer();
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      endIn.value = audioBuffer.duration.toFixed(1);
-      durInfo.textContent = `Full length: ${audioBuffer.duration.toFixed(1)}s`;
+    trimBtn.disabled = true;
+    // Duration and trim boundaries now come from the native <audio>
+    // element's own metadata (preview.onloadedmetadata), not from
+    // AudioContext.decodeAudioData() - a real, confirmed bug traced to a
+    // user-supplied file: files with embedded ID3 album art (a common,
+    // valid MP3 feature) could make decodeAudioData silently produce
+    // near-total silence, while native <audio> playback and ffmpeg both
+    // handle the same file correctly. See audio-compressor.html for the
+    // full root-cause writeup and the real file this was verified
+    // against. The actual trim below now runs through ffmpeg.wasm
+    // (same engine already proven correct on this exact bug), matching
+    // the same reliable pattern already used by Video Trimmer.
+    preview.onloadedmetadata = () => {
+      duration = preview.duration;
+      endIn.value = duration.toFixed(1);
+      durInfo.textContent = `Full length: ${duration.toFixed(1)}s`;
       trimBtn.disabled = false;
-    } catch (e) {
+    };
+    preview.onerror = () => {
       errText.textContent = 'Couldn\u2019t read this audio file.';
       errBox.classList.add('show');
-    }
+    };
   }
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
@@ -162,54 +181,44 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  clearBtn.addEventListener('click', () => { file=null; audioBuffer=null; editWrap.style.display='none'; trimBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  clearBtn.addEventListener('click', () => { file=null; duration=null; editWrap.style.display='none'; trimBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
 
-  function bufferToWav(abuffer) {
-    const numOfChan = abuffer.numberOfChannels;
-    const length = abuffer.length * numOfChan * 2 + 44;
-    const buffer = new ArrayBuffer(length);
-    const view = new DataView(buffer);
-    const channels = [];
-    let pos = 0;
-    function setUint16(d) { view.setUint16(pos, d, true); pos += 2; }
-    function setUint32(d) { view.setUint32(pos, d, true); pos += 4; }
-    setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
-    setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
-    setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
-    setUint16(numOfChan * 2); setUint16(16);
-    setUint32(0x61746164); setUint32(length - pos - 4);
-    for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
-    let offset = 0;
-    while (pos < length) {
-      for (let i = 0; i < numOfChan; i++) {
-        let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-        sample = (sample < 0 ? sample * 32768 : sample * 32767) | 0;
-        view.setInt16(pos, sample, true); pos += 2;
-      }
-      offset++;
-    }
-    return buffer;
-  }
-
-  trimBtn.addEventListener('click', () => {
+  trimBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '30%';
+    progressWrap.classList.add('show'); progressFill.style.width = '10%';
     trimBtn.disabled = true;
     try {
       const start = Math.max(0, parseFloat(startIn.value) || 0);
-      const end = Math.min(audioBuffer.duration, parseFloat(endIn.value) || audioBuffer.duration);
-      if (end <= start) throw new Error('End must be after start.');
-      const sr = audioBuffer.sampleRate;
-      const startSample = Math.floor(start * sr);
-      const endSample = Math.floor(end * sr);
-      const frameCount = endSample - startSample;
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const trimmed = ctx.createBuffer(audioBuffer.numberOfChannels, frameCount, sr);
-      for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
-        trimmed.copyToChannel(audioBuffer.getChannelData(ch).subarray(startSample, endSample), ch);
+      const end = Math.min(duration, parseFloat(endIn.value) || duration);
+      if (end <= start) throw new Error('too-short');
+
+      const ffmpeg = await ckGetFFmpeg((ratio) => {
+        progressFill.style.width = `${20 + ratio * 70}%`;
+      });
+      progressFill.style.width = '20%';
+      const { fetchFile } = FFmpeg;
+      const inExt = ckExt(file.name) || 'mp3';
+      const inName = 'input.' + inExt;
+      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+
+      // -acodec pcm_s16le rather than -c copy: this tool always outputs
+      // WAV regardless of input format (matches the FAQ's existing,
+      // accurate claim), so a real re-encode to WAV's own codec is
+      // correct here - unlike Video Trimmer's stream-copy approach,
+      // which only works when input and output share the same codec.
+      await ffmpeg.run('-i', inName, '-ss', String(start), '-to', String(end), '-vn', '-acodec', 'pcm_s16le', 'output.wav');
+
+      let data;
+      try {
+        data = ffmpeg.FS('readFile', 'output.wav');
+      } catch (readErr) {
+        throw new Error('encode-failed');
       }
-      progressFill.style.width = '80%';
-      const blob = new Blob([bufferToWav(trimmed)], { type: 'audio/wav' });
+      if (!data || data.length === 0) {
+        throw new Error('empty-output');
+      }
+
+      const blob = new Blob([data.buffer], { type: 'audio/wav' });
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
       downloadBtn.setAttribute('download', `${baseName}-trimmed.wav`);
@@ -218,7 +227,13 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = err.message || 'Couldn\u2019t trim this file.';
+      const knownMessages = {
+        'too-short': 'End must be after start.',
+        'encode-failed': 'Couldn\u2019t trim this file \u2014 it may be corrupted or contain no audio track.',
+        'empty-output': 'The trimmed file came out empty \u2014 please try a different range.',
+      };
+      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t trim this file.';
+      console.error('ConvertKoro Audio Trimmer: trim failed.', err);
       errBox.classList.add('show');
     }
     trimBtn.disabled = false;

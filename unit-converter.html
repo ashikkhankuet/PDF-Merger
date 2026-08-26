@@ -30,7 +30,7 @@
 </script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Unit Converter","description":"Convert between units of length, weight, and temperature, instantly.","url":"https://convertkoro.com/unit-converter","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Unit Converter","item":"https://convertkoro.com/unit-converter"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What unit categories are supported?","acceptedAnswer":{"@type":"Answer","text":"Length, weight, and temperature — covering the most commonly needed conversions."}},{"@type":"Question","name":"Is this accurate for scientific or engineering use?","acceptedAnswer":{"@type":"Answer","text":"Conversions use standard, precise conversion factors, suitable for everyday and professional use alike."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What unit categories are supported?","acceptedAnswer":{"@type":"Answer","text":"Length, weight, and temperature — covering the most commonly needed conversions."}},{"@type":"Question","name":"Why does the result show so many decimal places sometimes?","acceptedAnswer":{"@type":"Answer","text":"Some conversions (like ounces to metric tons) don't land on a clean number — the result shows up to 6 decimal places for length/weight and 4 for temperature, so nothing gets silently rounded away."}},{"@type":"Question","name":"Is this accurate for scientific or engineering use?","acceptedAnswer":{"@type":"Answer","text":"Conversions use standard, precise conversion factors, suitable for everyday and professional use alike."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -66,7 +66,7 @@
     
     <p class="tool-intro-copy">Converting between length, weight, and temperature units — kilometers to miles, kilograms to pounds, Celsius to Fahrenheit — comes up in cooking, travel, fitness, and everyday math.</p>
     <p class="tool-intro-bangla">একক রূপান্তর করতে চান? দৈর্ঘ্য, ওজন, বা তাপমাত্রা সহজেই রূপান্তর করুন — সম্পূর্ণ বিনামূল্যে, সরাসরি আপনার ব্রাউজারে।</p>
-<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;margin-top:34px;">
+<div class="info-grid" style="margin-top:34px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
@@ -75,12 +75,22 @@
           <li><strong>Type a value</strong><span>The converted result updates live.</span></li>
         </ol>
       </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Length covers meters, kilometers, centimeters, millimeters, miles, yards, feet, and inches</li>
+          <li>Weight covers kilograms, grams, milligrams, pounds, ounces, and metric tons</li>
+          <li>Temperature covers Celsius, Fahrenheit, and Kelvin</li>
+          <li>Results update instantly as you type — no convert button to click</li>
+        </ul>
+      </div>
     </div>
   </section>
 
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
         <details class="faq-item"><summary>What unit categories are supported?</summary><p>Length, weight, and temperature — covering the most commonly needed conversions.</p></details>
+        <details class="faq-item"><summary>Why does the result show so many decimal places sometimes?</summary><p>Some conversions (like ounces to metric tons) don't land on a clean number — the result shows up to 6 decimal places for length/weight and 4 for temperature, so nothing gets silently rounded away.</p></details>
         <details class="faq-item"><summary>Is this accurate for scientific or engineering use?</summary><p>Conversions use standard, precise conversion factors, suitable for everyday and professional use alike.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>

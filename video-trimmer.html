@@ -89,7 +89,7 @@
     
     <p class="tool-intro-copy">Cutting a video down to just the clip you need, quickly, using a fast trim mode that doesn't require a full re-encode.</p>
     <p class="tool-intro-bangla">ভিডিও কাটতে চান? দ্রুত ও সহজে পছন্দের অংশ কেটে নিন — সম্পূর্ণ বিনামূল্যে, সরাসরি আপনার ব্রাউজারে।</p>
-<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
+<div class="info-grid" style="max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
@@ -97,6 +97,15 @@
           <li><strong>Set start and end time</strong><span>Preview the clip, then fine-tune the seconds.</span></li>
           <li><strong>Download the trimmed clip</strong><span>Cut instantly without a full re-encode.</span></li>
         </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Stream-copy mode means video and audio quality are identical to the original &mdash; nothing is re-compressed</li>
+          <li>Output keeps the same container/format as your input, not forced to a different one</li>
+          <li>Fast stream-copy trims align to the nearest keyframe, so the exact cut point can shift by a fraction of a second on some files &mdash; a real, known tradeoff of this method, not a bug</li>
+          <li>Works on MP4, WebM, MOV, AVI, MPEG, and MKV</li>
+        </ul>
       </div>
     </div>
   </section>

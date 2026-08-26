@@ -34,19 +34,22 @@
 <main class="doc-page">
   <div class="wrap">
     <h1>About ConvertKoro</h1>
-    <p class="updated">A small toolkit, built with one rule.</p>
+    <p class="updated">Real tools, doing one job well, without asking for your files first.</p>
     <div class="doc">
-      <h2>The rule</h2>
-      <p>Your files stay on your device. Almost every tool on this site &mdash; merging, compressing, converting, splitting &mdash; runs as code in your browser. There's no server in the middle receiving your documents, which means there's nothing for us to store, lose, or hand over. Two exceptions: the URL Shortener, which by necessity stores the link you submit so it can redirect visitors, and Image-to-Text, which by default sends your image to a cloud OCR service for a more accurate result (an on-device-only option is available if you'd rather it stayed local). We built ConvertKoro because most free converters ask you to upload your files first and trust a stranger's server with them. Most of this one still doesn't ask.</p>
+      <h2>Why it exists</h2>
+      <p>Most free converter sites work the same way: you upload your file to their server, wait, then download the result. That's a real, deliberate exchange — your document, in exchange for the free service. ConvertKoro exists because that exchange isn't actually necessary for most of these tasks. A browser can merge PDFs, resize an image, or convert a file format entirely on its own, with no server involved at all. So that's what most of these tools do.</p>
+
+      <h2>How it works</h2>
+      <p>Merging, compressing, converting, splitting, cropping, editing &mdash; the processing happens as code running in your own browser tab. Your file never leaves your device for most tools here, because it never needs to. There are two honest exceptions, and they're disclosed exactly where you'd expect: the URL Shortener stores the destination link you submit, because that's the only way a short link can redirect anyone; and Image-to-Text sends your image to a cloud OCR service by default for meaningfully better accuracy, with an on-device-only option available if you'd rather it stayed local. Every other tool stays fully client-side, and where it doesn't, we say so.</p>
 
       <h2>What's here</h2>
-      <p id="toolCountP">Live tools so far across PDF, image, and developer utilities &mdash; plus more on the way (browse the Tools menu to see what's planned). Each live tool is free, has no daily limit, and doesn't require an account.</p>
+      <p id="toolCountP">Tools live so far across PDF, image, media, developer, and calculator utilities. Each one is free, has no daily limit, and doesn't require an account &mdash; drop a file in, get your result, done.</p>
 
       <h2>How it's free</h2>
-      <p>ConvertKoro is supported by a small amount of advertising on the page. There's no premium tier, no paywall, and no feature held back behind a subscription.</p>
+      <p>A small amount of advertising on the page supports the cost of running the site. There's no premium tier, no paywall, and no feature held back behind a subscription.</p>
 
       <h2>Who's behind it</h2>
-      <p>ConvertKoro is an independent project, built and maintained by a small team who wanted a converter site that didn't feel like a data-collection funnel.</p>
+      <p>ConvertKoro is an independent project, not a company &mdash; a small, growing team built it, starting from one developer who got tired of "free" tools that quietly needed your files uploaded first, and built the alternative. Testing and feedback now come from a second person too, and the team is expected to grow further as the site does.</p>
 
       <h2>Get in touch</h2>
       <p>Found a bug, or want a tool we don't have yet? Use the <a href="/contact" style="color:var(--signal-dk);">contact form</a>, or email us directly at <strong>support.convertkoro@gmail.com</strong>.</p>
@@ -58,7 +61,7 @@
 <script>
   const liveCount = TOOLS.filter(t => !t.soon).length;
   document.getElementById('toolCountP').innerHTML =
-    `<strong>${liveCount} tools</strong> live so far across PDF, image, developer, calculator, audio, and video utilities &mdash; plus more on the way. Each live tool is free, has no daily limit, and doesn't require an account.`;
+    `<strong>${liveCount} tools</strong> live so far across PDF, image, media, developer, and calculator utilities. Each one is free, has no daily limit, and doesn't require an account &mdash; drop a file in, get your result, done.`;
 </script>
 </body>
 </html>

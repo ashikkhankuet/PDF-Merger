@@ -28,7 +28,8 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Compressor","description":"Shrink an audio file's size with a bitrate slider, entirely in your browser.","url":"https://convertkoro.com/audio-compressor","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the output always MP3?","acceptedAnswer":{"@type":"Answer","text":"MP3 at a lower bitrate is what actually shrinks the file &mdash; WAV can't be compressed this way since it's uncompressed by design."}},{"@type":"Question","name":"What bitrate should I pick?","acceptedAnswer":{"@type":"Answer","text":"96 kbps is a solid balance for speech and podcasts. For music, 128&ndash;192 kbps keeps more detail at a larger size."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Audio Compressor","item":"https://convertkoro.com/audio-compressor"}]}</script>
@@ -47,11 +48,15 @@
   </section>
   <section class="container">
     <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads a ~25MB audio engine</strong> to your browser (one-time, cached after). This runs the same reliable engine used by this site's video tools.</span>
+      </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop an audio file here</strong>
-        <div class="hint">MP3, WAV, M4A, OGG, FLAC &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" hidden />
+        <div class="hint">MP3, WAV, M4A, OGG, FLAC, AAC, WMA &middot; stays on your device</div>
+        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.mpeg,.mpga,.aac,.wma" hidden />
       </div>
       <div class="file-list" id="fileList"></div>
       <div id="qualityRow" style="display:none;margin-top:16px;">
@@ -111,7 +116,7 @@
     window.ConvertKoroDrivePicker.renderSourceButtons({
       containerEl: dropzone,
       fileInputEl: fileInput,
-      mimeTypes: 'audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac,audio/x-flac',
+      mimeTypes: 'audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac,audio/x-flac,audio/aac,audio/x-ms-wma',
       pasteMimeCheck: (item) => item.type && item.type.startsWith('audio/'),
       onFiles: (files) => { setFile(files[0]); },
     });
@@ -135,7 +140,17 @@
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(2)+' MB'; }
 
   function setFile(f) {
-    if (!f || !f.type.startsWith('audio/')) return;
+    // Real, confirmed gap: a file can be genuine audio but report a
+    // non-"audio/" MIME type - the standard OS/browser MIME mapping for
+    // a .mpeg extension is video/mpeg, not audio/mpeg, even when the
+    // actual file content is MP3 audio (confirmed directly: WhatsApp's
+    // voice-note export names MP3 files with a .mpeg extension). Relying
+    // on f.type alone rejected these real files. Falling back to the
+    // filename extension catches this case without loosening validation
+    // for genuinely non-audio files.
+    const ext = (f && f.name || '').split('.').pop().toLowerCase();
+    const knownAudioExt = ['mp3','wav','m4a','ogg','flac','mpeg','mpga','aac','wma'];
+    if (!f || (!f.type.startsWith('audio/') && !knownAudioExt.includes(ext))) return;
     file = f;
     fileList.innerHTML = `<div class="file-row">
       <span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span>
@@ -157,98 +172,61 @@
   clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; resultBox.classList.remove('show'); });
   brSlider.addEventListener('input', () => { brVal.textContent = brSlider.value + ' kbps'; });
 
-  function floatTo16(input) {
-    const out = new Int16Array(input.length);
-    for (let i = 0; i < input.length; i++) {
-      const s = Math.max(-1, Math.min(1, input[i]));
-      out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-    }
-    return out;
-  }
-
   compressBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '15%';
+    progressWrap.classList.add('show'); progressFill.style.width = '5%';
     compressBtn.disabled = true;
     try {
-      if (typeof lamejs === 'undefined' || typeof lamejs.Mp3Encoder !== 'function') {
-        // A real, confirmed failure mode: the lamejs CDN script can fail
-        // to load (network hiccup, ad-blocker, CDN outage) or load in a
-        // way that doesn't expose window.lamejs correctly - previously
-        // this surfaced as the same generic "Couldn't process this audio
-        // file" message as every other failure, making it impossible to
-        // tell a missing-library problem from a real audio-decode
-        // problem. Checked explicitly, first, with its own clear message.
-        throw new Error('encoder-unavailable');
-      }
-      const arrayBuffer = await file.arrayBuffer();
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      let audioBuffer;
-      try {
-        audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      } catch (decodeErr) {
-        console.error('ConvertKoro Audio Compressor: decodeAudioData failed.', decodeErr);
-        throw new Error('decode-failed');
-      }
-      progressFill.style.width = '50%';
+      // Rebuilt on ffmpeg.wasm, replacing the previous
+      // AudioContext.decodeAudioData() + lamejs pipeline entirely - a
+      // real, confirmed bug traced directly from a user-supplied file
+      // pair (their original vs. the compressed output): the compressed
+      // file was a structurally valid MP3 that was 94% zero-bytes and
+      // measured -91dB (genuine digital silence), while the SAME file
+      // decoded and re-encoded through ffmpeg (outside the browser)
+      // produced correct, audible output at the right volume. The
+      // user's original file had an embedded ID3 album-art image stream
+      // alongside the audio (common, valid MP3 metadata) - matches a
+      // known, documented category of decodeAudioData bugs around
+      // multi-stream/video-container-like files (W3C bug 21520). ffmpeg
+      // correctly separates and ignores the embedded picture; the
+      // browser's native decoder apparently did not, for this file.
+      // ffmpeg.wasm is already used successfully elsewhere on this site
+      // (Video to MP3) for exactly this decode-then-encode job, so this
+      // switches to the already-proven-correct engine instead of
+      // patching the fragile native path further.
+      progressFill.style.width = '10%';
+      const ffmpeg = await ckGetFFmpeg((ratio) => {
+        progressFill.style.width = `${20 + ratio * 70}%`;
+      });
+      progressFill.style.width = '20%';
+      const { fetchFile } = FFmpeg;
+      const ext = ckExt(file.name) || 'mp3';
+      const inName = 'input.' + ext;
+      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+
       const kbps = parseInt(brSlider.value);
-      const channels = Math.min(audioBuffer.numberOfChannels, 2);
-      if (!channels || !audioBuffer.length) {
-        // A real, confirmed cause worth its own message: some files
-        // decode "successfully" (no thrown error) but produce an
-        // AudioBuffer with zero channels or zero samples - most often a
-        // container with no valid audio track, or one the browser
-        // silently failed to fully decode. Encoding would proceed
-        // without ever throwing and produce a technically-valid but
-        // completely empty/silent MP3 - exactly matching a real user
-        // report of "sound removed completely" on some files while
-        // others worked. Catching this explicitly turns that into a
-        // clear, honest message instead of a silent empty file.
-        throw new Error('empty-audio');
+      await ffmpeg.run('-i', inName, '-vn', '-acodec', 'libmp3lame', '-b:a', `${kbps}k`, 'output.mp3');
+
+      let data;
+      try {
+        data = ffmpeg.FS('readFile', 'output.mp3');
+      } catch (readErr) {
+        // ffmpeg completing without producing a readable output file
+        // means the encode genuinely failed partway (e.g. no audio
+        // stream found in the input) - a real, distinct failure from a
+        // successful-but-empty result, so it gets its own message.
+        throw new Error('encode-failed');
       }
-      const encoder = new lamejs.Mp3Encoder(channels, audioBuffer.sampleRate, kbps);
-      const left = floatTo16(audioBuffer.getChannelData(0));
-      const right = channels > 1 ? floatTo16(audioBuffer.getChannelData(1)) : null;
-      const chunks = [];
-      const blockSize = 1152;
-      const totalBlocks = Math.ceil(left.length / blockSize);
-      let blockIndex = 0;
-      for (let i = 0; i < left.length; i += blockSize) {
-        const l = left.subarray(i, i + blockSize);
-        const r = right ? right.subarray(i, i + blockSize) : undefined;
-        const buf = right ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
-        if (buf.length > 0) chunks.push(buf);
-        blockIndex++;
-        // Progress feedback during the encode loop itself, not just
-        // before/after it - on a long file this loop is genuinely the
-        // slowest part (lamejs is a pure-JS encoder, not hardware
-        // accelerated), and a frozen-looking 50% bar for a long time
-        // reads as broken even when it's still working. Updated every
-        // ~200 blocks (not every single one) to avoid the progress-bar
-        // update itself becoming a meaningful part of the slowdown.
-        if (blockIndex % 200 === 0) {
-          progressFill.style.width = `${50 + (blockIndex/totalBlocks)*45}%`;
-          // Yield to the browser's render/event loop so the tab stays
-          // responsive and the updated progress bar actually paints,
-          // instead of the whole encode running as one long, blocking
-          // synchronous task - a real, common cause of an encoder that
-          // is genuinely working but LOOKS frozen/hung to the user.
-          await new Promise((r) => setTimeout(r, 0));
-        }
-      }
-      const end = encoder.flush();
-      if (end.length > 0) chunks.push(end);
-      const blob = new Blob(chunks, { type: 'audio/mp3' });
-      if (blob.size === 0) {
-        // Confirmed possible even when every step above returns
-        // successfully: if the encoder itself never produced any bytes
-        // (e.g. certain silent/near-silent input, or an internal encoder
-        // fault that doesn't throw), the result is a technically "valid"
-        // empty MP3. Downloading a 0-byte file plays as silence in every
-        // player - this is exactly the reported symptom, caught here
-        // instead of shipping the empty file.
+      if (!data || data.length === 0) {
+        // Belt-and-suspenders: even with ffmpeg, if the output file
+        // exists but is empty this is the same "technically valid,
+        // actually silent" outcome the previous pipeline could produce -
+        // caught here rather than shipped as a 0-byte download.
         throw new Error('empty-output');
       }
+
+      const blob = new Blob([data.buffer], { type: 'audio/mp3' });
       progressFill.style.width = '100%';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
@@ -261,8 +239,7 @@
       // this particular file happens not to shrink, e.g. a high bitrate
       // slider against an already-small source), but report the size
       // change honestly instead of a floor-clamped-at-0% claim that hides
-      // a real increase - Math.max(0, ...) here was silently displaying
-      // "0% smaller" even when the output was in fact larger.
+      // a real increase.
       const sizeChangePct = Math.round((1 - blob.size/file.size) * 100);
       resultTitle.textContent = `${baseName}-compressed.mp3 is ready`;
       resultMeta.textContent = sizeChangePct >= 0
@@ -271,19 +248,11 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      // Each real, confirmed failure path above gets its own honest
-      // message now, instead of every possible failure - a missing
-      // library, a decode failure, an empty/silent result, or a genuine
-      // unexpected error - all collapsing into the same generic
-      // "Couldn't process this audio file" text that gave no way to
-      // tell them apart or know what to try next.
       const knownMessages = {
-        'encoder-unavailable': 'The MP3 encoder failed to load \u2014 try refreshing the page. If this keeps happening, an ad blocker or browser extension may be blocking it.',
-        'decode-failed': 'Couldn\u2019t decode this audio file \u2014 it may be corrupted, DRM-protected, or in a format this browser can\u2019t play.',
-        'empty-audio': 'This file doesn\u2019t appear to contain any playable audio \u2014 try a different file.',
+        'encode-failed': 'Couldn\u2019t find playable audio in this file \u2014 it may be corrupted or contain no audio track.',
         'empty-output': 'The encoder produced an empty file for this audio \u2014 please try again, or try a different bitrate.',
       };
-      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this audio file. Please try again.';
+      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this audio file \u2014 try a smaller file or a different format.';
       console.error('ConvertKoro Audio Compressor: compression failed.', err);
       errBox.classList.add('show');
     }

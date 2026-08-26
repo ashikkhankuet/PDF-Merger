@@ -93,7 +93,7 @@
     
     <p class="tool-intro-copy">Turning a short video clip into a looping GIF is a common need for messaging, forums, and social posts where autoplay video isn't supported but an animated image is.</p>
     <p class="tool-intro-bangla">ভিডিও থেকে জিফ বানাতে চান? পছন্দের অংশ কেটে সহজেই লুপিং জিফ তৈরি করুন — সম্পূর্ণ বিনামূল্যে।</p>
-<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
+<div class="info-grid" style="max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
@@ -101,6 +101,15 @@
           <li><strong>Set the clip and size</strong><span>Pick start time, duration, and output width.</span></li>
           <li><strong>Download the GIF</strong><span>A looping animated GIF, ready to share.</span></li>
         </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Generates a custom color palette from your actual clip before encoding, rather than using a generic fixed palette &mdash; this noticeably improves color accuracy on gradients and skin tones</li>
+          <li>Output is capped at 15 seconds per clip to keep file sizes reasonable</li>
+          <li>GIF has no audio support, so the sound is dropped in the output, same as any GIF</li>
+          <li>Wider output widths mean a larger file &mdash; 480px is a good default for messaging apps</li>
+        </ul>
       </div>
     </div>
   </section>

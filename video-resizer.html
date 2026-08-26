@@ -190,7 +190,19 @@
       ffmpeg.FS('writeFile', inName, await fetchFile(file));
       let w = Math.max(16, Math.round((parseInt(wIn.value) || 1280) / 2) * 2);
       let h = Math.max(16, Math.round((parseInt(hIn.value) || 720) / 2) * 2);
-      await ffmpeg.run('-i', inName, '-vf', `scale=${w}:${h}`, '-c:a', 'copy', 'output.mp4');
+      // -c:a aac (not the previous -c:a copy) - a real, confirmed risk
+      // found during this audit: stream-copying audio only works when
+      // the source codec is valid inside the MP4 container. This tool
+      // now accepts MKV/AVI/MPEG inputs (added in an earlier pass),
+      // which can carry audio codecs like Opus or Vorbis that older
+      // MP4-muxer versions (including the specific, somewhat dated
+      // ffmpeg.wasm core this site loads) may not accept via stream
+      // copy - the documented failure mode there is either an outright
+      // error or, in some ffmpeg versions, a muxed file with the audio
+      // silently dropped. Re-encoding to AAC is universally MP4-safe
+      // and removes this risk entirely, matching the same choice
+      // already made in Video Compressor.
+      await ffmpeg.run('-i', inName, '-vf', `scale=${w}:${h}`, '-c:a', 'aac', '-b:a', '128k', 'output.mp4');
       const data = ffmpeg.FS('readFile', 'output.mp4');
       const blob = new Blob([data.buffer], { type: 'video/mp4' });
       const baseName = file.name.replace(/\.[^.]+$/, '');

@@ -76,7 +76,7 @@
   <section class="container">
     
     <p class="tool-intro-copy">SVG files don't work everywhere PNGs do — this rasterizes any SVG vector graphic into a PNG at the exact size you need, for use in apps, presentations, or platforms that don't accept vector formats. Runs entirely in your browser, with nothing uploaded and transparency preserved in the output.</p>
-<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
+<div class="info-grid" style="max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
@@ -84,6 +84,15 @@
           <li><strong>Set the output width</strong><span>Height scales automatically to match the original proportions.</span></li>
           <li><strong>Download the PNG</strong><span>A rasterized PNG at the exact size you chose.</span></li>
         </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Because SVG is vector, scaling up to a large width stays crisp &mdash; unlike upscaling an already-raster image</li>
+          <li>Width can be set anywhere from 16px up to 8000px</li>
+          <li>Transparency in the original SVG carries over to the PNG</li>
+          <li>Any embedded fonts referenced by the SVG need to already be available in your browser to render correctly</li>
+        </ul>
       </div>
     </div>
   </section>

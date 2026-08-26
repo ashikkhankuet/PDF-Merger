@@ -58,7 +58,7 @@
   <section class="container">
     
     <p class="tool-intro-copy">XML and JSON are both common data-interchange formats, but working across systems that use different ones means converting between them — this handles it instantly in your browser.</p>
-<div class="info-grid" style="grid-template-columns:1fr;max-width:640px;">
+<div class="info-grid" style="max-width:640px;">
       <div>
         <h2 style="font-size:20px;margin-bottom:18px;">How it works</h2>
         <ol class="steps">
@@ -66,6 +66,15 @@
           <li><strong>Pick a direction</strong><span>XML → JSON or JSON → XML, both work.</span></li>
           <li><strong>Copy the result</strong><span>Attributes are preserved as an @attributes object.</span></li>
         </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>XML attributes convert to an <code>@attributes</code> object rather than being dropped</li>
+          <li>Repeated sibling elements become a JSON array automatically</li>
+          <li>Text content of an element with no attributes becomes a plain string, not a nested object</li>
+          <li>Works both directions on the same page &mdash; no separate tool needed</li>
+        </ul>
       </div>
     </div>
   </section>
