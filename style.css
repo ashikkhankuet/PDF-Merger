@@ -756,21 +756,27 @@ body.mob-panel-open { overflow: hidden; }
   box-shadow: var(--shadow-lg); padding: 28px; position: relative; z-index: 1; overflow: visible;
   min-width: 0;
 }
-/* Soft blurred color blobs behind the panel, matching the reference
-   design's decorative background - subtle in light mode, more visible
-   as a glow in dark mode. Purely decorative, pointer-events disabled so
-   they never interfere with the real, interactive panel content. */
+/* Soft blurred color blobs behind the panel - a real, reported problem:
+   at 260px/220px with .35 opacity and only 50px blur, these read as a
+   loud, saturated purple/blue wash across the whole panel (confirmed
+   directly against the user's own screenshot of the live site), nothing
+   like the much subtler, near-white reference design they'd shared
+   earlier. Shrunk and pushed further into the corners (more negative
+   offset), opacity roughly halved, and blur increased so the color
+   genuinely fades to a soft tint rather than a visible colored patch -
+   purely decorative, pointer-events disabled so they never interfere
+   with the real, interactive panel content. */
 .quick-start::before, .quick-start::after {
   content: ''; position: absolute; border-radius: 50%; z-index: -1; pointer-events: none;
-  filter: blur(50px); opacity: .35;
+  filter: blur(70px); opacity: .16;
 }
 .quick-start::before {
-  width: 260px; height: 260px; background: var(--grad-image); top: -60px; right: -60px;
+  width: 200px; height: 200px; background: var(--grad-image); top: -80px; right: -80px;
 }
 .quick-start::after {
-  width: 220px; height: 220px; background: var(--grad-media); bottom: -50px; left: -50px;
+  width: 170px; height: 170px; background: var(--grad-media); bottom: -70px; left: -70px;
 }
-:root[data-theme="dark"] .quick-start::before, :root[data-theme="dark"] .quick-start::after { opacity: .5; }
+:root[data-theme="dark"] .quick-start::before, :root[data-theme="dark"] .quick-start::after { opacity: .3; }
 @media (max-width: 480px) {
   /* The blobs' negative offsets (extending outside .quick-start's own
      box) were pushing the page's real scrollable width past the
@@ -779,17 +785,17 @@ body.mob-panel-open { overflow: hidden; }
      viewport width. Pulling them fully inside the panel bounds on
      small screens keeps the same visual glow without the extra
      scrollable width. */
-  .quick-start::before { top: 10px; right: 10px; width: 160px; height: 160px; }
-  .quick-start::after { bottom: 10px; left: 10px; width: 140px; height: 140px; }
+  .quick-start::before { top: 10px; right: 10px; width: 130px; height: 130px; }
+  .quick-start::after { bottom: 10px; left: 10px; width: 110px; height: 110px; }
 }
 
 .qs-stack { display: flex; justify-content: center; gap: 26px; margin-bottom: 22px; position: relative; }
 .qs-cat { display: flex; flex-direction: column; align-items: center; gap: 7px; }
 .qs-chip {
-  width: 54px; height: 54px; border-radius: 50%; color: #fff;
+  width: 46px; height: 46px; border-radius: 50%; color: #fff;
   border: none; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
 }
-.qs-chip svg { width: 23px; height: 23px; }
+.qs-chip svg { width: 20px; height: 20px; }
 .qs-cat-label { font-size: 12.5px; font-weight: 700; color: var(--ink); }
 .qs-cat-label::after {
   content: ''; display: block; height: 3px; width: 26px; margin: 4px auto 0; border-radius: 2px;
@@ -806,25 +812,36 @@ body.mob-panel-open { overflow: hidden; }
    light mode since the reference shows it there too but far more subtly;
    a strong glow on a white background would look like a rendering bug
    rather than a deliberate effect. */
-:root[data-theme="dark"] .qs-chip.c1 { box-shadow: 0 0 22px rgba(229,42,50,.55); }
-:root[data-theme="dark"] .qs-chip.c2 { box-shadow: 0 0 22px rgba(13,110,253,.55); }
-:root[data-theme="dark"] .qs-chip.c3 { box-shadow: 0 0 22px rgba(107,33,232,.55); }
-:root[data-theme="dark"] .qs-chip.c4 { box-shadow: 0 0 22px rgba(8,163,98,.55); }
+/* Icon glow in dark mode - a real, reported contributor to this panel
+   looking too visually loud/colorful (confirmed against the user's own
+   screenshot): 22px at .55 opacity across 4 differently-colored circles
+   at once genuinely reads as a saturated wash on a dark background, not
+   a subtle accent. Roughly halved both the glow radius and its opacity
+   to keep a soft indication of color without four competing glows.
+*/
+:root[data-theme="dark"] .qs-chip.c1 { box-shadow: 0 0 12px rgba(229,42,50,.3); }
+:root[data-theme="dark"] .qs-chip.c2 { box-shadow: 0 0 12px rgba(13,110,253,.3); }
+:root[data-theme="dark"] .qs-chip.c3 { box-shadow: 0 0 12px rgba(107,33,232,.3); }
+:root[data-theme="dark"] .qs-chip.c4 { box-shadow: 0 0 12px rgba(8,163,98,.3); }
 .qs-arrow { position: absolute; left: 50%; bottom: -38px; transform: translateX(-50%);
   width: 40px; height: 40px; border-radius: 50%; background: var(--signal); color: #fff;
   display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); z-index: 4; }
 .qs-arrow svg { width: 18px; height: 18px; }
 @media (max-width: 480px) {
-  /* The 4-icon category row (56px circles + 34px gaps) was overflowing
-     the panel on narrow phones, clipping the last icon's label - real,
-     confirmed bug, not just tight spacing. Shrinking both the icon size
-     and the gap keeps all 4 comfortably within a 320-390px viewport.
-     Placed after the base .qs-chip rules (not earlier in the file) so
-     this override actually wins - an identical-specificity rule earlier
-     in source order was being silently overridden by the base rule
-     that came later, a real ordering bug caught by testing. */
-  .qs-chip { width: 46px; height: 46px; }
-  .qs-chip svg { width: 20px; height: 20px; }
+  /* The 4-icon category row was overflowing the panel on narrow phones
+     at the desktop chip size, clipping the last icon's label - real,
+     confirmed bug, not just tight spacing. Now scaled down from the
+     desktop base (46px, itself reduced from an earlier 54px to calm
+     down this panel's overall visual intensity - see the .qs-chip rule
+     above) rather than matching it, so mobile still gets genuinely
+     smaller circles and tighter gaps, keeping all 4 comfortably within
+     a 320-390px viewport. Placed after the base .qs-chip rules (not
+     earlier in the file) so this override actually wins - an
+     identical-specificity rule earlier in source order was being
+     silently overridden by the base rule that came later, a real
+     ordering bug caught by testing. */
+  .qs-chip { width: 40px; height: 40px; }
+  .qs-chip svg { width: 17px; height: 17px; }
   .qs-stack { gap: 14px; }
   .qs-cat-label { font-size: 11px; }
 }

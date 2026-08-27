@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="This page doesn't exist on ConvertKoro. Browse our free PDF, image, media, and developer tools instead." />
+<meta name="robots" content="noindex, follow" />
+<title>Page not found | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
+</head>
+<body data-page="404">
+<div id="site-header"></div>
+<main>
+  <section class="container" style="padding:72px 0 96px;text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--ink-faint);margin-bottom:14px;">404</div>
+    <h1 style="font-size:clamp(28px,4vw,40px);margin-bottom:14px;">Page not found</h1>
+    <p style="font-size:16px;color:var(--ink-soft);max-width:480px;margin:0 auto 36px;line-height:1.65;">
+      That link doesn't lead anywhere on ConvertKoro &mdash; it may be mistyped, or the page may have moved. Try searching, or jump straight to a tool below.
+    </p>
+
+    <div style="max-width:440px;margin:0 auto 48px;">
+      <input type="text" id="notFoundSearch" placeholder="Search tools&hellip; e.g. merge pdf, compress image"
+        style="width:100%;padding:14px 18px;border:1.5px solid var(--line-strong);border-radius:12px;background:var(--card);color:var(--ink);font-size:15px;box-sizing:border-box;" />
+      <div id="notFoundResults" style="text-align:left;margin-top:10px;"></div>
+    </div>
+
+    <a href="/" class="btn btn-primary" style="margin-bottom:56px;">Go to homepage</a>
+
+    <div style="max-width:680px;margin:0 auto;text-align:left;">
+      <h2 style="font-size:15px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:18px;">Popular tools</h2>
+      <div id="notFoundPopular" class="tool-grid" style="grid-template-columns:repeat(4,1fr);"></div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>
+  // Real, working search over the actual TOOLS registry (same data
+  // nav.js's own search uses) - not a static list, so this stays
+  // accurate as tools are added later without needing a manual update
+  // here.
+  const searchInput = document.getElementById('notFoundSearch');
+  const resultsBox = document.getElementById('notFoundResults');
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) { resultsBox.innerHTML = ''; return; }
+    const matches = TOOLS.filter(t => !t.soon && (
+      t.name.toLowerCase().includes(q) ||
+      (t.short || '').toLowerCase().includes(q)
+    )).slice(0, 6);
+    resultsBox.innerHTML = matches.length
+      ? matches.map(t => `<a href="${t.url}" style="display:block;padding:10px 14px;border:1px solid var(--line-strong);border-radius:8px;margin-top:6px;color:var(--ink);text-decoration:none;font-size:14px;">${t.name}</a>`).join('')
+      : `<p style="color:var(--ink-faint);font-size:13.5px;margin-top:8px;">No tool matches &ldquo;${searchInput.value}&rdquo; &mdash; try the homepage instead.</p>`;
+  });
+
+  // A fixed, curated set of genuinely common destinations - not
+  // algorithmically "popular" (no analytics wired into this page), but
+  // representative across the site's main categories so a lost visitor
+  // has a real, useful next click regardless of what they were after.
+  const popularIds = ['merge', 'compress', 'img2pdf', 'pdf2word', 'img-compress', 'heic2jpg', 'qr', 'json-format'];
+  const popularTools = popularIds.map(id => TOOLS.find(t => t.id === id)).filter(Boolean);
+  document.getElementById('notFoundPopular').innerHTML = popularTools.map(t => `
+    <a class="tool-card" href="${t.url}">
+      <span class="ico" style="${tintStyle(t.tag)}">${svgIcon(t.icon)}</span>
+      <h3>${t.name}</h3>
+      <p>${t.short}</p>
+      <span class="tag">${t.tag}</span>
+    </a>`).join('');
+</script>
+</body>
+</html>
