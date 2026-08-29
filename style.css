@@ -792,10 +792,10 @@ body.mob-panel-open { overflow: hidden; }
 .qs-stack { display: flex; justify-content: center; gap: 26px; margin-bottom: 22px; position: relative; }
 .qs-cat { display: flex; flex-direction: column; align-items: center; gap: 7px; }
 .qs-chip {
-  width: 46px; height: 46px; border-radius: 50%; color: #fff;
+  width: 54px; height: 54px; border-radius: 50%; color: #fff;
   border: none; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
 }
-.qs-chip svg { width: 20px; height: 20px; }
+.qs-chip svg { width: 23px; height: 23px; }
 .qs-cat-label { font-size: 12.5px; font-weight: 700; color: var(--ink); }
 .qs-cat-label::after {
   content: ''; display: block; height: 3px; width: 26px; margin: 4px auto 0; border-radius: 2px;
@@ -840,8 +840,8 @@ body.mob-panel-open { overflow: hidden; }
      identical-specificity rule earlier in source order was being
      silently overridden by the base rule that came later, a real
      ordering bug caught by testing. */
-  .qs-chip { width: 40px; height: 40px; }
-  .qs-chip svg { width: 17px; height: 17px; }
+  .qs-chip { width: 46px; height: 46px; }
+  .qs-chip svg { width: 20px; height: 20px; }
   .qs-stack { gap: 14px; }
   .qs-cat-label { font-size: 11px; }
 }

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Generate tool post &mdash; ConvertKoro admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="stylesheet" href="style.css" />
+<style>
+  .gen-layout { display: grid; grid-template-columns: 380px 1fr; gap: 32px; align-items: start; }
+  @media (max-width: 900px) { .gen-layout { grid-template-columns: 1fr; } }
+  .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .theme-opt { border: 2px solid var(--line-strong); border-radius: 10px; padding: 10px; cursor: pointer; text-align: center; font-size: 12.5px; font-weight: 600; background: var(--card); }
+  .theme-opt.active { border-color: var(--signal); background: var(--signal-tint); }
+  .theme-swatch { width: 100%; height: 44px; border-radius: 6px; margin-bottom: 6px; }
+  #previewCanvas { max-width: 100%; border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--line); }
+  .step-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .step-row input { flex: 1; }
+</style>
+</head>
+<body data-page="admin-generate">
+<main class="doc-page">
+  <div class="wrap" style="max-width:1100px;">
+    <h1>Generate a tool post</h1>
+    <p class="updated">This page is not linked anywhere on the site and is not indexed. Pick a tool, pick a theme, download the image and caption &mdash; nothing here is sent anywhere automatically.</p>
+
+    <div class="gen-layout" style="margin-top:28px;">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Tool</label>
+          <select id="gTool" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:14px;box-sizing:border-box;"></select>
+          <p style="font-size:11.5px;color:var(--ink-faint);margin-top:4px;">52 tools, pulled live from the site's own tool list &mdash; always in sync, nothing to keep updated separately.</p>
+        </div>
+
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Link <span style="font-weight:400;color:var(--ink-faint);">(auto-filled from Tool)</span></label>
+          <input type="text" id="gUrl" readonly style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--paper);color:var(--ink-soft);font-size:13.5px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;" />
+        </div>
+
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Steps <span style="font-weight:400;color:var(--ink-faint);">(auto-filled &mdash; edit freely)</span></label>
+          <div id="gSteps"></div>
+        </div>
+
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Theme</label>
+          <div class="theme-grid" id="gThemeGrid"></div>
+        </div>
+
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Caption <span style="font-weight:400;color:var(--ink-faint);">(auto-filled &mdash; edit freely)</span></label>
+          <textarea id="gCaption" rows="7" style="width:100%;padding:11px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="btn btn-primary" id="gDownload">Download image</button>
+          <button type="button" class="btn btn-ghost" id="gCopyCaption">Copy caption</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <canvas id="previewCanvas" width="1080" height="1080"></canvas>
+        <p style="font-size:12px;color:var(--ink-faint);margin-top:10px;">1080\u00d71080 &mdash; posts natively to Instagram, and works on Facebook &amp; LinkedIn too.</p>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="nav.js"></script>
+<script>
+(() => {
+  const toolSelect = document.getElementById('gTool');
+  const urlInput = document.getElementById('gUrl');
+  const stepsWrap = document.getElementById('gSteps');
+  const themeGrid = document.getElementById('gThemeGrid');
+  const captionBox = document.getElementById('gCaption');
+  const canvas = document.getElementById('previewCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Real tag -> hex-pair mapping, taken directly from style.css's own
+  // --grad-* custom properties (not re-invented here) - canvas can't
+  // read CSS variables directly, so these are the same values mirrored
+  // as literal hex pairs, kept in sync by comment reference to their
+  // source of truth in style.css.
+  const TAG_COLORS = {
+    PDF:      ['#FE5059', '#E52A32'],
+    IMAGE:    ['#2A8CFC', '#0D6EFD'],
+    OCR:      ['#A78BFA', '#7C3AED'],
+    DEV:      ['#24D08A', '#08A362'],
+    DOCUMENT: ['#FBBF54', '#D97706'],
+    CREATE:   ['#F472B6', '#DB2777'],
+    AUDIO:    ['#A25AF3', '#6B21E8'],
+    VIDEO:    ['#A25AF3', '#6B21E8'],
+    CALC:     ['#38BDF8', '#0284C7'],
+  };
+
+  // Real, tool-specific 3-step how-tos - written from this site's own
+  // actual, verified tool behavior (confirmed across this session's work
+  // on the tools themselves), not generic placeholder text. Keyed by the
+  // same `id` values TOOLS already uses, so this stays correctly matched
+  // to whichever tool is selected regardless of list order.
+  const STEP_OVERRIDES = {
+    pdfedit: ['Drop in your PDF \u2014 opens right in the editor', 'Add text, highlights, shapes, or a signature', 'Download \u2014 changes are drawn into a real new PDF'],
+    merge: ['Drop in your PDFs, in any order', 'Drag to reorder them exactly how you want', 'Click Merge \u2014 download the combined file'],
+    compress: ['Drop in your PDF', 'Choose a quality level with the slider', 'Download \u2014 a smaller file, same content'],
+    img2pdf: ['Drop in any mix of JPG, PNG, or WebP images', 'Pick Fit to page or Original size', 'Download one ordered PDF from all your images'],
+    pdf2img: ['Drop in your PDF', 'Choose PNG or JPG for the export format', 'Download every page as an image, or as a ZIP'],
+    jpg2pdf: ['Drop in your JPG photos', 'Reorder them if needed', 'Download one combined PDF'],
+    pdf2word: ['Drop in your PDF', 'Pick Text only, or Keep formatting for real layout', 'Download a real, editable .docx'],
+    split: ['Drop in your PDF', 'Choose a page range, or pages to remove', 'Download the split result'],
+    qr: ['Type a link, text, or Wi-Fi details', 'Watch the QR code generate live', 'Download it as a PNG, ready to print or share'],
+    img2text: ['Drop in a photo or screenshot', 'Text is pulled out automatically, English & Bangla', 'Copy the extracted text, fully editable'],
+    'pdf-ocr': ['Drop in a scanned PDF (no real text underneath)', 'OCR reads each page, Bengali & English by default', 'Copy or download the extracted text'],
+    pdf2text: ['Drop in a PDF with real, selectable text', 'Text is extracted in reading order', 'Download a plain .txt file'],
+    word2pdf: ['Drop in your .docx file', 'It converts automatically', 'Download a PDF with formatting locked in'],
+    pdf2excel: ['Drop in a PDF with table data', 'Tables are detected and extracted', 'Download a real, editable .xlsx file'],
+    pdf2ppt: ['Drop in your PDF', 'Each page becomes one slide', 'Download a ready-to-present .pptx'],
+    pdf2md: ['Drop in your PDF', 'Headings, paragraphs, and lists convert to Markdown', 'Copy or download the .md file'],
+    md2pdf: ['Type or paste your Markdown', 'Click Generate PDF', 'Download a cleanly formatted PDF'],
+    md2html: ['Type your Markdown', 'Watch the HTML preview render live', 'Copy the generated HTML source'],
+    'heic2jpg': ['Drop in an iPhone HEIC photo', 'It decodes right in your browser \u2014 no upload', 'Download a standard JPG that opens anywhere'],
+    heic2png: ['Drop in an iPhone HEIC photo', 'It decodes right in your browser \u2014 no upload', 'Download a standard PNG, transparency included'],
+    'img-compress': ['Drop in a JPG or PNG', 'Adjust the quality slider', 'Download the smaller file instantly'],
+    'img-resize': ['Drop in your image', 'Enter exact pixels, or lock the aspect ratio', 'Download the resized image'],
+    'img-crop': ['Drop in your image', 'Drag to select the area you want, pick a ratio if needed', 'Download the cropped result'],
+    exif: ['Drop in your photo', 'GPS, camera model, and timestamp are stripped automatically', 'Download the cleaned photo, looks identical'],
+    jpg2webp: ['Drop in your JPG', 'It converts automatically', 'Download a WebP, typically 25\u201335% smaller'],
+    png2webp: ['Drop in your PNG', 'Transparency is preserved automatically', 'Download a smaller WebP file'],
+    webp2jpg: ['Drop in your WebP', 'It converts automatically', 'Download a JPG that opens everywhere'],
+    svg2png: ['Drop in your SVG', 'Set the output width you need', 'Download a crisp PNG at that exact size'],
+    'audio-compress': ['Drop in your audio file', 'Pick a target bitrate with the slider', 'Download a smaller MP3'],
+    'audio-conv': ['Drop in your audio file', 'Pick MP3 or WAV as the target', 'Download the converted file'],
+    'audio-trim': ['Drop in your audio file', 'Set a start and end time', 'Download just the clip you need'],
+    'video-compress': ['Drop in your video', 'Pick a quality level with the slider', 'Download a smaller MP4'],
+    'video-conv': ['Drop in your video', 'Pick MP4 or WebM as the target', 'Download the converted file'],
+    'video-resize': ['Drop in your video', 'Enter the exact pixel dimensions you need', 'Download the resized video'],
+    'video-trim': ['Drop in your video', 'Set a start and end time', 'Download the trimmed clip, instantly \u2014 no re-encode'],
+    video2gif: ['Drop in your video clip', 'Pick a start time, duration, and width', 'Download a looping animated GIF'],
+    video2mp3: ['Drop in your video', 'Click Extract Audio', 'Download just the audio track as MP3'],
+    'json-format': ['Paste in messy or minified JSON', 'Click Format to pretty-print it', 'Copy the clean, indented result'],
+    json2csv: ['Paste in a JSON array or a CSV table', 'Pick the direction you need', 'Copy the converted result'],
+    xml2json: ['Paste in your XML or JSON', 'Pick the direction you need', 'Copy the converted result'],
+    base64: ['Paste in your text or Base64 string', 'Click Encode or Decode', 'Copy the result'],
+    regex: ['Type your regular expression and flags', 'Paste sample text to test against', 'See matches highlight live, with a live count'],
+    color: ['Type or paste a HEX, RGB, or HSL value', 'It\u2019s detected automatically', 'See it instantly converted to the other two formats'],
+    timestamp: ['Paste in a Unix timestamp, seconds or milliseconds', 'It\u2019s detected automatically', 'See the exact date and time, instantly'],
+    'unit-conv': ['Pick a category \u2014 length, weight, or temperature', 'Choose your units', 'Type a value, see it convert live'],
+    'currency-conv': ['Live rates load automatically on the page', 'Pick your two currencies', 'Type an amount, see it convert instantly'],
+    'url-short': ['Paste in a long URL', 'Click Shorten', 'Copy your new, short link'],
+    'pct-calc': ['Pick which of the three calculators you need', 'Enter your numbers', 'See the result instantly, no calculate button'],
+    'age-calc': ['Enter a birth date', 'It calculates automatically', 'See your exact age in years, months, and days'],
+    'bmi-calc': ['Enter your height and weight, metric or imperial', 'It calculates automatically', 'See your BMI and what category it falls in'],
+    'emi-calc': ['Enter loan amount, interest rate, and term', 'It calculates automatically', 'See your monthly payment and full breakdown'],
+    'date-calc': ['Enter two dates', 'It calculates automatically', 'See the exact days between them, or add/subtract days'],
+  };
+  function stepsFor(tool) {
+    if (STEP_OVERRIDES[tool.id]) return STEP_OVERRIDES[tool.id];
+    // Fallback for the tools without a hand-written override yet: a
+    // reasonable, honest 3-step shape built from the tool's own real
+    // `short` description rather than an invented generic script -
+    // still accurate, just less specific than a hand-written one.
+    return [`Drop in your file for ${tool.name}`, tool.short, 'Download the result \u2014 free, no sign-up'];
+  }
+
+  // Populate the tool dropdown from the SAME live TOOLS array every
+  // other page on the site uses (loaded via nav.js above) - this is
+  // the real reason the user asked for this approach: no separate
+  // 52-tool list to maintain here that could drift out of sync with
+  // the actual site.
+  const liveTools = TOOLS.filter(t => !t.soon);
+  toolSelect.innerHTML = liveTools.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+  const THEMES = [
+    { id: 'midnight', label: 'Midnight', bg: '#0A0F1E', card: '#141b2e', text: '#ffffff', sub: '#B9C2D4', accent: '#4F9BFF' },
+    { id: 'paper', label: 'Paper', bg: '#F7F9FC', card: '#ffffff', text: '#14181F', sub: '#5B6472', accent: '#0062F8' },
+    { id: 'sunrise', label: 'Sunrise', bg: '#FFF7ED', card: '#ffffff', text: '#1C1917', sub: '#78716C', accent: '#EA580C' },
+    { id: 'mono', label: 'Mono', bg: '#111111', card: '#1c1c1c', text: '#ffffff', sub: '#9CA3AF', accent: '#ffffff' },
+  ];
+  let currentTheme = THEMES[0];
+  themeGrid.innerHTML = THEMES.map((t, i) => `
+    <div class="theme-opt${i===0?' active':''}" data-theme="${t.id}">
+      <div class="theme-swatch" style="background:${t.bg};"></div>
+      ${t.label}
+    </div>`).join('');
+  themeGrid.querySelectorAll('.theme-opt').forEach((el, i) => {
+    el.addEventListener('click', () => {
+      themeGrid.querySelectorAll('.theme-opt').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      currentTheme = THEMES[i];
+      render();
+    });
+  });
+
+  function renderStepInputs(steps) {
+    stepsWrap.innerHTML = steps.map((s, i) => `
+      <div class="step-row">
+        <input type="text" class="gStepInput" data-i="${i}" value="${s.replace(/"/g,'&quot;')}"
+          style="padding:9px 12px;border:1px solid var(--line-strong);border-radius:7px;background:var(--card);color:var(--ink);font-size:13px;" />
+      </div>`).join('');
+    stepsWrap.querySelectorAll('.gStepInput').forEach(inp => inp.addEventListener('input', render));
+  }
+
+  function currentSteps() {
+    return [...stepsWrap.querySelectorAll('.gStepInput')].map(i => i.value);
+  }
+
+  function captionFor(tool) {
+    const steps = currentSteps();
+    return `How to use ${tool.name} on ConvertKoro \ud83d\udc47
+
+${steps.map((s, i) => `${i+1}. ${s}`).join('\n')}
+
+Free, no sign-up \u2014 try it: convertkoro.com${tool.url}
+
+#ConvertKoro #FreeTools #${tool.name.replace(/[^a-zA-Z0-9]/g, '')}`;
+  }
+
+  function wrapText(text, maxWidth, font) {
+    ctx.font = font;
+    const words = text.split(' ');
+    const lines = [];
+    let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function render() {
+    const tool = liveTools.find(t => t.id === toolSelect.value);
+    if (!tool) return;
+    const steps = currentSteps();
+    const [c1, c2] = TAG_COLORS[tool.tag] || TAG_COLORS.PDF;
+    const th = currentTheme;
+
+    ctx.clearRect(0, 0, 1080, 1080);
+    ctx.fillStyle = th.bg;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // Header: small wordmark
+    ctx.fillStyle = th.accent;
+    ctx.beginPath(); ctx.roundRect(64, 60, 44, 44, 11); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 24px Georgia, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('C', 86, 84);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.font = '700 26px Arial';
+    ctx.fillStyle = th.text;
+    ctx.fillText('Convert', 122, 92);
+    const cw = ctx.measureText('Convert').width;
+    ctx.fillStyle = th.accent;
+    ctx.fillText('Koro', 122 + cw, 92);
+
+    // Category badge
+    const badgeGrad = ctx.createLinearGradient(64, 130, 194, 164);
+    badgeGrad.addColorStop(0, c1); badgeGrad.addColorStop(1, c2);
+    ctx.fillStyle = badgeGrad;
+    ctx.beginPath(); ctx.roundRect(64, 130, 130, 34, 17); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 14px Arial';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(tool.tag, 129, 148);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // Headline: tool name
+    ctx.fillStyle = th.text;
+    ctx.font = '800 60px Arial';
+    const nameLines = wrapText(tool.name, 950, '800 60px Arial');
+    let y = 260;
+    nameLines.forEach(line => { ctx.fillText(line, 64, y); y += 68; });
+
+    // Subtitle
+    ctx.fillStyle = th.sub;
+    ctx.font = '400 28px Arial';
+    const subLines = wrapText(tool.short, 950, '400 28px Arial');
+    y += 14;
+    subLines.forEach(line => { ctx.fillText(line, 64, y); y += 38; });
+
+    // Steps
+    y += 40;
+    steps.forEach((step, i) => {
+      const cy = y + i * 90;
+      // A localized gradient sized to this circle specifically - a real,
+      // caught bug during review: an earlier version reused a single
+      // canvas-wide gradient (spanning the full 1080x1080 canvas) for
+      // this small 26px circle, which meant it only ever sampled a tiny,
+      // near-solid slice of that gradient instead of showing a visible
+      // diagonal color transition of its own.
+      const circleGrad = ctx.createLinearGradient(96 - 26, cy - 4, 96 + 26, cy + 48);
+      circleGrad.addColorStop(0, c1); circleGrad.addColorStop(1, c2);
+      ctx.fillStyle = circleGrad;
+      ctx.beginPath(); ctx.arc(96, cy + 22, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '700 22px Arial';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), 96, cy + 23);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+      ctx.fillStyle = th.text;
+      ctx.font = '500 26px Arial';
+      const lines = wrapText(step, 800, '500 26px Arial');
+      lines.forEach((line, li) => ctx.fillText(line, 142, cy + 12 + li * 32));
+    });
+
+    // Footer
+    const footY = 960;
+    ctx.strokeStyle = th.sub;
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath(); ctx.moveTo(64, footY - 40); ctx.lineTo(1016, footY - 40); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = th.text;
+    ctx.font = '700 28px Arial';
+    ctx.fillText('Try it free at', 64, footY);
+    ctx.fillStyle = th.accent;
+    ctx.font = '800 42px Arial';
+    ctx.fillText('convertkoro.com' + tool.url, 64, footY + 42);
+  }
+
+  toolSelect.addEventListener('change', () => {
+    const tool = liveTools.find(t => t.id === toolSelect.value);
+    urlInput.value = 'https://convertkoro.com' + tool.url;
+    renderStepInputs(stepsFor(tool));
+    captionBox.value = captionFor(tool);
+    render();
+  });
+
+  // Seed with the first tool on load
+  toolSelect.value = liveTools[0].id;
+  toolSelect.dispatchEvent(new Event('change'));
+
+  document.getElementById('gDownload').addEventListener('click', () => {
+    const tool = liveTools.find(t => t.id === toolSelect.value);
+    const link = document.createElement('a');
+    link.download = `convertkoro-${tool.id}-${currentTheme.id}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  document.getElementById('gCopyCaption').addEventListener('click', async () => {
+    const btn = document.getElementById('gCopyCaption');
+    try {
+      await navigator.clipboard.writeText(captionBox.value);
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (err) {
+      // Clipboard API can be blocked by permissions in some contexts -
+      // the textarea itself still has the full, correct caption
+      // selectable/copyable by hand, so this isn't a dead end even if
+      // the one-click copy fails.
+      captionBox.select();
+    }
+  });
+})();
+</script>
+</body>
+</html>

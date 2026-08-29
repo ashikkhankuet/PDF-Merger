@@ -16,13 +16,17 @@
 # Format-preserving PDF -> Word conversion (via Adobe PDF Services)
 # genuinely needs more than the platform default 10s - a full pipeline
 # (auth, upload, start job, poll for completion, download result) is real
-# work beyond a single API call. 26s is the documented maximum obtainable
-# on the Pro plan (this site's current plan), and setting it here is
-# necessary but NOT sufficient - Netlify requires a separate support
-# request to actually enable it per-site even with this config present.
-# See the message shown to the user for that concrete action.
+# work beyond a single API call. Originally requested 26s (the documented
+# Pro-plan maximum at the time), but Netlify support confirmed via ticket
+# #1099575 (Aug 26) the actual enabled timeout for this function is 30
+# seconds - a genuine increase over what was asked for. Declared here to
+# match what's actually configured server-side; the function's own
+# internal AbortController (see pdf-to-word.js) is still set slightly
+# below this, at 27s, so it fires its own specific timeout message before
+# Netlify's platform-level enforcement would otherwise kill the function
+# with a generic error.
 [functions."pdf-to-word"]
-  timeout = 26
+  timeout = 30
 
 # Clean path for the short-link creation API, called from url-shortener.html
 [[redirects]]
