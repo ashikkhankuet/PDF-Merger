@@ -58,9 +58,11 @@ exports.handler = async (event) => {
   // lookup table.
   const existing = await store.get(email);
   if (existing !== null) {
-    // Not an error - resignup with the same address is a harmless no-op,
-    // and the front end shows the same success message either way so a
-    // person can't tell whether they were already on the list.
+    // Not an error - resignup with the same address is a harmless no-op.
+    // The front end distinguishes this from a fresh signup with a
+    // different message ("already on the list" vs "you're on the list"),
+    // so a returning user gets accurate feedback rather than being told
+    // the same generic success message either way.
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },

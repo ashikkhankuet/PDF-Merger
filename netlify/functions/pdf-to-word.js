@@ -57,8 +57,15 @@ exports.handler = async (event) => {
       };
     }
 
-    const clientId = process.env.ADOBE_PDF_CLIENT_ID;
-    const clientSecret = process.env.ADOBE_PDF_CLIENT_SECRET;
+    // .trim() guards against a very common, easy-to-make mistake: pasting
+    // a credential value copied from the downloaded
+    // pdfservices-api-credentials.json file often carries a trailing
+    // newline or leading/trailing space along with it, which silently
+    // makes the credential wrong (a space isn't visible in Netlify's
+    // input field) and produces exactly this kind of authentication
+    // failure with no visible cause.
+    const clientId = (process.env.ADOBE_PDF_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.ADOBE_PDF_CLIENT_SECRET || '').trim();
     if (!clientId || !clientSecret) {
       return {
         statusCode: 500,
@@ -94,8 +101,17 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Could not read the provided file data' }) };
     }
 
+    // Netlify confirmed (Aug 26, via support ticket #1099575) the
+    // function timeout for this site is now actually 30 seconds - a
+    // genuine increase from the 26s originally requested. Budget set to
+    // 27s rather than the full 30s: this function's own AbortController
+    // needs to fire and return its own clear, specific error message
+    // BEFORE Netlify's platform-level timeout kills the function
+    // outright, which would otherwise surface as a generic, less useful
+    // platform error instead of the real "timeout" message this code
+    // already returns.
     const controller = new AbortController();
-    const timeoutMs = 24000;
+    const timeoutMs = 27000;
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
@@ -113,7 +129,15 @@ exports.handler = async (event) => {
       }
       if (!tokenResponse.ok || !tokenData.access_token) {
         console.error('ConvertKoro PDF-to-Word (Adobe): token request failed.', 'HTTP status:', tokenResponse.status, tokenData);
-        return { statusCode: 502, body: JSON.stringify({ error: 'Conversion service authentication failed' }) };
+        // Surface Adobe's own error detail instead of a generic message -
+        // this is the exact point most likely to fail from a credentials
+        // mismatch (wrong env var names, extra whitespace pasted into the
+        // value, or a credential that hasn't finished provisioning yet),
+        // and a generic "authentication failed" gives no way to tell
+        // those apart. Adobe's token endpoint returns error/error_description
+        // fields on failure - passed straight through here.
+        const detail = tokenData.error_description || tokenData.error || `HTTP ${tokenResponse.status}`;
+        return { statusCode: 502, body: JSON.stringify({ error: `Conversion service authentication failed: ${detail}` }) };
       }
       const accessToken = tokenData.access_token;
       const authHeaders = {

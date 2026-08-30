@@ -99,7 +99,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           sender: { name: 'ConvertKoro', email: process.env.ANNOUNCE_SENDER_EMAIL || 'noreply@convertkoro.com' },
           subject: `${heading}: ${toolName}`,
-          htmlContent: buildAnnouncementHtml({ heading, toolName, toolDescription, toolUrl }),
+          htmlContent: buildAnnouncementHtml({ kind, heading, toolName, toolDescription, toolUrl }),
           messageVersions,
           params: { heading, toolName, toolDescription, toolUrl },
         }),
@@ -130,26 +130,104 @@ exports.handler = async (event) => {
   };
 };
 
-// Plain, simple HTML - no external template dependency in Brevo's UI
-// needed, so this function is fully self-contained. Deliberately no
-// "reply" affordance in the body copy, matching the no-reply requirement -
-// the actual no-reply behavior comes from the sender address itself
-// (ANNOUNCE_SENDER_EMAIL), which should be an address that either bounces
-// replies or isn't monitored.
-function buildAnnouncementHtml({ heading, toolName, toolDescription, toolUrl }) {
+// Three genuinely distinct templates, one per "kind" - not just a
+// swapped label on one shared layout. Each still shares the same brand
+// system (real ConvertKoro blue #0062F8, IBM Plex Sans, actual logo
+// hosted at convertkoro.com/logo-mark.png) so they're unmistakably from
+// the same sender, but the layout, color accent, emoji badge, and CTA
+// copy differ by case so each email "feels" like the right kind of news.
+//
+// Built with table-based layout and inline styles throughout, NOT
+// flexbox/grid/external CSS - deliberately, because Gmail/Outlook/etc
+// strip or ignore modern CSS in email HTML. This is the real, tested
+// constraint for email specifically, different from the site's own
+// modern CSS elsewhere. Deliberately no "reply" affordance in the body
+// copy, matching the no-reply requirement - the actual no-reply
+// behavior comes from the sender address itself (ANNOUNCE_SENDER_EMAIL),
+// which should be an address that either bounces replies or isn't
+// monitored.
+function buildAnnouncementHtml({ kind, heading, toolName, toolDescription, toolUrl }) {
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const templates = { new: newToolTemplate, enhanced: enhancedTemplate, campaign: campaignTemplate };
+  const build = templates[kind] || campaignTemplate;
+  return build({ heading, toolName: esc(toolName), toolDescription: esc(toolDescription), toolUrl: esc(toolUrl) });
+}
+
+// Shared wrapper every template uses - real logo in the header (not just
+// a text wordmark) so the email is recognizable as ConvertKoro at a
+// glance in a crowded inbox, plus the same footer disclosure on all
+// three so unsubscribe/sender trust signals never depend on which kind
+// was sent.
+function emailShell({ accentColor, badgeBg, badgeText, bodyContent }) {
   return `<!DOCTYPE html>
 <html>
-<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f5f7;margin:0;padding:32px 16px;">
-  <table role="presentation" width="100%" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">
-    <tr><td style="padding:32px;">
-      <p style="font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#2563eb;font-weight:600;margin:0 0 8px;">${esc(heading)}</p>
-      <h1 style="font-size:22px;margin:0 0 12px;color:#111827;">${esc(toolName)}</h1>
-      <p style="font-size:15px;line-height:1.6;color:#4b5563;margin:0 0 24px;">${esc(toolDescription)}</p>
-      <a href="${esc(toolUrl)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">Try it now</a>
-      <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;">You're receiving this because you signed up for ConvertKoro updates. This is a one-way announcement &mdash; replies to this address aren't monitored.</p>
+<body style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f4f5f7;margin:0;padding:32px 16px;">
+  <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;">
+    <tr><td style="padding:0 0 20px;text-align:center;">
+      <img src="https://convertkoro.com/logo-mark.png" width="36" height="36" alt="ConvertKoro" style="display:inline-block;vertical-align:middle;border-radius:8px;" />
+      <span style="display:inline-block;vertical-align:middle;margin-left:10px;font-size:17px;font-weight:700;color:#111827;">ConvertKoro</span>
+    </td></tr>
+    <tr><td style="padding:0;">
+      <table role="presentation" width="100%" style="background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #eef0f3;">
+        ${bodyContent}
+      </table>
+    </td></tr>
+    <tr><td style="padding:24px 8px 0;text-align:center;">
+      <p style="font-size:12px;color:#9ca3af;margin:0;line-height:1.6;">You're receiving this because you signed up for ConvertKoro updates.<br/>This is a one-way announcement &mdash; replies to this address aren't monitored.</p>
     </td></tr>
   </table>
 </body>
 </html>`;
+}
+
+// NEW TOOL - the most celebratory of the three: a full-bleed brand-blue
+// banner up top with a rocket badge, since a new tool is the biggest
+// piece of news this system sends and should look like it.
+function newToolTemplate({ toolName, toolDescription, toolUrl }) {
+  const body = `
+      <tr><td style="background:linear-gradient(135deg,#0062F8,#3B82F6);padding:36px 32px 28px;text-align:center;">
+        <div style="display:inline-block;background:rgba(255,255,255,.18);color:#ffffff;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:14px;">&#128640; New tool</div>
+        <h1 style="font-size:24px;line-height:1.3;margin:0;color:#ffffff;font-weight:700;">${toolName}</h1>
+      </td></tr>
+      <tr><td style="padding:28px 32px 32px;">
+        <p style="font-size:15px;line-height:1.65;color:#4b5563;margin:0 0 26px;">${toolDescription}</p>
+        <table role="presentation"><tr><td style="border-radius:10px;background:#0062F8;">
+          <a href="${toolUrl}" style="display:inline-block;padding:13px 28px;font-size:14.5px;font-weight:700;color:#ffffff;text-decoration:none;">Try it now &rarr;</a>
+        </td></tr></table>
+        <p style="font-size:13px;color:#9ca3af;margin:20px 0 0;">Free, no sign-up, and your files never leave your device.</p>
+      </td></tr>`;
+  return emailShell({ bodyContent: body });
+}
+
+// ENHANCED - calmer than "new", framed around improvement rather than
+// launch excitement. Uses a left accent bar + a small "what changed"
+// visual cue instead of a big color banner, since re-announcing an
+// existing tool shouldn't compete visually with genuinely new launches.
+function enhancedTemplate({ toolName, toolDescription, toolUrl }) {
+  const body = `
+      <tr><td style="padding:32px 32px 28px;border-left:4px solid #0062F8;">
+        <div style="display:inline-block;background:#EEF4FF;color:#0062F8;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:16px;">&#9889; Just improved</div>
+        <h1 style="font-size:22px;line-height:1.3;margin:0 0 14px;color:#111827;font-weight:700;">${toolName}</h1>
+        <p style="font-size:15px;line-height:1.65;color:#4b5563;margin:0 0 26px;">${toolDescription}</p>
+        <table role="presentation"><tr><td style="border-radius:10px;border:2px solid #0062F8;">
+          <a href="${toolUrl}" style="display:inline-block;padding:11px 26px;font-size:14.5px;font-weight:700;color:#0062F8;text-decoration:none;">See what's new &rarr;</a>
+        </td></tr></table>
+      </td></tr>`;
+  return emailShell({ bodyContent: body });
+}
+
+// GENERAL UPDATE / CAMPAIGN - the plainest of the three, deliberately:
+// this covers site-wide news that isn't tied to one tool (e.g. a policy
+// change, a milestone, a broad announcement), so it reads as an editorial
+// note rather than a product-launch push - no big banner, no bold badge
+// color, just a clean announcement layout.
+function campaignTemplate({ toolName, toolDescription, toolUrl }) {
+  const body = `
+      <tr><td style="padding:32px;">
+        <p style="font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;font-weight:700;margin:0 0 10px;">&#128227; Update</p>
+        <h1 style="font-size:21px;line-height:1.3;margin:0 0 14px;color:#111827;font-weight:700;">${toolName}</h1>
+        <p style="font-size:15px;line-height:1.65;color:#4b5563;margin:0 0 26px;">${toolDescription}</p>
+        <a href="${toolUrl}" style="display:inline-block;color:#0062F8;font-size:14.5px;font-weight:700;text-decoration:none;border-bottom:2px solid #0062F8;padding-bottom:2px;">Read more &rarr;</a>
+      </td></tr>`;
+  return emailShell({ bodyContent: body });
 }
