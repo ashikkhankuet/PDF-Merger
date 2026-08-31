@@ -79,6 +79,37 @@
       uploadWrap.style.display = 'none';
       infoSection.style.display = 'none';
       shell.classList.add('active');
+      // Real, previously-missing fit-to-viewport calculation: without
+      // this, zoom always started at a flat 1.0 (100%) regardless of the
+      // actual visible canvas area or the PDF's own page dimensions -
+      // confirmed as a real, separate contributor to the "page too big,
+      // had to zoom the whole browser out" bug (the *1.5 rendering-scale
+      // bug fixed elsewhere in this file was the main cause, but even
+      // with that fixed, a genuinely large page size or a small screen
+      // could still overflow at a flat 100%). Every mainstream PDF
+      // viewer calculates an initial fit-to-width/height zoom on open
+      // rather than assuming 100% is always reasonable.
+      try {
+        const firstPage = await pdfDoc.getPage(1);
+        const baseViewport = firstPage.getViewport({ scale: 1 });
+        // .active was just set above, so canvasWrap now has its real,
+        // final layout size to measure against - measuring before this
+        // point would read stale/zero dimensions from the hidden state.
+        const availW = canvasWrap.clientWidth - 48; // minus the stage's own padding
+        const availH = canvasWrap.clientHeight - 48;
+        const fitScale = Math.min(availW / baseViewport.width, availH / baseViewport.height, 1.5);
+        // Never start below a genuinely readable size, and never start
+        // above 150% even on a very large monitor with a small/narrow
+        // PDF page - an initial zoom that's too dramatic either way
+        // reads as broken rather than sized correctly.
+        zoom = Math.max(0.4, Math.min(fitScale, 1.5));
+      } catch (fitErr) {
+        // A failure here (e.g. an unusual page structure) should never
+        // block opening the file itself - fall back to the previous
+        // flat default rather than leaving the editor unusable.
+        console.warn('ConvertKoro PDF Editor: fit-to-viewport calculation failed, using default zoom.', fitErr);
+        zoom = 1.0;
+      }
       await renderSidebarThumbs();
       await renderCurrentPage();
       setMode('select');
@@ -179,7 +210,17 @@
     const origPageNum = origPageIdx + 1;
     const page = await pdfDoc.getPage(origPageNum);
     const extraRotation = pageRotations[origPageIdx] || 0;
-    const viewport = page.getViewport({ scale: zoom * 1.5, rotation: (page.rotate + extraRotation) % 360 });
+    // scale: zoom (not zoom * 1.5, as this was before a real, confirmed
+    // bug fix) - a hardcoded *1.5 was being applied here and in 7 other
+    // matching spots throughout this file, on top of the user's own
+    // zoom control, meaning "100%" always actually rendered at 150% of
+    // true page size. Confirmed directly from a user-supplied screen
+    // recording: this forced the page to visibly overflow its container
+    // even at the default zoom, requiring the user to zoom their whole
+    // BROWSER out to 67% just to see a full page - a real, severe
+    // usability bug, not a design preference. All 8 occurrences removed
+    // together since they were mutually consistent with each other.
+    const viewport = page.getViewport({ scale: zoom, rotation: (page.rotate + extraRotation) % 360 });
 
     pageCanvas.width = viewport.width;
     pageCanvas.height = viewport.height;
@@ -264,7 +305,7 @@
 
     if (obj.type === 'text') {
       el.textContent = obj.text;
-      el.style.fontSize = (obj.fontSizePt * zoom * 1.5) + 'px';
+      el.style.fontSize = (obj.fontSizePt * zoom) + 'px';
       el.style.color = obj.color;
       el.style.fontWeight = obj.bold ? '700' : '400';
       el.style.fontStyle = obj.italic ? 'italic' : 'normal';
@@ -366,8 +407,8 @@
     const startW = obj.wPt, startH = obj.hPt;
     function onMove(ev) {
       const cur = eventXY(ev);
-      const dxPt = (cur.x - start.x) / (zoom * 1.5);
-      const dyPt = (cur.y - start.y) / (zoom * 1.5);
+      const dxPt = (cur.x - start.x) / zoom;
+      const dyPt = (cur.y - start.y) / zoom;
       obj.wPt = Math.max(8, startW + dxPt);
       obj.hPt = Math.max(8, startH - dyPt);
       renderCurrentPage();
@@ -402,7 +443,7 @@
     const ta = document.createElement('textarea');
     ta.value = obj.text;
     ta.style.cssText = `position:absolute;left:0;top:0;width:100%;height:100%;border:none;outline:2px solid var(--signal);
-      font-size:${obj.fontSizePt * zoom * 1.5}px;color:${obj.color};font-family:Helvetica,Arial,sans-serif;
+      font-size:${obj.fontSizePt * zoom}px;color:${obj.color};font-family:Helvetica,Arial,sans-serif;
       font-weight:${obj.bold ? '700' : '400'};font-style:${obj.italic ? 'italic' : 'normal'};resize:none;background:#fff;padding:2px 4px;`;
     el.innerHTML = '';
     el.appendChild(ta);
@@ -483,7 +524,7 @@
     }
     const page = await pdfDoc.getPage(origPageIdx + 1);
     const extraRotation = pageRotations[origPageIdx] || 0;
-    return page.getViewport({ scale: zoom * 1.5, rotation: (page.rotate + extraRotation) % 360 });
+    return page.getViewport({ scale: zoom, rotation: (page.rotate + extraRotation) % 360 });
   }
 
   async function placeObjectAt(e) {
@@ -522,7 +563,7 @@
     const dims = await imageDims(dataUrl);
     const viewport = await currentViewportForCurrentPage();
     const origPageIdx = pageOrder[currentPageIdx];
-    const pageW = viewport.width / (zoom * 1.5), pageH = viewport.height / (zoom * 1.5);
+    const pageW = viewport.width / zoom, pageH = viewport.height / zoom;
     let wPt = dims.w * 0.75, hPt = dims.h * 0.75;
     const maxW = pageW * 0.6, maxH = pageH * 0.6;
     if (wPt > maxW || hPt > maxH) {
@@ -676,7 +717,7 @@
 
   async function placeSignature(dataUrl) {
     const viewport = await currentViewportForCurrentPage();
-    const pageW = viewport.width / (zoom * 1.5), pageH = viewport.height / (zoom * 1.5);
+    const pageW = viewport.width / zoom, pageH = viewport.height / zoom;
     const wPt = 130, hPt = 45;
     const xPt = pageW - wPt - 40, yPt = 40;
     const origPageIdx = pageOrder[currentPageIdx];

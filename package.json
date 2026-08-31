@@ -3,7 +3,6 @@
   "private": true,
   "description": "Static site + Netlify Functions for convertkoro.com. The dependency below is required for the URL Shortener's server-backed short links (netlify/functions/shorten.js, redirect.js) to build correctly.",
   "dependencies": {
-    "@netlify/blobs": "^10.7.9",
-    "jsdom": "^30.0.1"
+    "@netlify/blobs": "^10.7.9"
   }
 }
