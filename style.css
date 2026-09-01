@@ -993,6 +993,27 @@ body.mob-panel-open { overflow: hidden; }
 .cta-social-label { font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-right: 2px; }
 .social-ico-light { box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 
+/* Merged "Common questions" + "Ready to get things done" row - a real,
+   requested space fix: these were two separate full-width, stacked
+   sections eating a lot of vertical scroll for content that reads fine
+   side by side. FAQ keeps its real, working accordion (not shrunk into
+   uselessness); the CTA card gets a compact variant next to it rather
+   than its own full-width treatment. */
+.cta-faq-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 32px; align-items: start; }
+@media (max-width: 860px) {
+  /* Two full-width, fairly tall blocks side by side stop being genuinely
+     readable once the column width drops much below ~380px each - back
+     to a single stacked column here, same as the original layout, so
+     nothing is ever squeezed unreadably on tablets/phones. */
+  .cta-faq-grid { grid-template-columns: 1fr; gap: 28px; }
+}
+.cta-banner-compact { padding: 28px 26px; margin: 0; text-align: left; }
+.cta-banner-compact h2 { font-size: clamp(19px, 2.4vw, 22px); }
+.cta-banner-compact p { margin: 7px 0 18px; }
+.cta-banner-compact .actions-row { justify-content: flex-start; flex-wrap: wrap; }
+.cta-banner-compact .cta-mini-stats { justify-content: flex-start; margin-top: 16px; }
+.cta-banner-compact .cta-social { justify-content: flex-start; margin-top: 16px; padding-top: 14px; gap: 14px; }
+
 /* ============================================================
    FOOTER NEWSLETTER
    ============================================================ */
