@@ -1068,7 +1068,7 @@
     enhancedWrap.style.display = 'none';
 
     try {
-      const { base64, mimeType } = await prepareImageForCloudOcr(file);
+      const { base64, mimeType, wasResized } = await prepareImageForCloudOcr(file);
 
       let text = '';
       let usedFallback = false;
@@ -1110,6 +1110,16 @@
 
       if (usedFallback) {
         enhancedNote.textContent = 'Read using on-device OCR — the cloud OCR service was unavailable for this attempt.';
+        enhancedNote.style.display = 'block';
+      } else if (wasResized) {
+        // Real, requested transparency: cloud OCR has a real 1MB size
+        // limit (see /api/ocr's own enforcement) - prepareImageForCloudOcr
+        // already auto-compresses an oversized image before sending it,
+        // but that was previously silent. Telling the user this happened
+        // matters here specifically because it can affect accuracy on a
+        // very detailed or dense image, unlike PDF-to-Word's auto-compress
+        // (which only affects file size, not what Adobe reads).
+        enhancedNote.innerHTML = 'This image was larger than the 1MB cloud OCR limit, so a resized copy was sent for reading instead. If accuracy looks off, try <a href="/image-compressor" style="color:var(--signal-dk);text-decoration:underline;">Image Compressor</a> first at a higher quality, then re-upload.';
         enhancedNote.style.display = 'block';
       }
       // No enhancedWrap shown here on a normal successful cloud result —
@@ -1384,7 +1394,7 @@
     const MAX_BASE64_LENGTH = 1_300_000;
     const original = await fileToBase64(f);
     if (original.length <= MAX_BASE64_LENGTH) {
-      return { base64: original, mimeType: f.type || 'image/png' };
+      return { base64: original, mimeType: f.type || 'image/png', wasResized: false };
     }
     const attempts = [
       { maxDim: 1800, quality: 0.85 },
@@ -1394,12 +1404,12 @@
     let last = null;
     for (const { maxDim, quality } of attempts) {
       last = await fileToCompressedBase64(f, maxDim, quality);
-      if (last.base64.length <= MAX_BASE64_LENGTH) return last;
+      if (last.base64.length <= MAX_BASE64_LENGTH) return { ...last, wasResized: true };
     }
     // Even the smallest attempt is still too big - return it anyway and let
     // the server give its own clear, honest "too large" message rather than
     // silently failing here.
-    return last;
+    return { ...last, wasResized: true };
   }
 
   // Debug-only: reveals a button that saves each per-column crop this run

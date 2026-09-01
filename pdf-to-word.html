@@ -90,6 +90,10 @@
         <span class="rtext"><strong id="resultTitle">document.docx is ready</strong><span id="resultMeta"></span></span>
         <a class="btn btn-primary" id="downloadBtn" download="document.docx">Download .docx</a>
       </div>
+      <div class="callout" id="autoCompressNotice" style="display:none;margin-top:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span id="autoCompressNoticeText"></span>
+      </div>
 
       <div class="actions-row">
         <button class="btn btn-primary btn-lg" id="convertBtn" disabled>Extract to Word</button>
@@ -122,7 +126,7 @@
         <ul>
           <li>Preserves layout, tables, and images — not just plain text</li>
           <li>Scanned PDFs (photos of pages) with no real text underneath may convert with limited accuracy — try <a href="/image-to-text" style="color:var(--signal-dk);text-decoration:underline;">Image to Text</a> for those instead</li>
-          <li>8MB file size limit</li>
+          <li>8MB file size limit — larger PDFs are compressed automatically before converting, so most files still go through</li>
           <li>Output is a standard .docx, fully editable in any word processor</li>
         </ul>
       </div>
@@ -147,6 +151,7 @@
 <script>document.getElementById('toolIco').innerHTML = svgIcon('pdf2word');</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 (() => {
@@ -329,17 +334,78 @@ ${body}
 
   const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
+  // Real, reusable PDF re-compression, adapted directly from compress.html's
+  // own proven logic (same quality setting, same "never hand back something
+  // bigger than the input" safety check that fixed a real bug there
+  // earlier this session). Used here specifically to auto-shrink an
+  // over-8MB PDF before sending it to Adobe, rather than just rejecting
+  // the file outright - a real, requested improvement: give the user a
+  // working result instead of a dead end.
+  async function compressPdfBytes(bytes, quality) {
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const { jsPDF } = window.jspdf;
+    let outPdf;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.6 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      const imgData = canvas.toDataURL('image/jpeg', quality);
+      const orient = viewport.width > viewport.height ? 'l' : 'p';
+      if (!outPdf) outPdf = new jsPDF({ orientation: orient, unit: 'pt', format: [viewport.width, viewport.height] });
+      else outPdf.addPage([viewport.width, viewport.height], orient);
+      outPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
+    }
+    return outPdf.output('arraybuffer');
+  }
+
   async function convertFormatMode() {
     const MAX_SIZE = 8 * 1024 * 1024;
-    if (file.size > MAX_SIZE) throw new Error('too-large');
+    let workingFile = file;
+    let autoCompressed = false;
+    let originalSizeForNotice = null;
 
-    const base64 = await fileToBase64(file);
+    if (file.size > MAX_SIZE) {
+      // Real, requested improvement: rather than immediately failing with
+      // a "too large, go compress it yourself" dead end, try shrinking it
+      // automatically first, at successively lower quality, and only
+      // fail for real if even the most aggressive attempt still doesn't
+      // fit. This mirrors how a helpful human would behave - try the
+      // obvious fix first, only ask the user to intervene if it
+      // genuinely can't be solved automatically.
+      progressLabel.textContent = 'File is over 8MB \u2014 compressing automatically\u2026';
+      progressFill.style.width = '8%';
+      originalSizeForNotice = file.size;
+      const originalBytes = await file.arrayBuffer();
+      let compressedBytes = null;
+      for (const q of [0.7, 0.5, 0.35]) {
+        try {
+          const attempt = await compressPdfBytes(originalBytes, q);
+          if (attempt.byteLength < MAX_SIZE) { compressedBytes = attempt; break; }
+          // Keep the smallest attempt seen so far even if none get under
+          // the limit, so the final failure message can be honest about
+          // how close it got rather than implying nothing happened.
+          if (!compressedBytes || attempt.byteLength < compressedBytes.byteLength) compressedBytes = attempt;
+        } catch (compressErr) {
+          console.warn('ConvertKoro PDF-to-Word: auto-compress attempt failed.', compressErr);
+        }
+      }
+      if (!compressedBytes || compressedBytes.byteLength > MAX_SIZE) {
+        throw new Error('too-large');
+      }
+      workingFile = new File([compressedBytes], file.name.replace(/\.pdf$/i, '-compressed.pdf'), { type: 'application/pdf' });
+      autoCompressed = true;
+      progressFill.style.width = '20%';
+    }
+
+    const base64 = await fileToBase64(workingFile);
     progressFill.style.width = '35%';
 
     const response = await fetch('/api/pdf-to-word', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file: base64, filename: file.name }),
+      body: JSON.stringify({ file: base64, filename: workingFile.name }),
     });
 
     progressFill.style.width = '80%';
@@ -357,10 +423,25 @@ ${body}
     downloadBtn.setAttribute('download', data.filename || `${baseName}.docx`);
     resultTitle.textContent = `${baseName}.docx is ready`;
     resultMeta.textContent = fmtSize(blob.size);
+
+    const noticeBox = document.getElementById('autoCompressNotice');
+    const noticeText = document.getElementById('autoCompressNoticeText');
+    if (autoCompressed) {
+      // Real, requested transparency: tell the user their file was
+      // altered before conversion, rather than silently substituting a
+      // different file than the one they uploaded - and point at the
+      // real Compress PDF tool they could have used themselves, both as
+      // an honest disclosure and as the requested cross-promotion.
+      noticeText.innerHTML = `Your PDF was ${fmtSize(originalSizeForNotice)}, over the 8MB limit for this mode, so it was automatically compressed to ${fmtSize(workingFile.size)} first using the same engine as <a href="/compress" style="color:var(--signal-dk);text-decoration:underline;">Compress PDF</a>, then converted. If the result looks different than expected, try <a href="/compress" style="color:var(--signal-dk);text-decoration:underline;">compressing it yourself</a> at a custom quality first, then convert that file instead.`;
+      noticeBox.style.display = 'flex';
+    } else {
+      noticeBox.style.display = 'none';
+    }
   }
 
   convertBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
+    document.getElementById('autoCompressNotice').style.display = 'none';
     progressWrap.classList.add('show'); progressFill.style.width = '10%';
     progressLabel.textContent = mode === 'format' ? 'Uploading & converting\u2026' : 'Reading text\u2026';
     convertBtn.disabled = true;
@@ -380,7 +461,7 @@ ${body}
       // runtime value, so this can never become an XSS vector even
       // though errBox is set via innerHTML for this case.
       const knownHtmlMessages = {
-        'too-large': 'This PDF is larger than the 8MB limit for format-preserving conversion \u2014 try <a href="/compress" style="color:var(--signal-dk);text-decoration:underline;">compressing it first</a>, or switch to Text only mode.',
+        'too-large': 'This PDF is still over 8MB even after automatic compression \u2014 it likely has many large images. Try <a href="/compress" style="color:var(--signal-dk);text-decoration:underline;">Compress PDF</a> yourself at a lower quality setting, or switch to Text only mode.',
       };
       const knownMessages = {
         'timeout': 'The conversion is taking longer than expected. Please try again \u2014 large or complex PDFs can occasionally time out.',

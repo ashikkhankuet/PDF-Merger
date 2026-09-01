@@ -658,10 +658,21 @@ body.mob-panel-open { overflow: hidden; }
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
 }
 .footer-bottom p { font-size: 13.5px; color: var(--ink-faint); margin: 0; line-height: 1.6; max-width: 640px; }
+.footer-social { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.social-ico { display: inline-flex; width: 34px; height: 34px; border-radius: 9px; transition: transform .15s ease; }
+.social-ico svg { width: 100%; height: 100%; }
+.social-ico:hover { transform: translateY(-2px); }
+@media (max-width: 640px) {
+  /* footer-bottom is already flex-wrap, but the social row deserves its
+     own full-width line on narrow phones rather than being squeezed
+     between two paragraphs of copy - keeps icon size (and tap-target
+     size) genuinely comfortable rather than cramped. */
+  .footer-social { order: -1; width: 100%; justify-content: center; margin-bottom: 4px; }
+}
 
 /* ---------------- generic doc page ---------------- */
 .doc-page { padding: 48px 0 90px; }
-.doc-page .wrap { max-width: 760px; margin: 0 auto; }
+.doc-page .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
 .doc-page h1 { font-size: clamp(28px, 5vw, 34px); }
 .doc-page .updated { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--ink-faint); margin: 8px 0 26px; }
 .doc { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 34px 36px; }
