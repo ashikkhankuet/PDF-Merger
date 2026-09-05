@@ -132,11 +132,36 @@ exports.handler = async (event) => {
         // Surface Adobe's own error detail instead of a generic message -
         // this is the exact point most likely to fail from a credentials
         // mismatch (wrong env var names, extra whitespace pasted into the
-        // value, or a credential that hasn't finished provisioning yet),
-        // and a generic "authentication failed" gives no way to tell
-        // those apart. Adobe's token endpoint returns error/error_description
-        // fields on failure - passed straight through here.
-        const detail = tokenData.error_description || tokenData.error || `HTTP ${tokenResponse.status}`;
+        // value, or a credential that hasn't finished provisioning yet).
+        // Real, confirmed bug fixed here: Adobe's error field is not
+        // guaranteed to be a plain string - it can come back as a nested
+        // object (e.g. {"error":{"code":"...","message":"..."}}, a
+        // pattern confirmed against real Adobe API error reports), and
+        // the previous version assumed a string and string-interpolated
+        // it directly, which silently produced the literal text
+        // "[object Object]" for any non-string error shape - genuinely
+        // useless to the user and to debugging. Now explicitly checks
+        // for and extracts a nested .message/.code before falling back
+        // to a safe JSON.stringify, so this can never again print a
+        // meaningless placeholder instead of real information.
+        let detail = tokenData.error_description || tokenData.error || `HTTP ${tokenResponse.status}`;
+        if (detail && typeof detail === 'object') {
+          detail = detail.message || detail.code || JSON.stringify(detail);
+        }
+        // Extra safety net: if detail is STILL not a real string at this
+        // point for any reason not already anticipated above, fall back
+        // to a safe, generic message rather than risk a second, different
+        // route to the same "[object Object]" class of bug reappearing.
+        // This function's version marker (see the comment at the top of
+        // this file) is also logged here so a future "still broken"
+        // report can be checked directly against whether this exact
+        // code is actually the one running in production, rather than
+        // an older cached/un-deployed version.
+        if (typeof detail !== 'string') {
+          console.error('ConvertKoro PDF-to-Word (Adobe): detail was still not a string after extraction.', typeof detail, detail);
+          detail = 'unknown error (see function logs)';
+        }
+        console.error('ConvertKoro PDF-to-Word (Adobe): FUNCTION VERSION 2026-08-30-error-detail-fix. Final detail string sent to user:', detail);
         return { statusCode: 502, body: JSON.stringify({ error: `Conversion service authentication failed: ${detail}` }) };
       }
       const accessToken = tokenData.access_token;
