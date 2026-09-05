@@ -290,6 +290,81 @@
   });
   targetLangSelect.addEventListener('change', () => { translateRunBtn.disabled = !targetLangSelect.value; });
 
+  // Same real, verified, no-key MyMemory translation logic as
+  // image-to-text.html - see that file's own detailed comment for the
+  // full research/reasoning behind this choice over Google/Azure/Lara/
+  // DeepL. Duplicated here rather than shared via an external file,
+  // matching this site's existing pattern of each tool page being
+  // self-contained.
+  function splitIntoChunks(text, maxBytes) {
+    const byteLen = (s) => new Blob([s]).size;
+    const sentences = text.split(/(?<=[.!?\u0964\u09f7])\s+/);
+    const chunks = [];
+    let current = '';
+    for (const sentence of sentences) {
+      const candidate = current ? current + ' ' + sentence : sentence;
+      if (byteLen(candidate) <= maxBytes) {
+        current = candidate;
+      } else {
+        if (current) chunks.push(current);
+        if (byteLen(sentence) <= maxBytes) {
+          current = sentence;
+        } else {
+          const words = sentence.split(' ');
+          let piece = '';
+          for (const w of words) {
+            const cand2 = piece ? piece + ' ' + w : w;
+            if (byteLen(cand2) <= maxBytes) { piece = cand2; }
+            else {
+              if (piece) chunks.push(piece);
+              if (byteLen(w) <= maxBytes) {
+                piece = w;
+              } else {
+                let remaining = w;
+                while (byteLen(remaining) > maxBytes) {
+                  let cut = Math.floor(maxBytes / 2);
+                  while (cut > 0 && byteLen(remaining.slice(0, cut)) > maxBytes) cut--;
+                  chunks.push(remaining.slice(0, cut));
+                  remaining = remaining.slice(cut);
+                }
+                piece = remaining;
+              }
+            }
+          }
+          current = piece;
+        }
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  }
+
+  async function translateWithMyMemory(text, targetCode, onProgress) {
+    const chunks = splitIntoChunks(text, 480);
+    if (chunks.length === 0) throw new Error('No text to translate.');
+    let combined = '';
+    for (let i = 0; i < chunks.length; i++) {
+      if (onProgress) onProgress(i, chunks.length);
+      const params = new URLSearchParams({ q: chunks[i], langpair: `en|${targetCode}` });
+      let resp;
+      try {
+        resp = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`);
+      } catch (networkErr) {
+        throw new Error('Couldn\u2019t reach the translation service \u2014 check your connection and try again.');
+      }
+      if (!resp.ok) throw new Error(`Translation service error (HTTP ${resp.status}) \u2014 please try again.`);
+      const data = await resp.json().catch(() => null);
+      if (!data || data.responseStatus !== 200) {
+        if (data && data.responseStatus === 429) {
+          throw new Error('Translation quota reached for today (this is a shared free service with a real daily limit) \u2014 please try again tomorrow.');
+        }
+        throw new Error((data && data.responseDetails) || 'Translation failed \u2014 please try again.');
+      }
+      combined += (combined ? ' ' : '') + (data.responseData.translatedText || '');
+    }
+    return combined;
+  }
+
   translateRunBtn.addEventListener('click', async () => {
     const text = getCurrentText();
     const target = targetLangSelect.value;
@@ -298,20 +373,10 @@
     translateProgress.style.display = 'block';
     translateRunBtn.disabled = true;
     try {
-      const resp = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, target, source: '' }),
+      const translated = await translateWithMyMemory(text, target, (done, total) => {
+        translateProgress.textContent = total > 1 ? `Translating\u2026 (${done}/${total})` : 'Translating\u2026';
       });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        const knownMessages = {
-          'timeout': 'Translation is taking longer than expected \u2014 please try again.',
-          'quota-exhausted': 'Translation is temporarily unavailable due to high demand \u2014 please try again in a bit.',
-        };
-        throw new Error(knownMessages[data.error] || data.error || 'Translation failed \u2014 please try again.');
-      }
-      setCurrentText(data.translatedText || text);
+      setCurrentText(translated || text);
       translateDone.style.display = 'block';
     } catch (err) {
       translateErr.textContent = err.message || 'Couldn\u2019t translate this text \u2014 please try again.';

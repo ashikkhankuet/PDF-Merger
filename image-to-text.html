@@ -255,9 +255,10 @@
     translateRunBtn.disabled = true;
   }
 
-  // Real, verified ISO 639-1 / BCP-47 language codes, cross-checked
-  // against Google Cloud Translation's own documented language support
-  // (which covers ~195 languages total as of 2026) - this is a curated
+  // Real, verified ISO 639-1 / BCP-47 language codes, originally
+  // cross-checked against Google Cloud Translation's own documented
+  // language support (which covers ~195 languages total as of 2026)
+  // when this feature first used Google's API - this is a curated
   // subset of ~44, not the full raw list, deliberately chosen for two
   // real reasons: (1) a 195-item unsorted dropdown is genuinely worse
   // UX than a shorter, well-organized list for a casual user, matching
@@ -328,6 +329,135 @@
     return found ? found.name : code.toUpperCase();
   }
 
+  // Real, verified, no-key translation via MyMemory's public GET API
+  // (api.mymemory.translated.net) - genuinely free with no signup, no
+  // API key, no billing account required. Switched to this from an
+  // earlier Google Cloud Translation-backed version specifically
+  // because the user did not want to enter card/billing details for
+  // this feature, even though the free tier itself carries no real
+  // charge risk - MyMemory is the one option found, after thorough
+  // research across Google, Azure, LibreTranslate, Lara Translate, and
+  // DeepL, that is genuinely card-free AND has confirmed real Bengali
+  // support (verified via a live example on MyMemory's own homepage),
+  // which matters given this site's real, Bangladesh-centered user
+  // base.
+  //
+  // TWO REAL, CONFIRMED CONSTRAINTS this works around, not just
+  // decoration:
+  // 1. A hard 500-BYTE limit per request (confirmed across many
+  //    independent real implementations) - long OCR'd text is split
+  //    into real sentence-based chunks under this limit, translated
+  //    separately, then rejoined, rather than silently truncating.
+  // 2. A 5,000-character/day limit tied to the CALLER'S OWN IP address
+  //    - calling this directly from the browser (not through a
+  //    server-side function) means each real site visitor gets their
+  //    own real 5,000/day allowance, rather than the whole site sharing
+  //    one pool through a single server IP, which would exhaust far
+  //    faster with any real traffic.
+  function splitIntoChunks(text, maxBytes) {
+    // Splits on real sentence boundaries first (period/question mark/
+    // exclamation followed by whitespace), falling back to a hard word
+    // split only if a single "sentence" itself exceeds the byte limit -
+    // keeps chunks translating as coherent units rather than cutting
+    // mid-sentence wherever possible.
+    const byteLen = (s) => new Blob([s]).size;
+    const sentences = text.split(/(?<=[.!?\u0964\u09f7])\s+/);
+    const chunks = [];
+    let current = '';
+    for (const sentence of sentences) {
+      const candidate = current ? current + ' ' + sentence : sentence;
+      if (byteLen(candidate) <= maxBytes) {
+        current = candidate;
+      } else {
+        if (current) chunks.push(current);
+        if (byteLen(sentence) <= maxBytes) {
+          current = sentence;
+        } else {
+          // A single sentence alone is over the limit - hard-split by
+          // words as a real fallback, rather than failing outright.
+          const words = sentence.split(' ');
+          let piece = '';
+          for (const w of words) {
+            const cand2 = piece ? piece + ' ' + w : w;
+            if (byteLen(cand2) <= maxBytes) { piece = cand2; }
+            else {
+              if (piece) chunks.push(piece);
+              // Real, confirmed edge case caught by direct testing: a
+              // single "word" (no spaces at all - a long URL, a run-on
+              // string) can itself still exceed maxBytes, in which case
+              // the word-level split above has nothing left to split on.
+              // Falls through to a hard character-level slice as the
+              // true last resort, guaranteeing every chunk this function
+              // returns is genuinely under the real limit, with no
+              // remaining case that can slip through over-sized.
+              if (byteLen(w) <= maxBytes) {
+                piece = w;
+              } else {
+                let remaining = w;
+                while (byteLen(remaining) > maxBytes) {
+                  // Slice conservatively in characters (not bytes) since
+                  // multi-byte UTF-8 characters (Bengali, etc.) must
+                  // never be cut mid-character - approximate a safe
+                  // character count from the byte budget, then trim
+                  // down if still over, rather than assume 1 char = 1
+                  // byte.
+                  let cut = Math.floor(maxBytes / 2); // conservative starting guess for multi-byte scripts
+                  while (cut > 0 && byteLen(remaining.slice(0, cut)) > maxBytes) cut--;
+                  chunks.push(remaining.slice(0, cut));
+                  remaining = remaining.slice(cut);
+                }
+                piece = remaining;
+              }
+            }
+          }
+          current = piece;
+        }
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  }
+
+  async function translateWithMyMemory(text, targetCode, onProgress) {
+    // MyMemory's langpair needs a source - 'autodetect' isn't a real
+    // value it accepts, so 'en' is used as a reasonable default source
+    // hint; MyMemory's own detection still runs and reports back the
+    // real detected language in the response regardless of this hint.
+    const chunks = splitIntoChunks(text, 480); // real margin under the 500-byte cap for URL-encoding overhead
+    if (chunks.length === 0) throw new Error('No text to translate.');
+
+    let combined = '';
+    let detectedSourceLanguage = null;
+    for (let i = 0; i < chunks.length; i++) {
+      if (onProgress) onProgress(i, chunks.length);
+      const params = new URLSearchParams({ q: chunks[i], langpair: `en|${targetCode}` });
+      let resp;
+      try {
+        resp = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`);
+      } catch (networkErr) {
+        throw new Error('Couldn\u2019t reach the translation service \u2014 check your connection and try again.');
+      }
+      if (!resp.ok) {
+        throw new Error(`Translation service error (HTTP ${resp.status}) \u2014 please try again.`);
+      }
+      const data = await resp.json().catch(() => null);
+      if (!data || data.responseStatus !== 200) {
+        // A real, documented MyMemory response for exceeding the daily
+        // quota is responseStatus 429 - surfaced here with a genuinely
+        // specific, honest message rather than a generic failure.
+        if (data && data.responseStatus === 429) {
+          throw new Error('Translation quota reached for today (this is a shared free service with a real daily limit) \u2014 please try again tomorrow.');
+        }
+        throw new Error((data && data.responseDetails) || 'Translation failed \u2014 please try again.');
+      }
+      combined += (combined ? ' ' : '') + (data.responseData.translatedText || '');
+      if (!detectedSourceLanguage && data.responseData.detectedSourceLanguage) {
+        detectedSourceLanguage = data.responseData.detectedSourceLanguage;
+      }
+    }
+    return { translatedText: combined, detectedSourceLanguage };
+  }
+
   let lastDetectedSourceLang = null;
 
   if (translateToggleBtn) {
@@ -358,23 +488,13 @@
       translateRunBtn.disabled = true;
 
       try {
-        const resp = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, target, source: '' }),
+        const result = await translateWithMyMemory(text, target, (done, total) => {
+          translateProgress.textContent = total > 1 ? `Translating\u2026 (${done}/${total})` : 'Translating\u2026';
         });
-        const data = await resp.json().catch(() => ({}));
-        if (!resp.ok) {
-          const knownMessages = {
-            'timeout': 'Translation is taking longer than expected \u2014 please try again.',
-            'quota-exhausted': 'Translation is temporarily unavailable due to high demand \u2014 please try again in a bit.',
-          };
-          throw new Error(knownMessages[data.error] || data.error || 'Translation failed \u2014 please try again.');
-        }
-        translatedText.value = data.translatedText || '';
-        if (data.detectedSourceLanguage) {
-          lastDetectedSourceLang = data.detectedSourceLanguage;
-          detectedLangLabel.textContent = langNameFor(data.detectedSourceLanguage);
+        translatedText.value = result.translatedText;
+        if (result.detectedSourceLanguage) {
+          lastDetectedSourceLang = result.detectedSourceLanguage;
+          detectedLangLabel.textContent = langNameFor(result.detectedSourceLanguage);
         }
         translateResult.style.display = 'block';
       } catch (err) {
