@@ -29,7 +29,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Image to PDF","description":"Turn JPG, PNG, or WEBP images into a PDF file. Combine multiple photos into one document, processed entirely in your browser.","url":"https://convertkoro.com/image-to-pdf","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I mix JPG and PNG files in one PDF?","acceptedAnswer":{"@type":"Answer","text":"Yes, you can combine different image formats — each becomes its own page in the order they're listed."}},{"@type":"Question","name":"Does this reduce image quality?","acceptedAnswer":{"@type":"Answer","text":"No, images are embedded at their original resolution and quality."}},{"@type":"Question","name":"Is there a limit on how many images I can add?","acceptedAnswer":{"@type":"Answer","text":"No fixed limit — large batches just depend on your device's available memory."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I mix JPG and PNG files in one PDF?","acceptedAnswer":{"@type":"Answer","text":"Yes, you can combine different image formats. Each becomes its own page (or shares a page, if you've chosen more than one image per page), in the order they're listed."}},{"@type":"Question","name":"Does this reduce image quality?","acceptedAnswer":{"@type":"Answer","text":"No, images are embedded at their original resolution and quality."}},{"@type":"Question","name":"Is there a limit on how many images I can add?","acceptedAnswer":{"@type":"Answer","text":"No fixed limit — large batches just depend on your device's available memory."}},{"@type":"Question","name":"Can I rotate an image, or put multiple images on one page?","acceptedAnswer":{"@type":"Answer","text":"Yes — each file has its own rotate button, and you can choose 1, 2, 4, 6, or 8 images per page using the layout options above the file list. Multiple-per-page only works with \"Fit to page,\" since \"Original image size\" places one image at its own native size per page."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Image to PDF","item":"https://convertkoro.com/image-to-pdf"}]}</script>
 </head>
 <body data-page="tools">
@@ -63,6 +63,15 @@
       <div class="opts-row" id="fitOpts">
         <button class="opt-chip active" data-fit="fit">Fit to page (A4)</button>
         <button class="opt-chip" data-fit="original">Original image size</button>
+      </div>
+
+      <div class="opts-row" id="gridOpts">
+        <span class="opts-label">Images per page:</span>
+        <button class="opt-chip active" data-grid="1">1</button>
+        <button class="opt-chip" data-grid="2">2</button>
+        <button class="opt-chip" data-grid="4">4</button>
+        <button class="opt-chip" data-grid="6">6</button>
+        <button class="opt-chip" data-grid="8">8</button>
       </div>
 
       <div class="progress-wrap" id="progressWrap">
@@ -111,9 +120,10 @@
 
     <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-list">
-        <details class="faq-item"><summary>Can I mix JPG and PNG files in one PDF?</summary><p>Yes, you can combine different image formats — each becomes its own page in the order they're listed.</p></details>
+        <details class="faq-item"><summary>Can I mix JPG and PNG files in one PDF?</summary><p>Yes, you can combine different image formats. Each becomes its own page (or shares a page, if you've chosen more than one image per page), in the order they're listed.</p></details>
         <details class="faq-item"><summary>Does this reduce image quality?</summary><p>No, images are embedded at their original resolution and quality.</p></details>
         <details class="faq-item"><summary>Is there a limit on how many images I can add?</summary><p>No fixed limit — large batches just depend on your device's available memory.</p></details>
+        <details class="faq-item"><summary>Can I rotate an image, or put multiple images on one page?</summary><p>Yes — each file has its own rotate button, and you can choose 1, 2, 4, 6, or 8 images per page using the layout options above the file list. Multiple-per-page only works with "Fit to page," since "Original image size" places one image at its own native size per page.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
     </div></section>
@@ -149,22 +159,51 @@
   const resultBox = document.getElementById('resultBox');
   const resultMeta = document.getElementById('resultMeta');
   const downloadBtn = document.getElementById('downloadBtn');
-  let files = []; let fitMode = 'fit';
+  let files = []; let fitMode = 'fit'; let gridSize = 1;
 
   document.getElementById('fitOpts').addEventListener('click', (e) => {
     const chip = e.target.closest('.opt-chip'); if (!chip) return;
     document.querySelectorAll('#fitOpts .opt-chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active'); fitMode = chip.dataset.fit;
+    // "Original image size" places each image at its own native pixel
+    // size, one per page - that's geometrically meaningless combined
+    // with a multi-image grid (which images, of the several different
+    // native sizes, would decide the page dimensions?), so switching to
+    // it forces grid back to 1-per-page rather than leaving the two
+    // options in a combination that was never a coherent choice to
+    // begin with.
+    if (fitMode === 'original' && gridSize !== 1) {
+      gridSize = 1;
+      document.querySelectorAll('#gridOpts .opt-chip').forEach(c => c.classList.toggle('active', c.dataset.grid === '1'));
+    }
+    document.getElementById('gridOpts').style.opacity = fitMode === 'original' ? '.45' : '1';
+    document.getElementById('gridOpts').style.pointerEvents = fitMode === 'original' ? 'none' : 'auto';
+  });
+
+  document.getElementById('gridOpts').addEventListener('click', (e) => {
+    const chip = e.target.closest('.opt-chip'); if (!chip) return;
+    document.querySelectorAll('#gridOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active'); gridSize = parseInt(chip.dataset.grid, 10);
   });
 
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
   function imgIcon() { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'; }
+
+  // Per-file rotation, tracked by File object identity (a Map, not an
+  // array index) - a real, deliberate choice: `files` gets reordered and
+  // spliced by the existing move/remove buttons, and an index-keyed
+  // rotation store would silently point at the WRONG file the moment
+  // the array is reordered. Keying by the File object itself survives
+  // reordering correctly with zero extra bookkeeping.
+  const rotations = new Map();
+  function getRotation(f) { return rotations.get(f) || 0; }
 
   function render() {
     fileList.innerHTML = files.map((f, i) => `
       <div class="file-row" data-i="${i}">
         <span class="fico">${imgIcon()}</span>
         <span class="fname">${f.name}</span><span class="fsize">${fmtSize(f.size)}</span>
+        <button class="frotate" title="Rotate 90°" data-rot="${getRotation(f)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${getRotation(f)}deg);transition:transform .15s;"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg></button>
         <button class="fmove" data-dir="-1" ${i===0?'style="opacity:.3;pointer-events:none;"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
         <button class="fmove" data-dir="1" ${i===files.length-1?'style="opacity:.3;pointer-events:none;"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
         <button class="fremove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -184,11 +223,12 @@
   fileList.addEventListener('click', (e) => {
     const row = e.target.closest('.file-row'); if (!row) return;
     const i = +row.dataset.i;
-    if (e.target.closest('.fremove')) { files.splice(i, 1); render(); }
+    if (e.target.closest('.fremove')) { rotations.delete(files[i]); files.splice(i, 1); render(); return; }
+    if (e.target.closest('.frotate')) { rotations.set(files[i], (getRotation(files[i]) + 90) % 360); render(); return; }
     const mv = e.target.closest('.fmove');
     if (mv) { const j = i + +mv.dataset.dir; if (j<0||j>=files.length) return; [files[i],files[j]]=[files[j],files[i]]; render(); }
   });
-  clearBtn.addEventListener('click', () => { files = []; render(); });
+  clearBtn.addEventListener('click', () => { files = []; rotations.clear(); render(); });
 
   async function loadImageBitmap(file) {
     const buf = await file.arrayBuffer();
@@ -200,31 +240,96 @@
     progressWrap.classList.add('show'); progressFill.style.width = '10%';
     convertBtn.disabled = true;
     try {
-      const { PDFDocument, rgb } = PDFLib;
+      const { PDFDocument, degrees } = PDFLib;
       const pdfDoc = await PDFDocument.create();
       const A4 = [595.28, 841.89];
+
+      // Real, confirmed pdf-lib behavior (verified against pdf-lib's own
+      // GitHub issue tracker): drawImage's rotate option rotates
+      // COUNTERCLOCKWISE around the (x, y) point passed in - not the
+      // image's center, and not clockwise. An earlier version of this
+      // function used a center-based offset guess that was WRONG -
+      // caught by hand-deriving the actual rotation algebra and testing
+      // the resulting bounding box against the target box, which showed
+      // the guessed formula placed the image nowhere near where it
+      // should be. These four cases are the correct, algebraically
+      // verified offsets (solved from the standard CCW rotation matrix
+      // [cos -sin; sin cos] applied to the image's four local corners)
+      // so that whatever rotation is applied, the rotated image's
+      // bounding box exactly fills the same target box it would have
+      // occupied unrotated.
+      function drawRotatedImage(page, img, box, rot) {
+        const { x: tx, y: ty, width: w, height: h } = box;
+        let drawX, drawY;
+        if (rot === 90) { drawX = tx + h; drawY = ty; }
+        else if (rot === 180) { drawX = tx + w; drawY = ty + h; }
+        else if (rot === 270) { drawX = tx; drawY = ty + w; }
+        else { drawX = tx; drawY = ty; }
+        page.drawImage(img, { x: drawX, y: drawY, width: w, height: h, rotate: degrees(rot) });
+      }
+
       for (let i = 0; i < files.length; i++) {
         const { buf, type } = await loadImageBitmap(files[i]);
         let img;
         if (type === 'image/png') img = await pdfDoc.embedPng(buf);
         else img = await pdfDoc.embedJpg(type === 'image/webp' ? await webpToJpegBytes(files[i]) : buf);
         const dims = img.scale(1);
+        const rot = getRotation(files[i]);
+
         if (fitMode === 'original') {
-          const page = pdfDoc.addPage([dims.width, dims.height]);
-          page.drawImage(img, { x: 0, y: 0, width: dims.width, height: dims.height });
+          // Unchanged from the original tool - one native-size image per
+          // page. gridSize is always forced to 1 in this mode (see the
+          // fitOpts handler above), so this path's real, existing
+          // behavior is untouched by the grid feature. Rotation is still
+          // honored, since that request applies regardless of fit mode.
+          const rotated = (rot === 90 || rot === 270);
+          const pageW = rotated ? dims.height : dims.width;
+          const pageH = rotated ? dims.width : dims.height;
+          const page = pdfDoc.addPage([pageW, pageH]);
+          drawRotatedImage(page, img, { x: 0, y: 0, width: dims.width, height: dims.height }, rot);
         } else {
-          const page = pdfDoc.addPage(A4);
-          const maxW = A4[0] - 60, maxH = A4[1] - 60;
-          const ratio = Math.min(maxW / dims.width, maxH / dims.height, 1) || Math.min(maxW/dims.width, maxH/dims.height);
+          // Grid mode: a new page is only started when the current one
+          // is full (index divisible by gridSize) - images continue
+          // filling the existing page's remaining cells otherwise. Cell
+          // geometry is computed fresh per gridSize (1/2/4/6/8) using a
+          // simple, predictable column count per size rather than a
+          // generic square-root layout, so e.g. "2 per page" reliably
+          // means two side-by-side halves, not an awkward 2x1 vs 1x2
+          // ambiguity.
+          const cellIndex = i % gridSize;
+          let page;
+          if (cellIndex === 0) {
+            page = pdfDoc.addPage(A4);
+          } else {
+            page = pdfDoc.getPage(pdfDoc.getPageCount() - 1);
+          }
+          const cols = gridSize === 1 ? 1 : gridSize === 2 ? 1 : gridSize === 4 ? 2 : gridSize === 6 ? 2 : 2;
+          const rows = gridSize === 1 ? 1 : gridSize === 2 ? 2 : gridSize === 4 ? 2 : gridSize === 6 ? 3 : 4;
+          const margin = 24, gap = 12;
+          const cellW = (A4[0] - margin*2 - gap*(cols-1)) / cols;
+          const cellH = (A4[1] - margin*2 - gap*(rows-1)) / rows;
+          const col = cellIndex % cols;
+          const rowFromTop = Math.floor(cellIndex / cols);
+          const rowFromBottom = rows - 1 - rowFromTop;
+          const cellX = margin + col * (cellW + gap);
+          const cellY = margin + rowFromBottom * (cellH + gap);
+
+          const rotated = (rot === 90 || rot === 270);
+          const srcW = rotated ? dims.height : dims.width;
+          const srcH = rotated ? dims.width : dims.height;
+          const ratio = Math.min(cellW / srcW, cellH / srcH, 1) || Math.min(cellW/srcW, cellH/srcH);
           const w = dims.width * ratio, h = dims.height * ratio;
-          page.drawImage(img, { x: (A4[0]-w)/2, y: (A4[1]-h)/2, width: w, height: h });
+          const boxW = rotated ? h : w, boxH = rotated ? w : h;
+          const drawBox = { x: cellX + (cellW - boxW)/2, y: cellY + (cellH - boxH)/2, width: w, height: h };
+          drawRotatedImage(page, img, drawBox, rot);
         }
         progressFill.style.width = `${10 + (i+1)/files.length*80}%`;
       }
       const bytes = await pdfDoc.save();
       const blob = new Blob([bytes], { type: 'application/pdf' });
       downloadBtn.href = URL.createObjectURL(blob);
-      resultMeta.textContent = `${files.length} image${files.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+      const pageCount = pdfDoc.getPageCount();
+      resultMeta.textContent = `${files.length} image${files.length>1?'s':''} \u00b7 ${pageCount} page${pageCount>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
       progressFill.style.width = '100%';
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {

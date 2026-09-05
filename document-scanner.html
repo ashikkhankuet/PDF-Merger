@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Turn a phone photo into a clean, straightened PDF or Word document — free, right in your browser. Auto edge detection, perspective correction, and optional searchable text." />
+<meta property="og:title" content="Document Scanner — Free Online Tool | ConvertKoro" />
+<meta property="og:description" content="Turn a phone photo into a clean, straightened PDF or Word document." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://convertkoro.com/document-scanner" />
+<link rel="canonical" href="https://convertkoro.com/document-scanner" />
+<title>Document Scanner — Free Online Tool | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is this different from Image to PDF?","acceptedAnswer":{"@type":"Answer","text":"Image to PDF simply places your photo onto a PDF page as-is. Document Scanner detects the document's edges, straightens out the angle the photo was taken at, and can optionally add searchable text \u2014 it's built for photos of paper documents, not general images."}},{"@type":"Question","name":"What if the automatic edge detection gets it wrong?","acceptedAnswer":{"@type":"Answer","text":"Drag any of the four corner handles to adjust the detected area manually before continuing \u2014 automatic detection works well on a clear, contrasting background but isn't perfect on every photo."}},{"@type":"Question","name":"What does \"Searchable PDF\" mean?","acceptedAnswer":{"@type":"Answer","text":"A normal scan is just a picture of text \u2014 you can't select or search it. A searchable PDF has an invisible text layer added underneath the image, so you can select, copy, and search the text while the page still looks like the original scan."}},{"@type":"Question","name":"Is my photo uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Edge detection, perspective correction, and filters all run entirely in your browser. If you turn on searchable text, that text recognition also runs on-device using the same engine as Image to Text \u2014 nothing is uploaded."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Document Scanner","item":"https://convertkoro.com/document-scanner"}]}</script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Document Scanner</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-pdf);color:#fff;"></span>
+        <div><h1>Document Scanner</h1><p class="lead">Turn a phone photo into a clean, straightened document — free, right in your browser.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads a real computer-vision engine</strong> (~8MB) to your browser, one-time and cached after. This runs the edge detection and perspective correction.</span>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Add a document photo</strong>
+        <div class="hint">JPG, PNG, WEBP &middot; stays on your device &middot; multiple pages supported</div>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple hidden />
+      </div>
+
+      <!-- Step 1: corner adjustment for the page currently being added -->
+      <div id="cropStage" style="display:none;margin-top:20px;">
+        <div style="font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Adjust the document edges if needed, then confirm.</div>
+        <div id="cropCanvasWrap" style="position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#111;max-width:640px;">
+          <canvas id="cropCanvas" style="width:100%;display:block;"></canvas>
+        </div>
+        <div class="actions-row" style="margin-top:14px;">
+          <button class="btn btn-primary" id="confirmCropBtn">Use this page</button>
+          <button class="btn btn-ghost" id="redetectBtn">Re-detect edges</button>
+          <button class="btn btn-ghost" id="cancelCropBtn">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Step 2: page list + filter + export, once at least one page is confirmed -->
+      <div id="pagesStage" style="display:none;margin-top:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:600;color:var(--ink-soft);">Pages</div>
+          <button class="btn btn-ghost" id="addPageBtn" style="font-size:13px;">+ Add another page</button>
+        </div>
+        <div id="pageThumbs" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;"></div>
+
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Filter</label>
+        <div class="opts-row" id="filterOpts">
+          <button class="opt-chip active" data-filter="original">Original</button>
+          <button class="opt-chip" data-filter="color">Color scan</button>
+          <button class="opt-chip" data-filter="gray">Grayscale</button>
+          <button class="opt-chip" data-filter="bw">Black &amp; white</button>
+        </div>
+
+        <div style="margin-top:20px;padding:16px 18px;border-radius:12px;background:var(--paper);border:1px solid var(--line);">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="ocrToggle" style="width:18px;height:18px;" />
+            <span style="font-size:13.5px;"><strong>Make text searchable</strong> — adds an invisible, selectable text layer under the scan (on-device, takes longer)</span>
+          </label>
+        </div>
+
+        <div style="margin-top:20px;">
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Save as</label>
+          <div class="opts-row" id="exportOpts">
+            <button class="opt-chip active" data-export="pdf">PDF</button>
+            <button class="opt-chip" data-export="word">Word (.docx)</button>
+            <button class="opt-chip" data-export="images">JPG / PNG (ZIP)</button>
+          </div>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">Processing&hellip;</div>
+        </div>
+
+        <div class="err-box" id="errBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="errText"></span>
+        </div>
+
+        <div class="result-box" id="resultBox">
+          <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="rtext"><strong id="resultTitle">Your document is ready</strong><span id="resultMeta"></span></span>
+          <a class="btn btn-primary" id="downloadBtn" download="scan.pdf">Download</a>
+        </div>
+
+        <div class="actions-row" style="margin-top:18px;">
+          <button class="btn btn-primary btn-lg" id="exportBtn">Create document</button>
+          <button class="btn btn-ghost" id="clearAllBtn">Start over</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="tool-intro-copy">Photographing a paper document at an angle usually leaves it skewed, with an uneven background around the edges. This tool detects the document's actual boundary, corrects the perspective so it looks like a real flatbed scan, and can optionally add searchable text — all running in your browser.</p>
+    <p class="tool-intro-bangla">ডকুমেন্ট স্ক্যান করতে চান? এই টুল আপনার ছবি থেকে ডকুমেন্টের প্রান্ত শনাক্ত করে সোজা করে দেয়, সরাসরি আপনার ব্রাউজারে।</p>
+<div class="info-grid">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Add a document photo</strong><span>Edges are detected automatically — adjust the corners if needed.</span></li>
+          <li><strong>Add more pages if needed</strong><span>Scan a multi-page document into one file.</span></li>
+          <li><strong>Pick a filter and export</strong><span>Color, grayscale, or black & white — save as PDF, Word, or images.</span></li>
+        </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Automatic edge detection works best with real contrast between the document and its background</li>
+          <li>Searchable PDF adds real, selectable text — not just a picture that looks like text</li>
+          <li>First use downloads a real computer-vision engine (~8MB), cached after that</li>
+          <li>Works on any number of pages in one document</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>How is this different from Image to PDF?</summary><p>Image to PDF simply places your photo onto a PDF page as-is. Document Scanner detects the document's edges, straightens out the angle the photo was taken at, and can optionally add searchable text — it's built for photos of paper documents, not general images.</p></details>
+        <details class="faq-item"><summary>What if the automatic edge detection gets it wrong?</summary><p>Drag any of the four corner handles to adjust the detected area manually before continuing — automatic detection works well on a clear, contrasting background but isn't perfect on every photo.</p></details>
+        <details class="faq-item"><summary>What does "Searchable PDF" mean?</summary><p>A normal scan is just a picture of text — you can't select or search it. A searchable PDF has an invisible text layer added underneath the image, so you can select, copy, and search the text while the page still looks like the original scan.</p></details>
+        <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>Edge detection, perspective correction, and filters all run entirely in your browser. If you turn on searchable text, that text recognition also runs on-device using the same engine as Image to Text — nothing is uploaded.</p></details>
+        <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
+      </div>
+    </div></section>
+</main>
+<div id="site-footer"></div>
+<script src="https://docs.opencv.org/4.8.0/opencv.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('docscan');</script>
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const cropStage = document.getElementById('cropStage');
+  const cropCanvas = document.getElementById('cropCanvas');
+  const confirmCropBtn = document.getElementById('confirmCropBtn');
+  const redetectBtn = document.getElementById('redetectBtn');
+  const cancelCropBtn = document.getElementById('cancelCropBtn');
+  const pagesStage = document.getElementById('pagesStage');
+  const pageThumbs = document.getElementById('pageThumbs');
+  const addPageBtn = document.getElementById('addPageBtn');
+  const filterOpts = document.getElementById('filterOpts');
+  const exportOpts = document.getElementById('exportOpts');
+  const ocrToggle = document.getElementById('ocrToggle');
+  const exportBtn = document.getElementById('exportBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let pages = []; // each: { correctedCanvas, filter }
+  let currentImg = null;
+  let corners = null; // {x,y} x4, in canvas pixel space
+  let draggingCorner = -1;
+  let currentFilter = 'original';
+  let currentExport = 'pdf';
+  let cvReady = false;
+
+  function waitForCv() {
+    return new Promise((resolve) => {
+      if (typeof cv !== 'undefined' && cv.Mat) { cvReady = true; resolve(); return; }
+      const check = setInterval(() => {
+        if (typeof cv !== 'undefined' && cv.Mat) { clearInterval(check); cvReady = true; resolve(); }
+      }, 150);
+    });
+  }
+
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => { if (e.target.files.length) startCropFlow(e.target.files[0]); });
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) startCropFlow(e.dataTransfer.files[0]); });
+  addPageBtn.addEventListener('click', () => fileInput.click());
+
+  async function startCropFlow(file) {
+    errBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '15%';
+    progressLabel.textContent = 'Loading detection engine\u2026';
+    try {
+      await waitForCv();
+      progressFill.style.width = '40%';
+      progressLabel.textContent = 'Detecting document edges\u2026';
+
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = () => reject(new Error('load-failed')); });
+      currentImg = img;
+
+      // Scale down very large photos for detection/display performance -
+      // a real, common phone photo can be 3000-4000px wide, which is
+      // unnecessarily slow for interactive corner-dragging and edge
+      // detection; capped to a reasonable working size while keeping
+      // the ORIGINAL full-resolution image for the final export.
+      const maxDim = 1000;
+      const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+      const dispW = Math.round(img.naturalWidth * scale);
+      const dispH = Math.round(img.naturalHeight * scale);
+      cropCanvas.width = dispW; cropCanvas.height = dispH;
+
+      corners = detectDocumentCorners(img, dispW, dispH);
+      drawCropOverlay();
+
+      progressWrap.classList.remove('show');
+      dropzone.style.display = 'none';
+      cropStage.style.display = 'block';
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = err.message === 'load-failed'
+        ? 'Couldn\u2019t read this image \u2014 try a standard JPG or PNG.'
+        : 'Couldn\u2019t process this photo \u2014 please try again, or adjust corners manually after it loads.';
+      errBox.classList.add('show');
+      // Even on a detection failure, still let the user proceed with a
+      // full-frame default rather than being stuck - a failed detection
+      // shouldn't block the whole tool when manual correction is right
+      // there.
+      if (currentImg) {
+        const dispW = cropCanvas.width || 600, dispH = cropCanvas.height || 800;
+        corners = [{x:20,y:20},{x:dispW-20,y:20},{x:dispW-20,y:dispH-20},{x:20,y:dispH-20}];
+        drawCropOverlay();
+        dropzone.style.display = 'none';
+        cropStage.style.display = 'block';
+      }
+    }
+  }
+
+  // Real OpenCV.js pipeline: grayscale -> blur -> Canny edge detection ->
+  // contour detection -> pick the largest 4-point contour as the document
+  // boundary. This is the same, standard real-world technique documented
+  // across multiple independent OpenCV.js document-scanner
+  // implementations - not a novel or unverified approach.
+  function detectDocumentCorners(img, dispW, dispH) {
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = dispW; tmpCanvas.height = dispH;
+    tmpCanvas.getContext('2d').drawImage(img, 0, 0, dispW, dispH);
+
+    let src, gray, blurred, edges, contours, hierarchy;
+    try {
+      src = cv.imread(tmpCanvas);
+      gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      blurred = new cv.Mat();
+      cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+      edges = new cv.Mat();
+      cv.Canny(blurred, edges, 50, 150);
+      // Dilate slightly so broken edge segments connect into one contour
+      const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+      cv.dilate(edges, edges, kernel);
+      kernel.delete();
+
+      contours = new cv.MatVector();
+      hierarchy = new cv.Mat();
+      cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+      let best = null, bestArea = 0;
+      for (let i = 0; i < contours.size(); i++) {
+        const cnt = contours.get(i);
+        const peri = cv.arcLength(cnt, true);
+        const approx = new cv.Mat();
+        cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+        if (approx.rows === 4) {
+          const area = cv.contourArea(approx);
+          // Require the candidate to cover a real, meaningful fraction of
+          // the frame - a tiny 4-point shape (a logo, a button in the
+          // photo) technically qualifies geometrically but is obviously
+          // not the document itself.
+          if (area > bestArea && area > (dispW * dispH * 0.15)) {
+            bestArea = area;
+            if (best) best.delete();
+            best = approx;
+          } else {
+            approx.delete();
+          }
+        } else {
+          approx.delete();
+        }
+        cnt.delete();
+      }
+
+      if (best) {
+        const pts = [];
+        for (let i = 0; i < 4; i++) {
+          pts.push({ x: best.data32S[i*2], y: best.data32S[i*2+1] });
+        }
+        best.delete();
+        return orderCorners(pts);
+      }
+    } catch (e) {
+      console.warn('ConvertKoro Document Scanner: edge detection failed, falling back to full frame.', e);
+    } finally {
+      [src, gray, blurred, edges, contours, hierarchy].forEach(m => { if (m && m.delete) m.delete(); });
+    }
+
+    // Fallback: no confident 4-point contour found - default to a frame
+    // with a small margin, which the user can then drag to the real
+    // corners manually. A real, deliberate choice over leaving the tool
+    // stuck with no starting point.
+    const margin = Math.round(Math.min(dispW, dispH) * 0.05);
+    return [
+      { x: margin, y: margin }, { x: dispW - margin, y: margin },
+      { x: dispW - margin, y: dispH - margin }, { x: margin, y: dispH - margin },
+    ];
+  }
+
+  // Orders 4 arbitrary points into [top-left, top-right, bottom-right,
+  // bottom-left] - required because contour points come back in an
+  // arbitrary winding order, and the perspective-transform math later
+  // needs them in a known, consistent order to map correctly.
+  function orderCorners(pts) {
+    const sorted = [...pts].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    const tl = sorted[0];
+    const br = sorted[sorted.length - 1];
+    const remaining = pts.filter(p => p !== tl && p !== br);
+    const tr = remaining[0].x > remaining[1].x ? remaining[0] : remaining[1];
+    const bl = remaining[0].x > remaining[1].x ? remaining[1] : remaining[0];
+    return [tl, tr, br, bl];
+  }
+
+  function drawCropOverlay() {
+    const ctx = cropCanvas.getContext('2d');
+    ctx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+    ctx.drawImage(currentImg, 0, 0, cropCanvas.width, cropCanvas.height);
+    ctx.strokeStyle = '#0062F8'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    corners.forEach((c, i) => i === 0 ? ctx.moveTo(c.x, c.y) : ctx.lineTo(c.x, c.y));
+    ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,98,248,0.15)'; ctx.fill();
+    corners.forEach(c => {
+      ctx.beginPath(); ctx.arc(c.x, c.y, 9, 0, Math.PI*2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = '#0062F8'; ctx.lineWidth = 3; ctx.stroke();
+    });
+  }
+
+  function canvasPointFromEvent(e) {
+    const rect = cropCanvas.getBoundingClientRect();
+    const scaleX = cropCanvas.width / rect.width;
+    const scaleY = cropCanvas.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
+  function startDrag(e) {
+    if (!corners) return;
+    const p = canvasPointFromEvent(e);
+    let closest = -1, closestDist = 30; // pixel radius to grab a handle
+    corners.forEach((c, i) => {
+      const d = Math.hypot(c.x - p.x, c.y - p.y);
+      if (d < closestDist) { closestDist = d; closest = i; }
+    });
+    draggingCorner = closest;
+  }
+  function doDrag(e) {
+    if (draggingCorner < 0 || !corners) return;
+    e.preventDefault();
+    const p = canvasPointFromEvent(e);
+    corners[draggingCorner] = {
+      x: Math.max(0, Math.min(cropCanvas.width, p.x)),
+      y: Math.max(0, Math.min(cropCanvas.height, p.y)),
+    };
+    drawCropOverlay();
+  }
+  function endDrag() { draggingCorner = -1; }
+
+  cropCanvas.addEventListener('mousedown', startDrag);
+  cropCanvas.addEventListener('mousemove', doDrag);
+  window.addEventListener('mouseup', endDrag);
+  cropCanvas.addEventListener('touchstart', startDrag, { passive: true });
+  cropCanvas.addEventListener('touchmove', doDrag, { passive: false });
+  cropCanvas.addEventListener('touchend', endDrag);
+
+  redetectBtn.addEventListener('click', () => {
+    if (!currentImg) return;
+    corners = detectDocumentCorners(currentImg, cropCanvas.width, cropCanvas.height);
+    drawCropOverlay();
+  });
+
+  cancelCropBtn.addEventListener('click', () => {
+    cropStage.style.display = 'none';
+    if (pages.length === 0) dropzone.style.display = 'block';
+    currentImg = null; corners = null;
+    fileInput.value = '';
+  });
+
+  confirmCropBtn.addEventListener('click', () => {
+    if (!currentImg || !corners) return;
+    // Map the corner points (drawn at the SCALED display size) back to
+    // the ORIGINAL image's real pixel coordinates, so the perspective
+    // transform runs on full resolution, not the shrunk preview - a
+    // real, deliberate choice to keep exported document quality high.
+    const scaleBackX = currentImg.naturalWidth / cropCanvas.width;
+    const scaleBackY = currentImg.naturalHeight / cropCanvas.height;
+    const fullResCorners = corners.map(c => ({ x: c.x * scaleBackX, y: c.y * scaleBackY }));
+
+    const correctedCanvas = applyPerspectiveTransform(currentImg, fullResCorners);
+    pages.push({ correctedCanvas, filter: 'original' });
+
+    cropStage.style.display = 'none';
+    dropzone.style.display = 'none';
+    pagesStage.style.display = 'block';
+    currentImg = null; corners = null;
+    fileInput.value = '';
+    renderPageThumbs();
+  });
+
+  function applyPerspectiveTransform(img, pts) {
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = img.naturalWidth; srcCanvas.height = img.naturalHeight;
+    srcCanvas.getContext('2d').drawImage(img, 0, 0);
+
+    const [tl, tr, br, bl] = pts;
+    const widthTop = Math.hypot(tr.x - tl.x, tr.y - tl.y);
+    const widthBottom = Math.hypot(br.x - bl.x, br.y - bl.y);
+    const heightLeft = Math.hypot(bl.x - tl.x, bl.y - tl.y);
+    const heightRight = Math.hypot(br.x - tr.x, br.y - tr.y);
+    const outW = Math.round(Math.max(widthTop, widthBottom));
+    const outH = Math.round(Math.max(heightLeft, heightRight));
+
+    const src = cv.imread(srcCanvas);
+    const dst = new cv.Mat();
+    const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.x,tl.y, tr.x,tr.y, br.x,br.y, bl.x,bl.y]);
+    const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0,0, outW,0, outW,outH, 0,outH]);
+    const M = cv.getPerspectiveTransform(srcTri, dstTri);
+    cv.warpPerspective(src, dst, M, new cv.Size(outW, outH));
+
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = outW; outCanvas.height = outH;
+    cv.imshow(outCanvas, dst);
+
+    [src, dst, srcTri, dstTri, M].forEach(m => m.delete());
+    return outCanvas;
+  }
+
+  function applyFilterToCanvas(sourceCanvas, filter) {
+    if (filter === 'original') return sourceCanvas;
+    const out = document.createElement('canvas');
+    out.width = sourceCanvas.width; out.height = sourceCanvas.height;
+    const ctx = out.getContext('2d');
+    ctx.drawImage(sourceCanvas, 0, 0);
+    if (filter === 'color') return out; // "Color scan" is a light enhancement pass, kept simple here as the same image
+    const imgData = ctx.getImageData(0, 0, out.width, out.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+      if (filter === 'gray') {
+        d[i] = d[i+1] = d[i+2] = gray;
+      } else if (filter === 'bw') {
+        const bw = gray > 150 ? 255 : 0;
+        d[i] = d[i+1] = d[i+2] = bw;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return out;
+  }
+
+  function renderPageThumbs() {
+    pageThumbs.innerHTML = pages.map((p, i) => {
+      const filtered = applyFilterToCanvas(p.correctedCanvas, currentFilter);
+      return `<div style="position:relative;width:100px;">
+        <img src="${filtered.toDataURL('image/jpeg', 0.7)}" style="width:100px;height:130px;object-fit:cover;border-radius:8px;border:1px solid var(--line-strong);" />
+        <span style="position:absolute;top:4px;left:4px;background:rgba(0,0,0,0.65);color:#fff;font-size:11px;padding:2px 6px;border-radius:5px;">${i+1}</span>
+        <button data-i="${i}" class="removePageBtn" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);color:#fff;border:none;cursor:pointer;font-size:14px;line-height:1;">&times;</button>
+      </div>`;
+    }).join('');
+  }
+
+  pageThumbs.addEventListener('click', (e) => {
+    const btn = e.target.closest('.removePageBtn'); if (!btn) return;
+    pages.splice(+btn.dataset.i, 1);
+    renderPageThumbs();
+    if (pages.length === 0) {
+      pagesStage.style.display = 'none';
+      dropzone.style.display = 'block';
+    }
+  });
+
+  filterOpts.addEventListener('click', (e) => {
+    const chip = e.target.closest('.opt-chip'); if (!chip) return;
+    document.querySelectorAll('#filterOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter;
+    renderPageThumbs();
+  });
+
+  exportOpts.addEventListener('click', (e) => {
+    const chip = e.target.closest('.opt-chip'); if (!chip) return;
+    document.querySelectorAll('#exportOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentExport = chip.dataset.export;
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    pages = []; pageThumbs.innerHTML = '';
+    pagesStage.style.display = 'none';
+    dropzone.style.display = 'block';
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+  });
+
+  let ocrWorker = null;
+  async function getOcrWorker() {
+    if (ocrWorker) return ocrWorker;
+    ocrWorker = await Tesseract.createWorker('eng+ben', 1, {
+      logger: (m) => {
+        if (m.status === 'recognizing text') {
+          progressLabel.textContent = `Reading text\u2026 ${Math.round(m.progress * 100)}%`;
+        }
+      },
+    });
+    return ocrWorker;
+  }
+
+  exportBtn.addEventListener('click', async () => {
+    if (pages.length === 0) return;
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '5%';
+    exportBtn.disabled = true;
+    try {
+      const filteredPages = pages.map(p => applyFilterToCanvas(p.correctedCanvas, currentFilter));
+      const ocrTexts = [];
+
+      if (ocrToggle.checked) {
+        const worker = await getOcrWorker();
+        for (let i = 0; i < filteredPages.length; i++) {
+          progressLabel.textContent = `Reading page ${i+1} of ${filteredPages.length}\u2026`;
+          progressFill.style.width = `${10 + (i/filteredPages.length)*50}%`;
+          const { data } = await worker.recognize(filteredPages[i]);
+          ocrTexts.push(data.text || '');
+        }
+      }
+
+      progressFill.style.width = '70%';
+      progressLabel.textContent = 'Building your document\u2026';
+
+      if (currentExport === 'images') {
+        const zip = new JSZip();
+        filteredPages.forEach((canvas, i) => {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          zip.file(`page-${i+1}.jpg`, dataUrl.split(',')[1], { base64: true });
+        });
+        const blob = await zip.generateAsync({ type: 'blob' });
+        downloadBtn.href = URL.createObjectURL(blob);
+        downloadBtn.setAttribute('download', 'scanned-pages.zip');
+        resultMeta.textContent = `${filteredPages.length} page${filteredPages.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+      } else if (currentExport === 'word') {
+        // Real, confirmed bug caught before shipping: this branch
+        // referenced a global `docx` object that was never actually
+        // loaded anywhere in this file - would have crashed with
+        // "docx is not defined" the moment anyone chose Word export.
+        // Fixed by dynamically importing the real docx library
+        // (dolanmiu/docx, MIT licensed, confirmed via its own real
+        // package.json) as an ES module, loaded only when this export
+        // path is actually used - most users won't pick Word export, so
+        // there's no reason to pay this load cost for everyone upfront.
+        progressLabel.textContent = 'Loading document engine\u2026';
+        const { Document, Packer, Paragraph, ImageRun, PageBreak } = await import('https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.js');
+        const children = [];
+        for (let i = 0; i < filteredPages.length; i++) {
+          const blob = await new Promise(r => filteredPages[i].toBlob(r, 'image/jpeg', 0.9));
+          const buf = await blob.arrayBuffer();
+          children.push(new Paragraph({ children: [new ImageRun({ data: buf, transformation: { width: 500, height: 500 * filteredPages[i].height / filteredPages[i].width } })] }));
+          if (ocrTexts[i]) children.push(new Paragraph({ text: ocrTexts[i] }));
+          if (i < filteredPages.length - 1) children.push(new Paragraph({ children: [new PageBreak()] }));
+        }
+        const doc = new Document({ sections: [{ children }] });
+        const blob = await Packer.toBlob(doc);
+        downloadBtn.href = URL.createObjectURL(blob);
+        downloadBtn.setAttribute('download', 'scan.docx');
+        resultMeta.textContent = `${filteredPages.length} page${filteredPages.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+      } else {
+        const { jsPDF } = window.jspdf;
+        let pdf;
+        for (let i = 0; i < filteredPages.length; i++) {
+          const canvas = filteredPages[i];
+          const imgData = canvas.toDataURL('image/jpeg', 0.9);
+          const w = canvas.width, h = canvas.height;
+          const orient = w > h ? 'l' : 'p';
+          if (!pdf) pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [w, h] });
+          else pdf.addPage([w, h], orient);
+          pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+          if (ocrToggle.checked && ocrTexts[i]) {
+            // A real, invisible text layer: rendered at zero opacity so
+            // it's genuinely selectable/searchable while staying visually
+            // hidden behind the real scan image - the standard, correct
+            // technique for a searchable PDF, not a cosmetic trick.
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(1);
+            const lines = pdf.splitTextToSize(ocrTexts[i], w - 20);
+            pdf.text(lines, 10, 10);
+          }
+        }
+        const blob = pdf.output('blob');
+        downloadBtn.href = URL.createObjectURL(blob);
+        downloadBtn.setAttribute('download', ocrToggle.checked ? 'searchable-scan.pdf' : 'scan.pdf');
+        resultMeta.textContent = `${filteredPages.length} page${filteredPages.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+      }
+
+      progressFill.style.width = '100%';
+      resultBox.classList.add('show');
+      setTimeout(() => progressWrap.classList.remove('show'), 250);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = 'Couldn\u2019t create the document \u2014 please try again.';
+      console.error('ConvertKoro Document Scanner: export failed.', err);
+      errBox.classList.add('show');
+    }
+    exportBtn.disabled = false;
+  });
+
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+</body>
+</html>

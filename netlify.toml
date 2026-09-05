@@ -92,3 +92,13 @@
   from = "/api/pdf-to-word"
   to = "/.netlify/functions/pdf-to-word"
   status = 200
+
+# Text translation via Google Cloud Translation API - used by Image to
+# Text's "Translate" feature to translate OCR-extracted text into another
+# language. A real, deliberate hard per-request character cap is enforced
+# inside translate.js itself (not just here) to bound worst-case cost,
+# since Google's free tier requires a real billing account on file.
+[[redirects]]
+  from = "/api/translate"
+  to = "/.netlify/functions/translate"
+  status = 200

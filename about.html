@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3333506502324789" crossorigin="anonymous"></script>
-<meta name="description" content="ConvertKoro is a free, no-login toolkit for everyday PDF and image conversions, built to run entirely in your browser." />
+<meta name="description" content="ConvertKoro is a free, no-login toolkit for everyday PDF, image, audio, video, and document tasks, built to run entirely in your browser." />
 <meta name="robots" content="index, follow" />
 <meta property="og:title" content="About ConvertKoro | ConvertKoro" />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
@@ -40,10 +40,10 @@
       <p>Most free converter sites work the same way: you upload your file to their server, wait, then download the result. That's a real, deliberate exchange — your document, in exchange for the free service. ConvertKoro exists because that exchange isn't actually necessary for most of these tasks. A browser can merge PDFs, resize an image, or convert a file format entirely on its own, with no server involved at all. So that's what most of these tools do.</p>
 
       <h2>How it works</h2>
-      <p>Merging, compressing, converting, splitting, cropping, editing &mdash; the processing happens as code running in your own browser tab. Your file never leaves your device for most tools here, because it never needs to. There are two honest exceptions, and they're disclosed exactly where you'd expect: the URL Shortener stores the destination link you submit, because that's the only way a short link can redirect anyone; and Image-to-Text sends your image to a cloud OCR service by default for meaningfully better accuracy, with an on-device-only option available if you'd rather it stayed local. Every other tool stays fully client-side, and where it doesn't, we say so.</p>
+      <p>Merging, compressing, converting, splitting, cropping, editing &mdash; the processing happens as code running in your own browser tab. Your file never leaves your device for most tools here, because it never needs to. There are a few honest exceptions, and they're disclosed exactly where you'd expect: the URL Shortener stores the destination link you submit, because that's the only way a short link can redirect anyone; Image-to-Text sends your image to a cloud OCR service by default for meaningfully better accuracy, with an on-device-only option available if you'd rather it stayed local; and the Translate feature sends the text you're translating (never your file) to a translation service. Document Scanner, Background Remover, and Passport Photo Maker download a real detection engine the first time you use them, but your photo itself stays on your device for all three. Every other tool stays fully client-side, and where it doesn't, we say so.</p>
 
       <h2>What's here</h2>
-      <p id="toolCountP">Tools live so far across PDF, image, media, developer, and calculator utilities. Each one is free, has no daily limit, and doesn't require an account &mdash; drop a file in, get your result, done.</p>
+      <p id="toolCountP">Tools live so far across PDF, image, audio, video, document, developer, and calculator utilities. Each one is free, has no daily limit, and doesn't require an account &mdash; drop a file in, get your result, done.</p>
 
       <h2>How it's free</h2>
       <p>A small amount of advertising on the page supports the cost of running the site. There's no premium tier, no paywall, and no feature held back behind a subscription.</p>
@@ -61,7 +61,7 @@
 <script>
   const liveCount = TOOLS.filter(t => !t.soon).length;
   document.getElementById('toolCountP').innerHTML =
-    `<strong>${liveCount} tools</strong> live so far across PDF, image, media, developer, and calculator utilities. Each one is free, has no daily limit, and doesn't require an account &mdash; drop a file in, get your result, done.`;
+    `<strong>${liveCount} tools</strong> live so far across PDF, image, audio, video, document, developer, and calculator utilities. Each one is free, has no daily limit, and doesn't require an account &mdash; drop a file in, get your result, done.`;
 </script>
 </body>
 </html>

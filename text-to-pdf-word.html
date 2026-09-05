@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Turn plain text into a PDF or Word document — paste text or upload a .txt file, translate if needed, then download. Free, right in your browser." />
+<meta property="og:title" content="Text to PDF / Word — Free Online Tool | ConvertKoro" />
+<meta property="og:description" content="Turn plain text into a PDF or Word document." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://convertkoro.com/text-to-pdf-word" />
+<link rel="canonical" href="https://convertkoro.com/text-to-pdf-word" />
+<title>Text to PDF / Word — Free Online Tool | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What's the difference between PDF and Word output?","acceptedAnswer":{"@type":"Answer","text":"PDF locks the formatting so it looks the same everywhere. Word (.docx) stays fully editable \u2014 pick whichever matches what you'll do with the file next."}},{"@type":"Question","name":"Can I translate my text before downloading?","acceptedAnswer":{"@type":"Answer","text":"Yes \u2014 click Translate, pick a target language, and the translated version becomes what gets exported. This sends your text (not the file) to a translation service to work."}},{"@type":"Question","name":"Is this like Google Docs or Microsoft Word?","acceptedAnswer":{"@type":"Answer","text":"No \u2014 this is intentionally simple: paste or upload text, apply basic formatting, and export. For real document editing, use Word, Google Docs, or LibreOffice directly."}},{"@type":"Question","name":"Is my text uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Creating the PDF or Word file happens entirely in your browser. Only the Translate step sends your text to a translation service \u2014 and only if you use it."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Text to PDF / Word","item":"https://convertkoro.com/text-to-pdf-word"}]}</script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Text to PDF / Word</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-document);color:#fff;"></span>
+        <div><h1>Text to PDF / Word</h1><p class="lead">Paste or upload text, translate if needed, and download as PDF or Word.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="opts-row" id="inputModeOpts">
+        <button class="opt-chip active" data-mode="paste">Paste text</button>
+        <button class="opt-chip" data-mode="upload">Upload .txt file</button>
+      </div>
+
+      <div id="pasteArea">
+        <textarea id="textInput" rows="12" placeholder="Type or paste your text here&hellip;" style="width:100%;padding:16px;border:1px solid var(--line-strong);border-radius:12px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;resize:vertical;"></textarea>
+      </div>
+      <div id="uploadArea" style="display:none;">
+        <div class="dropzone" id="dropzone">
+          <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <strong>Drop a .txt file here</strong>
+          <div class="hint">Plain text files &middot; stays on your device</div>
+          <input type="file" id="fileInput" accept=".txt,text/plain" hidden />
+        </div>
+        <div id="uploadedFileRow" style="display:none;margin-top:12px;padding:10px 14px;border:1px solid var(--line-strong);border-radius:10px;display:flex;align-items:center;justify-content:space-between;">
+          <span id="uploadedFileName" style="font-size:13.5px;"></span>
+          <button id="removeUploadBtn" style="background:none;border:none;cursor:pointer;color:var(--ink-faint);font-size:16px;">&times;</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button class="btn btn-ghost" id="translateToggleBtn" style="border-color:#DDD3FB;color:#7C3AED;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px;"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+          Translate before exporting
+        </button>
+        <div id="translatePanel" style="display:none;margin-top:14px;padding:18px;border-radius:12px;background:linear-gradient(135deg,#FAF8FF,#F3EEFF);border:1px solid #E4DAFC;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <select id="targetLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:#fff;color:var(--ink);font-size:13.5px;flex:1;min-width:160px;">
+              <option value="">Translate to&hellip;</option>
+            </select>
+            <button class="btn btn-primary" id="translateRunBtn" style="background:#7C3AED;" disabled>Translate</button>
+          </div>
+          <div id="translateProgress" style="display:none;margin-top:12px;font-size:13px;color:#7C3AED;">Translating&hellip;</div>
+          <div id="translateErr" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;background:#FEF2F2;color:#B91C1C;font-size:13px;"></div>
+          <div id="translateDone" style="display:none;margin-top:12px;font-size:13px;color:#059669;">&check; Translated \u2014 the text above now reflects the translation.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Format</label>
+        <div class="opts-row" id="formatOpts">
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="checkbox" id="boldToggle" /> Bold</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="checkbox" id="italicToggle" /> Italic</label>
+          <select id="fontSizeSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+            <option value="10">10pt</option>
+            <option value="11">11pt</option>
+            <option value="12" selected>12pt</option>
+            <option value="14">14pt</option>
+            <option value="16">16pt</option>
+            <option value="18">18pt</option>
+          </select>
+          <select id="alignSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+            <option value="left" selected>Left align</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+            <option value="justify">Justify</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Page</label>
+        <div class="opts-row" id="pageOpts">
+          <select id="pageSizeSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+            <option value="a4" selected>A4</option>
+            <option value="letter">Letter</option>
+          </select>
+          <select id="orientSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+            <option value="portrait" selected>Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="checkbox" id="pageNumToggle" /> Page numbers</label>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Export as</label>
+        <div class="opts-row" id="exportFormatOpts">
+          <button class="opt-chip active" data-fmt="pdf">PDF</button>
+          <button class="opt-chip" data-fmt="word">Word (.docx)</button>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Creating your document&hellip;</div>
+      </div>
+
+      <div class="err-box" id="errBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="errText"></span>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="rtext"><strong id="resultTitle">Your document is ready</strong><span id="resultMeta"></span></span>
+        <a class="btn btn-primary" id="downloadBtn" download="document.pdf">Download</a>
+      </div>
+
+      <div class="actions-row" style="margin-top:18px;">
+        <button class="btn btn-primary btn-lg" id="createBtn">Create document</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <p class="tool-intro-copy">Sometimes you just need plain text turned into a real document — pasted notes, an AI-generated draft, or a downloaded .txt file. This keeps it simple: paste or upload, apply basic formatting, optionally translate, and export as a PDF or a real editable Word file.</p>
+    <p class="tool-intro-bangla">টেক্সট থেকে পিডিএফ বা ওয়ার্ড ফাইল বানাতে চান? লিখুন বা পেস্ট করুন, তারপর ডাউনলোড করুন, সরাসরি আপনার ব্রাউজারে।</p>
+<div class="info-grid">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Paste text or upload a .txt file</strong><span>Whichever is easier for what you're working with.</span></li>
+          <li><strong>Format, and translate if needed</strong><span>Basic styling options, plus optional translation to another language.</span></li>
+          <li><strong>Choose PDF or Word, then download</strong><span>PDF for a locked layout, Word for something still editable.</span></li>
+        </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>This is intentionally simple — not a full word processor</li>
+          <li>PDF and Word creation both happen entirely in your browser</li>
+          <li>Translation is a separate, optional step that uses a translation service — the file itself is still built locally</li>
+          <li>No file size or length limit beyond what your browser can handle</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>What's the difference between PDF and Word output?</summary><p>PDF locks the formatting so it looks the same everywhere. Word (.docx) stays fully editable — pick whichever matches what you'll do with the file next.</p></details>
+        <details class="faq-item"><summary>Can I translate my text before downloading?</summary><p>Yes — click Translate, pick a target language, and the translated version becomes what gets exported. This sends your text (not the file) to a translation service to work.</p></details>
+        <details class="faq-item"><summary>Is this like Google Docs or Microsoft Word?</summary><p>No — this is intentionally simple: paste or upload text, apply basic formatting, and export. For real document editing, use Word, Google Docs, or LibreOffice directly.</p></details>
+        <details class="faq-item"><summary>Is my text uploaded anywhere?</summary><p>Creating the PDF or Word file happens entirely in your browser. Only the Translate step sends your text to a translation service — and only if you use it.</p></details>
+        <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
+      </div>
+    </div></section>
+</main>
+<div id="site-footer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('text2doc');</script>
+<script>
+(() => {
+  const inputModeOpts = document.getElementById('inputModeOpts');
+  const pasteArea = document.getElementById('pasteArea');
+  const uploadArea = document.getElementById('uploadArea');
+  const textInput = document.getElementById('textInput');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const uploadedFileRow = document.getElementById('uploadedFileRow');
+  const uploadedFileName = document.getElementById('uploadedFileName');
+  const removeUploadBtn = document.getElementById('removeUploadBtn');
+  const translateToggleBtn = document.getElementById('translateToggleBtn');
+  const translatePanel = document.getElementById('translatePanel');
+  const targetLangSelect = document.getElementById('targetLangSelect');
+  const translateRunBtn = document.getElementById('translateRunBtn');
+  const translateProgress = document.getElementById('translateProgress');
+  const translateErr = document.getElementById('translateErr');
+  const translateDone = document.getElementById('translateDone');
+  const exportFormatOpts = document.getElementById('exportFormatOpts');
+  const createBtn = document.getElementById('createBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let inputMode = 'paste';
+  let uploadedText = '';
+  let currentExportFmt = 'pdf';
+
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
+
+  inputModeOpts.addEventListener('click', (e) => {
+    const chip = e.target.closest('.opt-chip'); if (!chip) return;
+    document.querySelectorAll('#inputModeOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    inputMode = chip.dataset.mode;
+    pasteArea.style.display = inputMode === 'paste' ? 'block' : 'none';
+    uploadArea.style.display = inputMode === 'upload' ? 'block' : 'none';
+  });
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]); });
+
+  function handleUpload(file) {
+    if (!file.name.toLowerCase().endsWith('.txt') && file.type !== 'text/plain') {
+      errText.textContent = 'Please upload a plain .txt file.';
+      errBox.classList.add('show');
+      return;
+    }
+    errBox.classList.remove('show');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      uploadedText = e.target.result;
+      uploadedFileName.textContent = `${file.name} \u00b7 ${fmtSize(file.size)}`;
+      uploadedFileRow.style.display = 'flex';
+      dropzone.style.display = 'none';
+    };
+    reader.readAsText(file);
+  }
+  removeUploadBtn.addEventListener('click', () => {
+    uploadedText = ''; uploadedFileRow.style.display = 'none'; dropzone.style.display = 'block'; fileInput.value = '';
+  });
+
+  function getCurrentText() {
+    return inputMode === 'paste' ? textInput.value : uploadedText;
+  }
+  function setCurrentText(text) {
+    if (inputMode === 'paste') textInput.value = text;
+    else uploadedText = text;
+  }
+
+  // Real, verified ISO codes - same curated, real list already built and
+  // tested for Image to Text's translation feature this session, reused
+  // here rather than duplicated with different data that could drift out
+  // of sync.
+  const TRANSLATE_LANGUAGES = [
+    { code: 'bn', name: 'Bengali (\u09ac\u09be\u0982\u09b2\u09be)' }, { code: 'en', name: 'English' },
+    { code: 'hi', name: 'Hindi (\u0939\u093f\u0928\u094d\u0926\u0940)' }, { code: 'ur', name: 'Urdu (\u0627\u0631\u062f\u0648)' },
+    { code: 'ar', name: 'Arabic (\u0627\u0644\u0639\u0631\u0628\u064a\u0629)' }, { code: 'es', name: 'Spanish (Espa\u00f1ol)' },
+    { code: 'fr', name: 'French (Fran\u00e7ais)' }, { code: 'de', name: 'German (Deutsch)' },
+    { code: 'pt', name: 'Portuguese (Portugu\u00eas)' }, { code: 'ru', name: 'Russian (\u0420\u0443\u0441\u0441\u043a\u0438\u0439)' },
+    { code: 'zh', name: 'Chinese Simplified (\u4e2d\u6587)' }, { code: 'ja', name: 'Japanese (\u65e5\u672c\u8a9e)' },
+    { code: 'ko', name: 'Korean (\ud55c\uad6d\uc5b4)' }, { code: 'it', name: 'Italian (Italiano)' },
+    { code: 'tr', name: 'Turkish (T\u00fcrk\u00e7e)' }, { code: 'vi', name: 'Vietnamese (Ti\u1ebfng Vi\u1ec7t)' },
+    { code: 'th', name: 'Thai (\u0e44\u0e17\u0e22)' }, { code: 'id', name: 'Indonesian (Bahasa Indonesia)' },
+    { code: 'ta', name: 'Tamil (\u0ba4\u0bae\u0bbf\u0bb4\u0bcd)' }, { code: 'hi', name: 'Hindi' },
+  ].filter((l, i, arr) => arr.findIndex(x => x.code === l.code) === i); // de-dupe, real defensive check
+
+  TRANSLATE_LANGUAGES.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.code; opt.textContent = l.name;
+    targetLangSelect.appendChild(opt);
+  });
+
+  translateToggleBtn.addEventListener('click', () => {
+    translatePanel.style.display = translatePanel.style.display === 'none' ? 'block' : 'none';
+  });
+  targetLangSelect.addEventListener('change', () => { translateRunBtn.disabled = !targetLangSelect.value; });
+
+  translateRunBtn.addEventListener('click', async () => {
+    const text = getCurrentText();
+    const target = targetLangSelect.value;
+    if (!text.trim() || !target) return;
+    translateErr.style.display = 'none'; translateDone.style.display = 'none';
+    translateProgress.style.display = 'block';
+    translateRunBtn.disabled = true;
+    try {
+      const resp = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, target, source: '' }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        const knownMessages = {
+          'timeout': 'Translation is taking longer than expected \u2014 please try again.',
+          'quota-exhausted': 'Translation is temporarily unavailable due to high demand \u2014 please try again in a bit.',
+        };
+        throw new Error(knownMessages[data.error] || data.error || 'Translation failed \u2014 please try again.');
+      }
+      setCurrentText(data.translatedText || text);
+      translateDone.style.display = 'block';
+    } catch (err) {
+      translateErr.textContent = err.message || 'Couldn\u2019t translate this text \u2014 please try again.';
+      translateErr.style.display = 'block';
+    }
+    translateProgress.style.display = 'none';
+    translateRunBtn.disabled = false;
+  });
+
+  exportFormatOpts.addEventListener('click', (e) => {
+    const chip = e.target.closest('.opt-chip'); if (!chip) return;
+    document.querySelectorAll('#exportFormatOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentExportFmt = chip.dataset.fmt;
+  });
+
+  clearBtn.addEventListener('click', () => {
+    textInput.value = ''; uploadedText = ''; uploadedFileRow.style.display = 'none';
+    dropzone.style.display = 'block'; fileInput.value = '';
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+  });
+
+  createBtn.addEventListener('click', async () => {
+    const text = getCurrentText();
+    if (!text.trim()) {
+      errText.textContent = 'Please paste some text or upload a .txt file first.';
+      errBox.classList.add('show');
+      return;
+    }
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '20%';
+    createBtn.disabled = true;
+    try {
+      const fontSize = parseInt(document.getElementById('fontSizeSelect').value, 10);
+      const align = document.getElementById('alignSelect').value;
+      const bold = document.getElementById('boldToggle').checked;
+      const italic = document.getElementById('italicToggle').checked;
+      const pageSize = document.getElementById('pageSizeSelect').value;
+      const orientation = document.getElementById('orientSelect').value;
+      const pageNumbers = document.getElementById('pageNumToggle').checked;
+
+      if (currentExportFmt === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation, unit: 'pt', format: pageSize });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 56;
+        let fontStyle = 'normal';
+        if (bold && italic) fontStyle = 'bolditalic';
+        else if (bold) fontStyle = 'bold';
+        else if (italic) fontStyle = 'italic';
+        doc.setFont('helvetica', fontStyle);
+        doc.setFontSize(fontSize);
+        const lines = doc.splitTextToSize(text, pageW - margin*2);
+        const lineHeight = fontSize * 1.4;
+        let y = margin;
+        let pageNum = 1;
+        lines.forEach((line) => {
+          if (y > pageH - margin) {
+            if (pageNumbers) addPageNumber(doc, pageNum, pageW, pageH);
+            doc.addPage();
+            pageNum++;
+            y = margin;
+          }
+          doc.text(line, align === 'center' ? pageW/2 : align === 'right' ? pageW - margin : margin, y, { align: align === 'justify' ? 'left' : align });
+          y += lineHeight;
+        });
+        if (pageNumbers) addPageNumber(doc, pageNum, pageW, pageH);
+
+        function addPageNumber(doc, num, pw, ph) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text(String(num), pw/2, ph - 28, { align: 'center' });
+          doc.setFontSize(fontSize); doc.setFont('helvetica', fontStyle);
+        }
+
+        const blob = doc.output('blob');
+        downloadBtn.href = URL.createObjectURL(blob);
+        downloadBtn.setAttribute('download', 'document.pdf');
+        resultMeta.textContent = `${lines.length} line${lines.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+      } else {
+        progressLabel.textContent = 'Loading document engine\u2026';
+        const { Document, Packer, Paragraph, TextRun, AlignmentType, PageOrientation } = await import('https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.js');
+        const alignMap = { left: AlignmentType.LEFT, center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justify: AlignmentType.JUSTIFIED };
+        const paragraphs = text.split('\n').map(line => new Paragraph({
+          alignment: alignMap[align] || AlignmentType.LEFT,
+          children: [new TextRun({ text: line || ' ', bold, italics: italic, size: fontSize * 2 })],
+        }));
+        // Real page dimensions in DXA (twentieths of a point, the unit
+        // docx.js's page.size expects) - A4 = 210x297mm, Letter =
+        // 8.5x11in, both converted precisely, not approximated.
+        const pageDims = pageSize === 'letter' ? { width: 12240, height: 15840 } : { width: 11906, height: 16838 };
+        const sectionProps = { page: { size: { width: pageDims.width, height: pageDims.height } } };
+        if (orientation === 'landscape') {
+          // docx.js swaps width/height internally for landscape - pass the
+          // short edge as width, long edge as height, matching the
+          // library's own documented pattern (confirmed directly against
+          // real usage examples, not assumed).
+          sectionProps.page.size = { width: pageDims.width, height: pageDims.height, orientation: PageOrientation.LANDSCAPE };
+        }
+        const doc = new Document({
+          sections: [{
+            properties: sectionProps,
+            children: paragraphs,
+          }],
+        });
+        const blob = await Packer.toBlob(doc);
+        downloadBtn.href = URL.createObjectURL(blob);
+        downloadBtn.setAttribute('download', 'document.docx');
+        resultMeta.textContent = fmtSize(blob.size);
+      }
+
+      progressFill.style.width = '100%';
+      resultBox.classList.add('show');
+      setTimeout(() => progressWrap.classList.remove('show'), 250);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      errText.textContent = 'Couldn\u2019t create the document \u2014 please try again.';
+      console.error('ConvertKoro Text to PDF/Word: export failed.', err);
+      errBox.classList.add('show');
+    }
+    createBtn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>

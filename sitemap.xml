@@ -68,4 +68,8 @@
   <url><loc>https://convertkoro.com/currency-converter</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.com/emi-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://convertkoro.com/date-calculator</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.com/background-remover</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.com/document-scanner</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.com/passport-photo-maker</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://convertkoro.com/text-to-pdf-word</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
 </urlset>

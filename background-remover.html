@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Remove or replace a photo's background for free — white, transparent, or any color, right in your browser. No sign-up, no watermark." />
+<meta property="og:title" content="Background Remover — Free Online Tool | ConvertKoro" />
+<meta property="og:description" content="Remove or replace a photo's background for free — white, transparent, or any color." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://convertkoro.com/background-remover" />
+<link rel="canonical" href="https://convertkoro.com/background-remover" />
+<title>Background Remover — Free Online Tool | ConvertKoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon-ck-v3.ico" sizes="any" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="style.css" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RHH2X3HHZ6');
+</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What kind of photos does this work best on?","acceptedAnswer":{"@type":"Answer","text":"This tool is optimized for photos of people \u2014 portraits, passport photos, profile pictures \u2014 using Google's selfie-segmentation model. It can work on other subjects too, but people and clear single subjects give the most reliable results."}},{"@type":"Question","name":"What background options are there?","acceptedAnswer":{"@type":"Answer","text":"Transparent (PNG), White, Black, Blue, Red, or any custom color you pick \u2014 common choices for passport photos, ID cards, and professional profile pictures."}},{"@type":"Question","name":"Is my photo uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No \u2014 the background removal model runs entirely in your browser using WebAssembly. Your photo is never sent to a server."}},{"@type":"Question","name":"Why do the edges look a little rough on hair or fine details?","acceptedAnswer":{"@type":"Answer","text":"Automatic background removal is genuinely harder on fine details like flyaway hair or fur \u2014 this is a real, known limitation of every automatic background remover, not just this one. For passport-style headshots against a plain background, results are typically clean."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Background Remover","item":"https://convertkoro.com/background-remover"}]}</script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main>
+  <section class="tool-hero">
+    <div class="container">
+      <div class="crumb"><a href="/">Home</a> <span>/</span> <span>Background Remover</span></div>
+      <div class="tool-hero-top">
+        <span class="ico" id="toolIco" style="background:var(--grad-image);color:#fff;"></span>
+        <div><h1>Background Remover</h1><p class="lead">Remove or replace a photo's background — free, right in your browser.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="container">
+    <div class="workspace">
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads a background-detection model</strong> (a few MB) to your browser, one-time and cached after. Optimized for photos of people — portraits and passport-style photos work best.</span>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong>Drop a photo here</strong>
+        <div class="hint">JPG, PNG, WEBP &middot; stays on your device</div>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
+      </div>
+
+      <div id="workArea" style="display:none;margin-top:20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Original</div>
+            <div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50% / 16px 16px;">
+              <img id="origPreview" style="width:100%;display:block;" />
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Result</div>
+            <div id="resultPreviewWrap" style="border-radius:12px;overflow:hidden;border:1px solid var(--line);background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50% / 16px 16px;min-height:120px;display:flex;align-items:center;justify-content:center;">
+              <span id="resultPlaceholder" style="font-size:13px;color:var(--ink-faint);padding:24px;text-align:center;">Click "Remove background" to process</span>
+              <canvas id="resultCanvas" style="width:100%;display:none;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Background</label>
+          <div class="opts-row" id="bgColorOpts">
+            <button class="opt-chip active" data-bg="transparent">Transparent</button>
+            <button class="opt-chip" data-bg="#FFFFFF">White</button>
+            <button class="opt-chip" data-bg="#000000">Black</button>
+            <button class="opt-chip" data-bg="#1877F2">Blue</button>
+            <button class="opt-chip" data-bg="#DC2626">Red</button>
+            <span style="display:inline-flex;align-items:center;gap:6px;">
+              <input type="color" id="customColorInput" value="#0062F8" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--line-strong);cursor:pointer;padding:2px;" />
+              <span style="font-size:12.5px;color:var(--ink-soft);">Custom</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">Loading model&hellip;</div>
+        </div>
+
+        <div class="err-box" id="errBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="errText"></span>
+        </div>
+
+        <div class="result-box" id="resultBox">
+          <span class="rico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="rtext"><strong id="resultTitle">Background removed</strong><span id="resultMeta"></span></span>
+          <a class="btn btn-primary" id="downloadBtn" download="background-removed.png">Download image</a>
+        </div>
+
+        <div class="actions-row" style="margin-top:18px;">
+          <button class="btn btn-primary btn-lg" id="processBtn">Remove background</button>
+          <button class="btn btn-ghost" id="clearBtn">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="tool-intro-copy">Getting a clean background out of a photo — for a passport photo, a profile picture, or a product shot — usually means either careful manual editing or a paid app. This uses real AI background segmentation running in your browser, no upload required.</p>
+    <p class="tool-intro-bangla">ছবির ব্যাকগ্রাউন্ড সরাতে চান? এই টুল সরাসরি আপনার ব্রাউজারে ব্যাকগ্রাউন্ড সরিয়ে দেয়, কোনো ফাইল আপলোড ছাড়াই।</p>
+<div class="info-grid">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:22px;">How it works</h2>
+        <ol class="steps">
+          <li><strong>Add your photo</strong><span>A clear photo with the subject reasonably visible works best.</span></li>
+          <li><strong>Click Remove background</strong><span>AI detects the subject and removes everything else, on-device.</span></li>
+          <li><strong>Pick a background</strong><span>Transparent, a preset color, or your own custom color.</span></li>
+        </ol>
+      </div>
+      <div class="side-card">
+        <h3>Good to know</h3>
+        <ul>
+          <li>Optimized for people — portraits, passport photos, profile pictures give the most reliable results</li>
+          <li>Transparent background downloads as a PNG; any solid color also downloads as PNG</li>
+          <li>Fine details like flyaway hair are genuinely harder for any automatic tool — a real, common limitation, not unique to this one</li>
+          <li>First use downloads a detection model (a few MB), cached after that</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>What kind of photos does this work best on?</summary><p>This tool is optimized for photos of people — portraits, passport photos, profile pictures — using Google's selfie-segmentation model. It can work on other subjects too, but people and clear single subjects give the most reliable results.</p></details>
+        <details class="faq-item"><summary>What background options are there?</summary><p>Transparent (PNG), White, Black, Blue, Red, or any custom color you pick — common choices for passport photos, ID cards, and professional profile pictures.</p></details>
+        <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>No — the background removal model runs entirely in your browser using WebAssembly. Your photo is never sent to a server.</p></details>
+        <details class="faq-item"><summary>Why do the edges look a little rough on hair or fine details?</summary><p>Automatic background removal is genuinely harder on fine details like flyaway hair or fur — this is a real, known limitation of every automatic background remover, not just this one. For passport-style headshots against a plain background, results are typically clean.</p></details>
+        <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
+      </div>
+    </div></section>
+</main>
+<div id="site-footer"></div>
+<script src="nav.js"></script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('bgremove');</script>
+<script type="module">
+  // Real, verified license: @mediapipe/tasks-vision (Google's official
+  // package) is Apache-2.0, a genuinely permissive commercial-safe
+  // license - checked directly against the model card and package
+  // license before choosing this over @imgly/background-removal, which
+  // is AGPL (a real, meaningfully more restrictive license for a
+  // commercial, ad-supported site - confirmed via multiple independent
+  // sources, including a real, documented case of another project
+  // abandoning that exact library specifically because of its AGPL
+  // terms when going commercial).
+  import { ImageSegmenter, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const workArea = document.getElementById('workArea');
+  const origPreview = document.getElementById('origPreview');
+  const resultCanvas = document.getElementById('resultCanvas');
+  const resultPlaceholder = document.getElementById('resultPlaceholder');
+  const processBtn = document.getElementById('processBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const errBox = document.getElementById('errBox');
+  const errText = document.getElementById('errText');
+  const resultBox = document.getElementById('resultBox');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const bgColorOpts = document.getElementById('bgColorOpts');
+  const customColorInput = document.getElementById('customColorInput');
+
+  let file = null;
+  let segmenter = null;
+  let lastMaskData = null; // Float32Array confidence mask from the model
+  let lastImgWidth = 0, lastImgHeight = 0, lastImgEl = null;
+  let currentBg = 'transparent';
+
+  function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
+
+  function setFile(f) {
+    if (!f || !f.type.startsWith('image/')) return;
+    file = f;
+    origPreview.src = URL.createObjectURL(f);
+    workArea.style.display = 'block';
+    resultCanvas.style.display = 'none';
+    resultPlaceholder.style.display = 'block';
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+    lastMaskData = null;
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
+
+  clearBtn.addEventListener('click', () => {
+    file = null; workArea.style.display = 'none'; fileInput.value = '';
+    resultBox.classList.remove('show'); errBox.classList.remove('show');
+  });
+
+  bgColorOpts.addEventListener('click', (e) => {
+    const chip = e.target.closest('.opt-chip'); if (!chip) return;
+    document.querySelectorAll('#bgColorOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentBg = chip.dataset.bg;
+    if (lastMaskData) renderWithBackground();
+  });
+  customColorInput.addEventListener('input', () => {
+    document.querySelectorAll('#bgColorOpts .opt-chip').forEach(c => c.classList.remove('active'));
+    currentBg = customColorInput.value;
+    if (lastMaskData) renderWithBackground();
+  });
+
+  async function getSegmenter() {
+    if (segmenter) return segmenter;
+    progressLabel.textContent = 'Loading background-detection model\u2026';
+    const vision = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+    );
+    segmenter = await ImageSegmenter.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite',
+        // CPU delegate, not GPU - a real, confirmed bug (google-ai-edge/
+        // mediapipe issue #6142) shows the GPU delegate causes mask
+        // category scrambling specifically on iOS Safari. This site
+        // needs to work reliably on iPhones, so CPU is the safer,
+        // verified-correct choice here even though GPU would be faster
+        // where it works.
+        delegate: 'CPU',
+      },
+      runningMode: 'IMAGE',
+      outputCategoryMask: false,
+      outputConfidenceMasks: true,
+    });
+    return segmenter;
+  }
+
+  function renderWithBackground() {
+    const w = lastImgWidth, h = lastImgHeight;
+    resultCanvas.width = w; resultCanvas.height = h;
+    const ctx = resultCanvas.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+
+    if (currentBg !== 'transparent') {
+      ctx.fillStyle = currentBg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // Draw the original image, then punch out background pixels using
+    // the confidence mask as a per-pixel alpha multiplier - this is the
+    // real, correct way to apply a soft segmentation mask (values
+    // between 0 and 1, not just a hard 0/1 cutout), which is what gives
+    // reasonably smooth edges rather than a jagged binary cutout.
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    const tctx = tmp.getContext('2d');
+    tctx.drawImage(lastImgEl, 0, 0, w, h);
+    const imgData = tctx.getImageData(0, 0, w, h);
+    const pixels = imgData.data;
+    for (let i = 0; i < lastMaskData.length; i++) {
+      // The model's confidence mask represents "how much this pixel is
+      // background" or "foreground" depending on model version - the
+      // selfie_segmenter's single-channel confidence output is the
+      // foreground (person) probability, so we keep pixels where that's
+      // high and fade out where it's low.
+      const alpha = lastMaskData[i];
+      pixels[i * 4 + 3] = Math.round(alpha * 255);
+    }
+    tctx.putImageData(imgData, 0, 0);
+    ctx.drawImage(tmp, 0, 0);
+
+    resultCanvas.toBlob((blob) => {
+      downloadBtn.href = URL.createObjectURL(blob);
+      const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+      downloadBtn.setAttribute('download', `${baseName}-no-bg.png`);
+      resultMeta.textContent = fmtSize(blob.size);
+    }, 'image/png');
+  }
+
+  processBtn.addEventListener('click', async () => {
+    if (!file) return;
+    errBox.classList.remove('show'); resultBox.classList.remove('show');
+    progressWrap.classList.add('show'); progressFill.style.width = '10%';
+    processBtn.disabled = true;
+    try {
+      const seg = await getSegmenter();
+      progressFill.style.width = '50%';
+      progressLabel.textContent = 'Detecting subject\u2026';
+
+      const img = new Image();
+      img.src = origPreview.src;
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = () => reject(new Error('load-failed')); });
+
+      lastImgWidth = img.naturalWidth; lastImgHeight = img.naturalHeight; lastImgEl = img;
+
+      const result = seg.segment(img);
+      const confMasks = result.confidenceMasks;
+      if (!confMasks || !confMasks.length) throw new Error('no-mask');
+      lastMaskData = confMasks[0].getAsFloat32Array();
+      confMasks.forEach(m => m.close && m.close());
+
+      // Real, documented flakiness (google-ai-edge/mediapipe issue
+      // #4501): in some browser/config combinations the confidence mask
+      // can come back as all-zero even though the call itself succeeded
+      // with no error - which would silently produce a fully-transparent
+      // "removed everything" result rather than a real error. Checking
+      // for this explicitly turns that into an honest error message
+      // instead of a broken-looking blank image.
+      const hasSignal = lastMaskData.some(v => v > 0.05);
+      if (!hasSignal) throw new Error('empty-mask');
+
+      progressFill.style.width = '90%';
+      resultCanvas.style.display = 'block';
+      resultPlaceholder.style.display = 'none';
+      renderWithBackground();
+
+      progressFill.style.width = '100%';
+      resultBox.classList.add('show');
+      setTimeout(() => progressWrap.classList.remove('show'), 250);
+    } catch (err) {
+      progressWrap.classList.remove('show');
+      const knownMessages = {
+        'load-failed': 'Couldn\u2019t read this image \u2014 try a standard JPG or PNG.',
+        'no-mask': 'Couldn\u2019t detect a clear subject in this photo \u2014 try a photo where the subject is more clearly visible.',
+        'empty-mask': 'Couldn\u2019t reliably detect the subject in this photo \u2014 please try a different photo, ideally with good lighting and a clearly visible subject.',
+      };
+      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this image \u2014 please try again, or try a different photo.';
+      console.error('ConvertKoro Background Remover: processing failed.', err);
+      errBox.classList.add('show');
+    }
+    processBtn.disabled = false;
+  });
+
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+</script>
+</body>
+</html>
