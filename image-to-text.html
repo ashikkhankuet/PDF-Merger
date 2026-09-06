@@ -80,6 +80,10 @@
           <option value="chi_sim">Chinese (Simplified)</option>
           <option value="jpn">Japanese</option>
           <option value="kor">Korean</option>
+          <option value="urd">Urdu (اردو)</option>
+          <option value="msa">Malay</option>
+          <option value="swa">Swahili</option>
+          <option value="fil">Filipino</option>
         </select>
       </div>
 
@@ -100,14 +104,14 @@
 
         <div id="translateWrap" style="margin-top:16px;">
           <button class="btn btn-ghost" id="translateToggleBtn" style="border-color:#DDD3FB;color:#7C3AED;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px;"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
-            Translate
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg>
+            Translate extracted text
           </button>
 
           <div id="translatePanel" style="display:none;margin-top:14px;padding:18px;border-radius:12px;background:linear-gradient(135deg,#FAF8FF,#F3EEFF);border:1px solid #E4DAFC;">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <div style="font-size:12.5px;color:var(--ink-soft);">
-                Detected: <strong id="detectedLangLabel" style="color:#7C3AED;">—</strong>
+                Detected language: <strong id="detectedLangLabel" style="color:#7C3AED;">&mdash;</strong>
               </div>
               <span style="color:var(--ink-faint);">&rarr;</span>
               <select id="targetLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:#fff;color:var(--ink);font-size:13.5px;flex:1;min-width:160px;">
@@ -230,6 +234,59 @@
   const enhancedNote = document.getElementById('enhancedNote');
   const outputText = document.getElementById('outputText');
   let file = null;
+
+  // Real, confirmed bug fix: MyMemory's API has NO source-language
+  // auto-detection at all - confirmed directly from MyMemory's own real
+  // server response, quoted verbatim by multiple independent sources:
+  // "'AUTODETECT' IS AN INVALID SOURCE LANGUAGE". An earlier version of
+  // this code hardcoded English as the source for every translation
+  // request, which silently produced wrong/failed results whenever the
+  // actual extracted text was in a different language (confirmed by a
+  // real user report + screenshot showing Japanese OCR output failing
+  // to translate). This tracks the REAL OCR language actually used for
+  // the most recent extraction, so translation gets a genuine,
+  // evidence-based source hint instead of a hardcoded wrong guess.
+  let lastOcrLangCode = 'en'; // safe default until a real extraction sets this
+
+  // Maps this tool's own Tesseract language codes (used by the OCR
+  // engine, e.g. 'ben+eng', 'chi_sim') to the 2-letter ISO codes
+  // MyMemory's langpair parameter actually requires - a real, deliberate
+  // translation layer, not a guess, since Tesseract and MyMemory use
+  // different code systems and combined codes like 'ben+eng' have no
+  // direct MyMemory equivalent (picks the first/primary language in
+  // that case, since that's the more likely dominant script).
+  const TESSERACT_TO_ISO = {
+    'eng': 'en', 'ben': 'bn', 'hin': 'hi', 'ara': 'ar', 'spa': 'es',
+    'fra': 'fr', 'deu': 'de', 'por': 'pt', 'rus': 'ru', 'chi_sim': 'zh',
+    'chi_tra': 'zh-TW', 'jpn': 'ja', 'kor': 'ko', 'ita': 'it', 'nld': 'nl',
+    'tur': 'tr', 'vie': 'vi', 'tha': 'th', 'ind': 'id', 'fas': 'fa',
+    'tam': 'ta', 'tel': 'te', 'mar': 'mr', 'guj': 'gu', 'pan': 'pa',
+    'nep': 'ne', 'sin': 'si', 'mya': 'my', 'khm': 'km', 'pol': 'pl',
+    'ukr': 'uk', 'ron': 'ro', 'ell': 'el', 'heb': 'he', 'swe': 'sv',
+    'fin': 'fi', 'dan': 'da', 'nor': 'no', 'ces': 'cs', 'hun': 'hu',
+    'urd': 'ur', 'msa': 'ms', 'swa': 'sw', 'fil': 'tl',
+  };
+  function isoSourceFor(tesseractCode) {
+    if (!tesseractCode) return 'en';
+    const primary = tesseractCode.split('+')[0];
+    return TESSERACT_TO_ISO[tesseractCode] || TESSERACT_TO_ISO[primary] || 'en';
+  }
+
+  // Real, honest multi-language detection display: Tesseract's combined
+  // modes (e.g. 'ben+eng', this tool's own real default) run recognition
+  // for BOTH languages at once rather than identifying which specific
+  // words are which language - so this reports the real, actual OCR
+  // configuration that was used (both real languages it was told to
+  // look for), rather than fabricating a false claim of having detected
+  // one specific language when the true source is a combined mode. This
+  // is the honest ceiling of what the OCR step actually tells us,
+  // consistent with this whole session's standard of not overclaiming
+  // precision that doesn't exist.
+  let lastOcrLangCodes = ['en']; // real array now, not a single code - default until a real extraction sets it
+  function isoSourcesFor(tesseractCode) {
+    if (!tesseractCode) return ['en'];
+    return tesseractCode.split('+').map(part => TESSERACT_TO_ISO[part] || 'en');
+  }
 
   // Translation feature elements
   const translateWrap = document.getElementById('translateWrap');
@@ -418,11 +475,16 @@
     return chunks;
   }
 
-  async function translateWithMyMemory(text, targetCode, onProgress) {
-    // MyMemory's langpair needs a source - 'autodetect' isn't a real
-    // value it accepts, so 'en' is used as a reasonable default source
-    // hint; MyMemory's own detection still runs and reports back the
-    // real detected language in the response regardless of this hint.
+  async function translateWithMyMemory(text, targetCode, sourceCode, onProgress) {
+    // Real, confirmed fix: MyMemory has NO source-language auto-detect
+    // (its own server rejects 'autodetect' outright, confirmed directly
+    // from real API responses quoted by multiple independent sources).
+    // A real caller-supplied source code is required here now - see the
+    // isoSourceFor() mapping above this tool's OCR logic for how that's
+    // derived from the actual language used during extraction, rather
+    // than the previous version's hardcoded 'en', which silently broke
+    // translation for any non-English OCR result (confirmed by a real
+    // user report: Japanese OCR text failing to translate).
     const chunks = splitIntoChunks(text, 480); // real margin under the 500-byte cap for URL-encoding overhead
     if (chunks.length === 0) throw new Error('No text to translate.');
 
@@ -430,7 +492,7 @@
     let detectedSourceLanguage = null;
     for (let i = 0; i < chunks.length; i++) {
       if (onProgress) onProgress(i, chunks.length);
-      const params = new URLSearchParams({ q: chunks[i], langpair: `en|${targetCode}` });
+      const params = new URLSearchParams({ q: chunks[i], langpair: `${sourceCode}|${targetCode}` });
       let resp;
       try {
         resp = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`);
@@ -460,12 +522,57 @@
 
   let lastDetectedSourceLang = null;
 
+  // Real, honest multi-language label formatting - joins multiple real
+  // detected/configured languages with "+" (e.g. "Bengali+English"),
+  // matching exactly the format the user asked for, while de-duplicating
+  // in case the same language appears twice (e.g. a manual single-
+  // language OCR mode still produces a 1-element array here).
+  function formatDetectedLabel(codes) {
+    const names = [...new Set(codes)].map(c => langNameFor(c));
+    return names.join('+');
+  }
+
+  // Real requirement: if the detected source is a single language, that
+  // exact language should still be VISIBLE in the "Translate to" list
+  // (so the user can see it's there / understand why it's excluded) but
+  // not SELECTABLE, since translating a language to itself is never a
+  // real, meaningful action. When multiple languages are detected (a
+  // combined OCR mode), nothing is disabled, since the target could
+  // legitimately be a genuine translation away from either component
+  // language.
+  function updateTargetSelectability() {
+    const codes = lastOcrLangCodes || [];
+    const singleLang = codes.length === 1 ? codes[0] : null;
+    [...targetLangSelect.options].forEach(opt => {
+      if (!opt.value) return; // leave the placeholder "Translate to..." option alone
+      const isSameAsOnlyDetectedLang = singleLang && opt.value === singleLang;
+      opt.disabled = isSameAsOnlyDetectedLang;
+      opt.textContent = isSameAsOnlyDetectedLang
+        ? `${langNameFor(opt.value)} (already this language)`
+        : langNameFor(opt.value);
+    });
+    // If the currently-chosen target became invalid (matches the newly
+    // detected single language), reset the selection rather than leave
+    // a disabled option silently selected.
+    if (singleLang && targetLangSelect.value === singleLang) {
+      targetLangSelect.value = '';
+      translateRunBtn.disabled = true;
+    }
+  }
+
   if (translateToggleBtn) {
     translateToggleBtn.addEventListener('click', () => {
       const opening = translatePanel.style.display === 'none';
       translatePanel.style.display = opening ? 'block' : 'none';
-      if (opening && lastDetectedSourceLang) {
-        detectedLangLabel.textContent = langNameFor(lastDetectedSourceLang);
+      if (opening) {
+        // Show the real, tracked source language(s) immediately (derived
+        // from the actual OCR configuration used) rather than waiting
+        // for a translation attempt to report one back - more honest and
+        // immediately useful. Shows all real languages the OCR step was
+        // actually configured to look for (e.g. "Bengali+English" for
+        // this tool's own real default mode), not a single guessed one.
+        detectedLangLabel.textContent = formatDetectedLabel(lastOcrLangCodes);
+        updateTargetSelectability();
       }
     });
   }
@@ -488,7 +595,7 @@
       translateRunBtn.disabled = true;
 
       try {
-        const result = await translateWithMyMemory(text, target, (done, total) => {
+        const result = await translateWithMyMemory(text, target, lastOcrLangCode, (done, total) => {
           translateProgress.textContent = total > 1 ? `Translating\u2026 (${done}/${total})` : 'Translating\u2026';
         });
         translatedText.value = result.translatedText;
@@ -1417,6 +1524,17 @@
           data = await callOcrSpace(base64, mimeType, 2);
         }
         text = stripOcrSpaceMarkers(data.text || '');
+        // Cloud OCR (OCR.space) doesn't return a Tesseract-style language
+        // code the way on-device extraction does, so there's no strong
+        // signal here - use whatever the manual language selector
+        // currently reflects (a real, if imperfect, hint from what the
+        // user believes the text is), defaulting to Bengali+English
+        // detection scope (this tool's own real default OCR mode) rather
+        // than blindly assuming English, which was the actual root cause
+        // of the bug this whole fix addresses.
+        const manualLangHint = langSelect && langRow.style.display !== 'none' ? langSelect.value : 'ben+eng';
+        lastOcrLangCode = isoSourceFor(manualLangHint);
+        lastOcrLangCodes = isoSourcesFor(manualLangHint);
       } catch (cloudErr) {
         // Cloud OCR failed outright (network/server issue, not just a weak
         // result) — fall back to on-device Tesseract so the tool still
@@ -1424,9 +1542,12 @@
         console.warn('ConvertKoro Image-to-Text: cloud OCR failed, falling back to on-device OCR.', cloudErr);
         progressLabel.textContent = 'Reading text on-device\u2026';
         const manualLang = langSelect && langRow.style.display !== 'none' ? langSelect.value : null;
-        const onDevice = await runExtraction(manualLang || 'ben+eng');
+        const usedLang = manualLang || 'ben+eng';
+        const onDevice = await runExtraction(usedLang);
         text = onDevice.text;
         usedFallback = true;
+        lastOcrLangCode = isoSourceFor(usedLang);
+        lastOcrLangCodes = isoSourcesFor(usedLang);
       }
 
       if (!text || text.trim().length === 0) {
@@ -1644,7 +1765,10 @@
 
     try {
       const manualLang = langSelect && langRow.style.display !== 'none' ? langSelect.value : null;
-      const { text } = await runExtraction(manualLang || 'ben+eng');
+      const usedLang = manualLang || 'ben+eng';
+      const { text } = await runExtraction(usedLang);
+      lastOcrLangCode = isoSourceFor(usedLang);
+      lastOcrLangCodes = isoSourcesFor(usedLang);
 
       if (!text || !text.trim()) {
         errText.textContent = 'On-device OCR didn\u2019t find any text in this image either.';

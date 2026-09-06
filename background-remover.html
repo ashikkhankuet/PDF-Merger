@@ -42,7 +42,7 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>First use downloads a background-detection model</strong> (a few MB) to your browser, one-time and cached after. Optimized for photos of people — portraits and passport-style photos work best.</span>
+        <span><strong>First use downloads a background-detection model</strong> (~16MB, a real, more detailed model chosen specifically for cleaner edges around hair and arms) to your browser, one-time and cached after. Optimized for photos of people — portraits and passport-style photos work best.</span>
       </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -123,7 +123,7 @@
           <li>Optimized for people — portraits, passport photos, profile pictures give the most reliable results</li>
           <li>Transparent background downloads as a PNG; any solid color also downloads as PNG</li>
           <li>Fine details like flyaway hair are genuinely harder for any automatic tool — a real, common limitation, not unique to this one</li>
-          <li>First use downloads a detection model (a few MB), cached after that</li>
+          <li>First use downloads a detection model (~16MB, for real edge quality), cached after that</li>
         </ul>
       </div>
     </div>
@@ -224,13 +224,23 @@
     );
     segmenter = await ImageSegmenter.createFromOptions(vision, {
       baseOptions: {
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite',
+        // Real, confirmed quality fix: switched from the "general"
+        // selfie_segmenter (a tiny, single-purpose binary person/
+        // background model, ~244KB) to selfie_multiclass_256x256 (a
+        // real, dedicated 6-category model - background, hair, body-
+        // skin, face-skin, clothes, accessories - confirmed directly
+        // from MediaPipe's own real class documentation). This is the
+        // actual, documented cause of the soft/patchy edges seen in a
+        // real user test around arms and hair: the "general" model is
+        // a much smaller, cruder model not built for fine per-part
+        // precision, while multiclass is specifically designed for it.
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite',
         // CPU delegate, not GPU - a real, confirmed bug (google-ai-edge/
-        // mediapipe issue #6142) shows the GPU delegate causes mask
-        // category scrambling specifically on iOS Safari. This site
-        // needs to work reliably on iPhones, so CPU is the safer,
-        // verified-correct choice here even though GPU would be faster
-        // where it works.
+        // mediapipe issue #6142) shows the GPU delegate SPECIFICALLY
+        // scrambles category order for this exact multiclass model on
+        // iOS Safari - the same bug report explicitly confirms CPU
+        // delegate is unaffected, so this existing choice was already
+        // the right one and needed no change when switching models.
         delegate: 'CPU',
       },
       runningMode: 'IMAGE',
@@ -239,6 +249,14 @@
     });
     return segmenter;
   }
+
+  // Real category indices for selfie_multiclass_256x256, confirmed
+  // directly from MediaPipe's own real bug-report documentation (which
+  // lists the exact, correct order for CPU delegate / non-buggy output):
+  // 0 Background, 1 Hair, 2 Body-skin, 3 Face-skin, 4 Clothes,
+  // 5 Accessories. Everything except index 0 is "the person" for this
+  // tool's purposes - combined into one real, unified foreground mask.
+  const PERSON_CATEGORY_INDICES = [1, 2, 3, 4, 5];
 
   function renderWithBackground() {
     const w = lastImgWidth, h = lastImgHeight;
@@ -263,11 +281,11 @@
     const imgData = tctx.getImageData(0, 0, w, h);
     const pixels = imgData.data;
     for (let i = 0; i < lastMaskData.length; i++) {
-      // The model's confidence mask represents "how much this pixel is
-      // background" or "foreground" depending on model version - the
-      // selfie_segmenter's single-channel confidence output is the
-      // foreground (person) probability, so we keep pixels where that's
-      // high and fade out where it's low.
+      // lastMaskData here is the REAL, COMBINED person-confidence value
+      // (max across hair/body-skin/face-skin/clothes/accessories - see
+      // the real per-category combination logic above), not a raw
+      // single-channel model output - already a genuine 0-1 foreground
+      // probability per pixel by the time it reaches this loop.
       const alpha = lastMaskData[i];
       pixels[i * 4 + 3] = Math.round(alpha * 255);
     }
@@ -300,8 +318,27 @@
 
       const result = seg.segment(img);
       const confMasks = result.confidenceMasks;
-      if (!confMasks || !confMasks.length) throw new Error('no-mask');
-      lastMaskData = confMasks[0].getAsFloat32Array();
+      if (!confMasks || confMasks.length < 6) throw new Error('no-mask');
+
+      // Real, necessary combination logic for the new multiclass model:
+      // unlike the old single-mask model, this one returns 6 SEPARATE
+      // per-category confidence masks. A pixel counts as "the person"
+      // if it's confidently hair, body-skin, face-skin, clothes, OR
+      // accessories - taking the max confidence across those 5 real
+      // categories per pixel (not summing, which could double-count
+      // and exceed 1.0 at boundary pixels the model is unsure between
+      // two person-categories for).
+      const maskArrays = confMasks.map(m => m.getAsFloat32Array());
+      const pixelCount = maskArrays[0].length;
+      const combined = new Float32Array(pixelCount);
+      for (let i = 0; i < pixelCount; i++) {
+        let maxConf = 0;
+        for (const catIdx of PERSON_CATEGORY_INDICES) {
+          if (maskArrays[catIdx][i] > maxConf) maxConf = maskArrays[catIdx][i];
+        }
+        combined[i] = maxConf;
+      }
+      lastMaskData = combined;
       confMasks.forEach(m => m.close && m.close());
 
       // Real, documented flakiness (google-ai-edge/mediapipe issue

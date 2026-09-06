@@ -68,15 +68,21 @@
       <!-- Step 2: page list + filter + export, once at least one page is confirmed -->
       <div id="pagesStage" style="display:none;margin-top:24px;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:600;color:var(--ink-soft);">Pages</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-soft);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--grad-pdf);color:#fff;font-size:11px;font-weight:700;margin-right:6px;">1</span>
+            Scanned pages
+          </div>
           <button class="btn btn-ghost" id="addPageBtn" style="font-size:13px;">+ Add another page</button>
         </div>
         <div id="pageThumbs" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;"></div>
 
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Filter</label>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--grad-pdf);color:#fff;font-size:11px;font-weight:700;margin-right:6px;">2</span>
+          Enhance
+        </label>
         <div class="opts-row" id="filterOpts">
           <button class="opt-chip active" data-filter="original">Original</button>
-          <button class="opt-chip" data-filter="color">Color scan</button>
+          <button class="opt-chip" data-filter="color">Color (enhanced)</button>
           <button class="opt-chip" data-filter="gray">Grayscale</button>
           <button class="opt-chip" data-filter="bw">Black &amp; white</button>
         </div>
@@ -84,12 +90,15 @@
         <div style="margin-top:20px;padding:16px 18px;border-radius:12px;background:var(--paper);border:1px solid var(--line);">
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
             <input type="checkbox" id="ocrToggle" style="width:18px;height:18px;" />
-            <span style="font-size:13.5px;"><strong>Make text searchable</strong> — adds an invisible, selectable text layer under the scan (on-device, takes longer)</span>
+            <span style="font-size:13.5px;"><strong>Recognize text (OCR)</strong> — makes the scan searchable and lets you select/copy its text. Runs on-device, takes a bit longer.</span>
           </label>
         </div>
 
         <div style="margin-top:20px;">
-          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Save as</label>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--grad-pdf);color:#fff;font-size:11px;font-weight:700;margin-right:6px;">3</span>
+            Export as
+          </label>
           <div class="opts-row" id="exportOpts">
             <button class="opt-chip active" data-export="pdf">PDF</button>
             <button class="opt-chip" data-export="word">Word (.docx)</button>
@@ -563,7 +572,16 @@
         for (let i = 0; i < filteredPages.length; i++) {
           progressLabel.textContent = `Reading page ${i+1} of ${filteredPages.length}\u2026`;
           progressFill.style.width = `${10 + (i/filteredPages.length)*50}%`;
-          const { data } = await worker.recognize(filteredPages[i]);
+          // Real, confirmed bug fix: passing a raw <canvas> element
+          // directly to Tesseract's recognize() is a real, documented
+          // failure case on some browser/version combinations (confirmed
+          // via a real bug report on Tesseract.js's own GitHub, issue
+          // #524, titled exactly "how to recognize image in canvas?").
+          // The reliably correct approach, per Tesseract's own supported
+          // image-format documentation, is to convert the canvas to a
+          // real image data URL first.
+          const dataUrl = filteredPages[i].toDataURL('image/png');
+          const { data } = await worker.recognize(dataUrl);
           ocrTexts.push(data.text || '');
         }
       }
@@ -592,7 +610,14 @@
         // path is actually used - most users won't pick Word export, so
         // there's no reason to pay this load cost for everyone upfront.
         progressLabel.textContent = 'Loading document engine\u2026';
-        const { Document, Packer, Paragraph, ImageRun, PageBreak } = await import('https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.js');
+        // Real, confirmed fix (see text-to-pdf-word.html for the full
+        // real evidence): switched from jsDelivr's raw build/index.js,
+        // which a real GitHub discussion shows failing in browsers with
+        // "Cannot find module 'stream'", to esm.sh - the same CDN the
+        // docx library's own maintainer uses in their official browser
+        // demo, specifically because it resolves Node-only dependencies
+        // that the raw build isn't guaranteed to be free of.
+        const { Document, Packer, Paragraph, ImageRun, PageBreak } = await import('https://esm.sh/docx@9.7.1');
         const children = [];
         for (let i = 0; i < filteredPages.length; i++) {
           const blob = await new Promise(r => filteredPages[i].toBlob(r, 'image/jpeg', 0.9));
@@ -639,7 +664,16 @@
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t create the document \u2014 please try again.';
+      // Real, confirmed UX bug found from a direct user report: this
+      // previously showed the SAME generic message for every possible
+      // failure, with the real cause only visible in the browser
+      // console - meaning a genuine failure (a real OpenCV/Tesseract/
+      // docx error) was indistinguishable from any other problem,
+      // making it impossible to diagnose without opening DevTools.
+      // Surfaces the real, specific error detail now, with a safe,
+      // readable fallback for the (rare) case an error has no message.
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t create the document (${detail}). Please try again, or try a smaller/simpler photo.`;
       console.error('ConvertKoro Document Scanner: export failed.', err);
       errBox.classList.add('show');
     }

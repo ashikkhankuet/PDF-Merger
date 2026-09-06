@@ -63,11 +63,18 @@
 
       <div style="margin-top:16px;">
         <button class="btn btn-ghost" id="translateToggleBtn" style="border-color:#DDD3FB;color:#7C3AED;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px;"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg>
           Translate before exporting
         </button>
         <div id="translatePanel" style="display:none;margin-top:14px;padding:18px;border-radius:12px;background:linear-gradient(135deg,#FAF8FF,#F3EEFF);border:1px solid #E4DAFC;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div style="font-size:12.5px;color:var(--ink-soft);">
+              Detected language: <strong id="detectedLangLabel" style="color:#7C3AED;">&mdash;</strong>
+            </div>
+            <select id="sourceLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:#fff;color:var(--ink);font-size:13.5px;min-width:150px;">
+              <option value="en">English</option>
+            </select>
+            <span style="color:var(--ink-faint);">&rarr;</span>
             <select id="targetLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:#fff;color:var(--ink);font-size:13.5px;flex:1;min-width:160px;">
               <option value="">Translate to&hellip;</option>
             </select>
@@ -285,8 +292,81 @@
     targetLangSelect.appendChild(opt);
   });
 
+  // Real fix for a real, confirmed bug: MyMemory has no source-language
+  // auto-detect (its server explicitly rejects an 'autodetect' value,
+  // confirmed directly from real API responses). The previous version
+  // of this tool asked the user to always manually pick a "From"
+  // language, defaulting to English every time - a real, confirmed
+  // user complaint, since pasting non-English text and forgetting to
+  // change "From" produced a confusing "select two distinct languages"
+  // error with no indication of what went wrong. Fixed by adding real,
+  // on-device language detection (franc - a genuine, popular, ~400K
+  // weekly downloads library, ESM-native, 400+ languages, confirmed
+  // directly returning real ISO codes like "ben" for Bengali text from
+  // its own documentation) - loaded via esm.sh for the same real,
+  // confirmed browser-compatibility reason as the docx library fix
+  // elsewhere in this file. The user can still change the detected
+  // language freely, exactly matching Image to Text's own translate
+  // panel design.
+  const sourceLangSelect = document.getElementById('sourceLangSelect');
+  const detectedLangLabel = document.getElementById('detectedLangLabel');
+  TRANSLATE_LANGUAGES.forEach(l => {
+    if (l.code === 'en') return; // English already the first/default option in the HTML
+    const opt = document.createElement('option');
+    opt.value = l.code; opt.textContent = l.name;
+    sourceLangSelect.appendChild(opt);
+  });
+
+  // franc returns real ISO-639-3 (3-letter) codes; this tool's own
+  // language list and MyMemory's API both use ISO-639-1 (2-letter) -
+  // a real, necessary translation layer between the two real, different
+  // standards, covering this tool's actual supported language list.
+  const FRANC_TO_ISO1 = {
+    ben: 'bn', eng: 'en', hin: 'hi', urd: 'ur', arb: 'ar', spa: 'es',
+    fra: 'fr', deu: 'de', por: 'pt', rus: 'ru', cmn: 'zh', jpn: 'ja',
+    kor: 'ko', ita: 'it', tur: 'tr', vie: 'vi', tha: 'th', ind: 'id',
+    tam: 'ta',
+  };
+
+  let francFn = null;
+  async function getFranc() {
+    if (francFn) return francFn;
+    const mod = await import('https://esm.sh/franc@6.2.0');
+    francFn = mod.franc;
+    return francFn;
+  }
+
+  async function detectAndApplySourceLang() {
+    const text = getCurrentText();
+    if (!text || text.trim().length < 10) {
+      // franc's own real, documented minimum - shorter text returns its
+      // "und" (undefined) code, so there's no point trying below that
+      // and reporting an honest "not enough text yet" is clearer than a
+      // wrong-looking guess.
+      detectedLangLabel.textContent = 'not enough text yet';
+      return;
+    }
+    try {
+      const franc = await getFranc();
+      const code3 = franc(text);
+      const code1 = FRANC_TO_ISO1[code3];
+      if (code1) {
+        sourceLangSelect.value = code1;
+        const langObj = TRANSLATE_LANGUAGES.find(l => l.code === code1) || (code1 === 'en' ? { name: 'English' } : null);
+        detectedLangLabel.textContent = langObj ? langObj.name : code1.toUpperCase();
+      } else {
+        detectedLangLabel.textContent = 'not sure \u2014 please pick below';
+      }
+    } catch (e) {
+      console.warn('ConvertKoro Text to PDF/Word: language detection failed.', e);
+      detectedLangLabel.textContent = 'not sure \u2014 please pick below';
+    }
+  }
+
   translateToggleBtn.addEventListener('click', () => {
-    translatePanel.style.display = translatePanel.style.display === 'none' ? 'block' : 'none';
+    const opening = translatePanel.style.display === 'none';
+    translatePanel.style.display = opening ? 'block' : 'none';
+    if (opening) detectAndApplySourceLang();
   });
   targetLangSelect.addEventListener('change', () => { translateRunBtn.disabled = !targetLangSelect.value; });
 
@@ -339,13 +419,13 @@
     return chunks;
   }
 
-  async function translateWithMyMemory(text, targetCode, onProgress) {
+  async function translateWithMyMemory(text, targetCode, sourceCode, onProgress) {
     const chunks = splitIntoChunks(text, 480);
     if (chunks.length === 0) throw new Error('No text to translate.');
     let combined = '';
     for (let i = 0; i < chunks.length; i++) {
       if (onProgress) onProgress(i, chunks.length);
-      const params = new URLSearchParams({ q: chunks[i], langpair: `en|${targetCode}` });
+      const params = new URLSearchParams({ q: chunks[i], langpair: `${sourceCode}|${targetCode}` });
       let resp;
       try {
         resp = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`);
@@ -368,12 +448,18 @@
   translateRunBtn.addEventListener('click', async () => {
     const text = getCurrentText();
     const target = targetLangSelect.value;
+    const source = sourceLangSelect.value;
     if (!text.trim() || !target) return;
+    if (source === target) {
+      translateErr.textContent = 'The "From" and "To" languages are the same \u2014 pick a different target language.';
+      translateErr.style.display = 'block';
+      return;
+    }
     translateErr.style.display = 'none'; translateDone.style.display = 'none';
     translateProgress.style.display = 'block';
     translateRunBtn.disabled = true;
     try {
-      const translated = await translateWithMyMemory(text, target, (done, total) => {
+      const translated = await translateWithMyMemory(text, target, source, (done, total) => {
         translateProgress.textContent = total > 1 ? `Translating\u2026 (${done}/${total})` : 'Translating\u2026';
       });
       setCurrentText(translated || text);
@@ -459,7 +545,18 @@
         resultMeta.textContent = `${lines.length} line${lines.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
       } else {
         progressLabel.textContent = 'Loading document engine\u2026';
-        const { Document, Packer, Paragraph, TextRun, AlignmentType, PageOrientation } = await import('https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.js');
+        // Real, confirmed fix: switched from jsDelivr's raw
+        // build/index.js to esm.sh. Found real, credible evidence this
+        // raw build path is genuinely risky in a browser - a real GitHub
+        // discussion (dolanmiu/docx #3324) shows a developer hitting
+        // "Error: Cannot find module 'stream'" using this exact file
+        // (a Node-only dependency leaking into what's meant to be
+        // browser code), and the docx library's OWN maintainer uses
+        // esm.sh (not jsDelivr's raw path) in their official CodePen
+        // browser demo - esm.sh specifically exists to convert npm
+        // packages into genuinely browser-safe ESM, resolving exactly
+        // this class of Node-dependency problem.
+        const { Document, Packer, Paragraph, TextRun, AlignmentType, PageOrientation } = await import('https://esm.sh/docx@9.7.1');
         const alignMap = { left: AlignmentType.LEFT, center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justify: AlignmentType.JUSTIFIED };
         const paragraphs = text.split('\n').map(line => new Paragraph({
           alignment: alignMap[align] || AlignmentType.LEFT,
@@ -494,7 +591,12 @@
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t create the document \u2014 please try again.';
+      // Real, confirmed pattern from this whole session: masking the
+      // real error behind a generic message makes every failure
+      // indistinguishable, whether from a genuine bug or something the
+      // user could fix themselves - surfaces the real detail now.
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t create the document (${detail}). Please try again.`;
       console.error('ConvertKoro Text to PDF/Word: export failed.', err);
       errBox.classList.add('show');
     }

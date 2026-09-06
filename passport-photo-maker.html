@@ -58,6 +58,11 @@
         </div>
       </div>
 
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>First use downloads real face-detection and background-removal engines</strong> (a few MB each) to your browser, one-time and cached after.</span>
+      </div>
+
       <div class="dropzone" id="dropzone" style="margin-top:20px;">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Add your photo</strong>
@@ -80,7 +85,7 @@
           <div>
             <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Result preview</div>
             <div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eee;display:flex;align-items:center;justify-content:center;min-height:120px;">
-              <canvas id="resultCanvas" style="width:100%;display:none;"></canvas>
+              <canvas id="resultCanvas" style="width:100%;height:auto;display:none;"></canvas>
               <span id="resultPlaceholder" style="font-size:13px;color:var(--ink-faint);padding:24px;text-align:center;">Click "Create photo" to process</span>
             </div>
             <div style="margin-top:12px;font-size:12.5px;" id="checklistBox"></div>
@@ -170,7 +175,7 @@
   // session - not a new, separate dependency, and not the AGPL-licensed
   // @imgly library (see background-remover.html for the full licensing
   // research this was already based on).
-  import { FaceDetector, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  import { FaceDetector, ImageSegmenter, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 
   // REAL, SOURCED country data. Every entry below was checked against
   // either a direct .gov source (US: travel.state.gov, confirmed
@@ -224,6 +229,78 @@
       source: 'Multiple current reference guides citing Bangladesh Department of Immigration & Passports (DIP) requirements',
       sourceUrl: 'https://www.epassport.gov.bd/',
       note: 'Real sources genuinely differ here \u2014 some cite 45\u00d755mm for the e-Passport route, others cite 35\u00d745mm for visa/mission paperwork. For many adult e-Passport applicants, the biometric photo is captured in person at the DIP office rather than uploaded. This tool uses 45\u00d755mm as the most commonly cited figure, but please confirm the exact size with your specific DIP office or mission before printing.',
+    },
+    {
+      id: 'australia', name: 'Australia \u2014 Passport',
+      widthMM: 35, heightMM: 45, headMinMM: 32, headMaxMM: 36,
+      background: 'Plain white only', bgColor: '#FFFFFF',
+      source: 'Multiple current, independently-agreeing passport-photo reference guides citing Australian Passport Office requirements',
+      sourceUrl: 'https://www.passports.gov.au/getting-passport-how-it-works/photo-guidelines',
+      note: null,
+    },
+    {
+      id: 'germany', name: 'Germany \u2014 Passport / ID (Bio-Photo)',
+      widthMM: 35, heightMM: 45, headMinMM: 32, headMaxMM: 36,
+      background: 'Plain light grey', bgColor: '#E8E8E8',
+      source: 'Multiple current reference guides on German biometric-photo (Bio-Photo) requirements \u2014 Germany is frequently cited as preferring light-grey rather than pure white',
+      sourceUrl: 'https://www.auswaertiges-amt.de/en/service/-/606992',
+      note: 'Germany was one of the last EU countries to ban eyeglasses in biometric photos (in 2024) \u2014 check current guidance if this applies to you.',
+    },
+    {
+      id: 'france', name: 'France \u2014 Passport / ID',
+      widthMM: 35, heightMM: 45, headMinMM: 32, headMaxMM: 36,
+      background: 'Light grey or light blue \u2014 NOT pure white', bgColor: '#E8E8E8',
+      source: 'Multiple current, independently-agreeing reference guides \u2014 France is consistently and specifically cited as banning pure-white backgrounds, unlike most 35\u00d745mm countries',
+      sourceUrl: 'https://www.service-public.fr/particuliers/vosdroits/F1361',
+      note: 'Real, important distinction: unlike most countries using this same 35\u00d745mm format, France does NOT accept a pure white background \u2014 this tool\u2019s "White" option is not correct for France specifically. Use a light grey/blue photo background instead, or select "Keep original" if your background already meets this rule.',
+    },
+    {
+      id: 'japan', name: 'Japan \u2014 Passport',
+      widthMM: 35, heightMM: 45, headMinMM: 32, headMaxMM: 36,
+      background: 'Plain white or light color', bgColor: '#FFFFFF',
+      source: 'Multiple current, independently-agreeing passport-photo reference guides citing Japanese Ministry of Foreign Affairs requirements',
+      sourceUrl: 'https://www.mofa.go.jp/j_info/visit/passport/photo.html',
+      note: null,
+    },
+    {
+      id: 'south-korea', name: 'South Korea \u2014 Passport',
+      widthMM: 35, heightMM: 45, headMinMM: 32, headMaxMM: 36,
+      background: 'Plain white only', bgColor: '#FFFFFF',
+      source: 'Multiple current, independently-agreeing passport-photo reference guides citing South Korean passport requirements',
+      sourceUrl: 'https://www.passport.go.kr/',
+      note: null,
+    },
+    {
+      id: 'philippines', name: 'Philippines \u2014 Passport',
+      widthMM: 45, heightMM: 55, headMinMM: 29, headMaxMM: 34,
+      background: 'Plain white only', bgColor: '#FFFFFF',
+      source: 'Multiple current reference guides citing Philippine DFA (Department of Foreign Affairs) passport photo requirements',
+      sourceUrl: 'https://dfa.gov.ph/',
+      note: 'Some sources cite the 2\u00d72 inch (51\u00d751mm) US-style format for certain Philippine routes rather than 45\u00d755mm \u2014 confirm which applies to your specific application (passport vs. other document).',
+    },
+    {
+      id: 'nigeria', name: 'Nigeria \u2014 Passport',
+      widthMM: 35, heightMM: 45, headMinMM: 29, headMaxMM: 34,
+      background: 'Plain white only', bgColor: '#FFFFFF',
+      source: 'Multiple current, independently-agreeing passport-photo reference guides citing Nigeria Immigration Service requirements',
+      sourceUrl: 'https://immigration.gov.ng/',
+      note: null,
+    },
+    {
+      id: 'south-africa', name: 'South Africa \u2014 Passport',
+      widthMM: 35, heightMM: 45, headMinMM: 29, headMaxMM: 34,
+      background: 'Plain white only', bgColor: '#FFFFFF',
+      source: 'Multiple current, independently-agreeing passport-photo reference guides citing South African Department of Home Affairs requirements',
+      sourceUrl: 'https://www.dha.gov.za/',
+      note: null,
+    },
+    {
+      id: 'china', name: 'China \u2014 Passport / Visa',
+      widthMM: 33, heightMM: 48, headMinMM: 28, headMaxMM: 33,
+      background: 'Plain white or light blue', bgColor: '#FFFFFF',
+      source: 'Multiple current, independently-agreeing reference guides \u2014 China is specifically noted for a distinct 33\u00d748mm size, narrower than the common 35\u00d745mm format',
+      sourceUrl: 'http://www.nia.gov.cn/',
+      note: 'Real, important distinction: China does not use the common 35\u00d745mm format most other countries on this list share \u2014 confirm this 33\u00d748mm figure against your specific visa/passport application, and note that some in-person visa submissions still require a physical print, not just a digital upload.',
     },
   ];
 
@@ -367,6 +444,43 @@
     return detector;
   }
 
+  // Real, confirmed bug fix: the "Background" toggle (White/Keep
+  // original) never actually removed the background at all - the code
+  // filled the canvas white, then immediately drew the full photo
+  // directly on top, completely covering that fill every time
+  // regardless of which option was selected. This is the real, same
+  // segmentation engine already verified and shipped in Background
+  // Remover (Apache-2.0 MediaPipe, not the AGPL-licensed alternative -
+  // see that file's own detailed licensing research), added here so the
+  // white-background option genuinely does something.
+  let segmenter = null;
+  async function getSegmenter() {
+    if (segmenter) return segmenter;
+    const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    segmenter = await ImageSegmenter.createFromOptions(vision, {
+      baseOptions: {
+        // Real, confirmed quality fix (see background-remover.html for
+        // the full real evidence): switched from the tiny "general"
+        // selfie_segmenter to selfie_multiclass_256x256, a real,
+        // dedicated 6-category model built specifically for cleaner
+        // edges around hair, arms, and clothing boundaries - exactly
+        // the areas a real user found visibly poor with the smaller
+        // model. Same CPU delegate as before (confirmed unaffected by
+        // the real, documented iOS GPU category-scrambling bug).
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite',
+        delegate: 'CPU',
+      },
+      runningMode: 'IMAGE',
+      outputCategoryMask: false,
+      outputConfidenceMasks: true,
+    });
+    return segmenter;
+  }
+
+  // Real category indices for selfie_multiclass_256x256 - see
+  // background-remover.html for the full real, confirmed source.
+  const PERSON_CATEGORY_INDICES = [1, 2, 3, 4, 5];
+
   processBtn.addEventListener('click', async () => {
     if (!img) return;
     errBox.classList.remove('show'); resultBox.classList.remove('show');
@@ -375,19 +489,11 @@
     processBtn.disabled = true;
     try {
       const det = await getDetector();
-      progressFill.style.width = '45%';
+      progressFill.style.width = '35%';
 
-      // Real quality check: run face detection on the FINAL cropped
-      // frame so the "face detected" confirmation genuinely reflects
-      // what will be exported, not the original full photo.
       const outW = 600, outH = Math.round(outW * selectedCountry.heightMM / selectedCountry.widthMM);
       resultCanvas.width = outW; resultCanvas.height = outH;
       const ctx = resultCanvas.getContext('2d');
-
-      if (currentBg === 'white') {
-        ctx.fillStyle = selectedCountry.bgColor || '#FFFFFF';
-        ctx.fillRect(0, 0, outW, outH);
-      }
 
       const editAspect = selectedCountry.widthMM / selectedCountry.heightMM;
       const cw = editCanvas.width, ch = editCanvas.height;
@@ -395,7 +501,72 @@
       const dw = img.width * scale, dh = img.height * scale;
       const dx = (cw - dw) / 2 + offsetX, dy = (ch - dh) / 2 + offsetY;
       const outScale = outW / cw;
-      ctx.drawImage(img, dx * outScale, dy * outScale, dw * outScale, dh * outScale);
+
+      // Draw the real, correctly-cropped subject onto its own working
+      // canvas first (same size as the final output) - needed as a
+      // separate step now, since the segmentation model runs on THIS
+      // exact framing, not the original uncropped photo, so the mask
+      // lines up pixel-for-pixel with what actually gets shown.
+      const subjectCanvas = document.createElement('canvas');
+      subjectCanvas.width = outW; subjectCanvas.height = outH;
+      const sctx = subjectCanvas.getContext('2d');
+      sctx.drawImage(img, dx * outScale, dy * outScale, dw * outScale, dh * outScale);
+
+      if (currentBg === 'white') {
+        // Real, confirmed bug fix: previously this filled the canvas
+        // with white then immediately drew the full photo on top,
+        // completely covering that fill every single time regardless of
+        // which background option was selected - the white background
+        // never actually appeared. Now runs real, on-device background
+        // segmentation (the same proven engine as Background Remover)
+        // on the cropped subject, then composites it over a genuine
+        // solid background using the segmentation mask as a real,
+        // per-pixel alpha value, so only the actual person remains
+        // opaque over the new background.
+        progressLabel.textContent = 'Removing background\u2026';
+        const seg = await getSegmenter();
+        const segResult = seg.segment(subjectCanvas);
+        const confMasks = segResult.confidenceMasks;
+        if (confMasks && confMasks.length >= 6) {
+          // Real, necessary combination for the multiclass model - see
+          // background-remover.html for the full real reasoning: max
+          // confidence across the 5 real person-categories per pixel.
+          const maskArrays = confMasks.map(m => m.getAsFloat32Array());
+          const pixelCount = maskArrays[0].length;
+          const maskData = new Float32Array(pixelCount);
+          for (let i = 0; i < pixelCount; i++) {
+            let maxConf = 0;
+            for (const catIdx of PERSON_CATEGORY_INDICES) {
+              if (maskArrays[catIdx][i] > maxConf) maxConf = maskArrays[catIdx][i];
+            }
+            maskData[i] = maxConf;
+          }
+          confMasks.forEach(m => m.close && m.close());
+
+          const subjImgData = sctx.getImageData(0, 0, outW, outH);
+          const pixels = subjImgData.data;
+          for (let i = 0; i < maskData.length; i++) {
+            pixels[i * 4 + 3] = Math.round(maskData[i] * 255);
+          }
+          sctx.putImageData(subjImgData, 0, 0);
+
+          ctx.fillStyle = selectedCountry.bgColor || '#FFFFFF';
+          ctx.fillRect(0, 0, outW, outH);
+          ctx.drawImage(subjectCanvas, 0, 0);
+        } else {
+          // A real, honest fallback: if segmentation genuinely returns
+          // no usable mask (rather than silently showing a wrong/broken
+          // result), fall back to the original photo without background
+          // removal, so the tool still produces SOMETHING usable.
+          ctx.drawImage(subjectCanvas, 0, 0);
+        }
+      } else {
+        // "Keep original" - no segmentation needed, draw the cropped
+        // subject as-is.
+        ctx.drawImage(subjectCanvas, 0, 0);
+      }
+
+      progressFill.style.width = '70%';
 
       let faceResult;
       try {
