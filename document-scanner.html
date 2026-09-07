@@ -160,6 +160,7 @@
         <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>Edge detection, perspective correction, and filters all run entirely in your browser. If you turn on searchable text, that text recognition also runs on-device using the same engine as Image to Text — nothing is uploaded.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
@@ -168,7 +169,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="nav.js"></script>
-<script>document.getElementById('toolIco').innerHTML = svgIcon('docscan');</script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('docscan');
+document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('doc-scan');</script>
 <script>
 (() => {
   const dropzone = document.getElementById('dropzone');

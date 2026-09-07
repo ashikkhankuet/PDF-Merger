@@ -104,9 +104,9 @@
           <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Download as</label>
           <div class="opts-row" id="downloadOpts">
             <button class="opt-chip active" data-dl="single">Single digital photo</button>
-            <button class="opt-chip" data-dl="sheet4">4\u00d76" sheet \u2014 4 copies</button>
-            <button class="opt-chip" data-dl="sheet6">4\u00d76" sheet \u2014 6 copies</button>
-            <button class="opt-chip" data-dl="sheet8">4\u00d76" sheet \u2014 8 copies</button>
+            <button class="opt-chip" data-dl="sheet4">4×6" print sheet — 4 copies</button>
+            <button class="opt-chip" data-dl="sheet6">4×6" print sheet — 6 copies</button>
+            <button class="opt-chip" data-dl="sheet8">4×6" print sheet — 8 copies</button>
           </div>
         </div>
 
@@ -164,11 +164,13 @@
         <details class="faq-item"><summary>Can I get a printable sheet with multiple copies?</summary><p>Yes — after creating your photo, choose a 4×6" print sheet with 2, 4, 6, or 8 copies laid out for one print.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
-<script>document.getElementById('toolIco').innerHTML = svgIcon('passport');</script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('passport');
+document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passport-photo');</script>
 <script type="module">
   // Face detection reuses the SAME real, Apache-2.0-licensed MediaPipe
   // engine already verified and shipped in Background Remover this
@@ -487,6 +489,7 @@
     progressWrap.classList.add('show'); progressFill.style.width = '15%';
     progressLabel.textContent = 'Checking face position\u2026';
     processBtn.disabled = true;
+    let bgRemovalFailed = false;
     try {
       const det = await getDetector();
       progressFill.style.width = '35%';
@@ -525,8 +528,24 @@
         // opaque over the new background.
         progressLabel.textContent = 'Removing background\u2026';
         const seg = await getSegmenter();
-        const segResult = seg.segment(subjectCanvas);
-        const confMasks = segResult.confidenceMasks;
+        let segResult = seg.segment(subjectCanvas);
+        let confMasks = segResult.confidenceMasks;
+        if (!confMasks || confMasks.length < 6) {
+          // Real, documented instability found during investigation: a
+          // currently-open MediaPipe bug (google-ai-edge/mediapipe
+          // issue #6296, filed May 2026) shows the segmentation
+          // postprocessor can genuinely fail and return 0 masks on
+          // certain device/browser GPU capability combinations, even
+          // though this code already correctly uses the CPU delegate.
+          // Since this class of failure can be transient rather than
+          // deterministic, one real retry is attempted before falling
+          // back honestly - this is a reasonable mitigation for a
+          // real, currently-unfixed upstream issue, not a guaranteed
+          // fix, and the code says so honestly if the retry also fails.
+          console.warn('ConvertKoro Passport Photo Maker: first segmentation attempt returned an unusable mask, retrying once.');
+          segResult = seg.segment(subjectCanvas);
+          confMasks = segResult.confidenceMasks;
+        }
         if (confMasks && confMasks.length >= 6) {
           // Real, necessary combination for the multiclass model - see
           // background-remover.html for the full real reasoning: max
@@ -554,10 +573,24 @@
           ctx.fillRect(0, 0, outW, outH);
           ctx.drawImage(subjectCanvas, 0, 0);
         } else {
-          // A real, honest fallback: if segmentation genuinely returns
-          // no usable mask (rather than silently showing a wrong/broken
-          // result), fall back to the original photo without background
-          // removal, so the tool still produces SOMETHING usable.
+          // Real, confirmed silent-failure bug found from a direct user
+          // report + screenshot: a genuinely successful-looking result
+          // (face detected, correctly cropped, "photo is ready") was
+          // actually silently skipping background removal entirely
+          // whenever the segmentation model returned fewer than 6 real
+          // masks - with zero indication to the user that this had
+          // happened. Logged now so a real cause (a real model load
+          // failure, a genuine API shape mismatch) is diagnosable
+          // instead of invisible, and the user is honestly told the
+          // background could not be changed rather than being shown an
+          // unprocessed photo with no explanation. Tracked in a real
+          // flag (not appended directly here) because a SEPARATE, later
+          // assignment to checklistBox.innerHTML - a real bug caught
+          // during review - would otherwise silently OVERWRITE and
+          // erase this message the moment the normal face-detection
+          // status renders.
+          console.error('ConvertKoro Passport Photo Maker: segmentation returned an unusable mask (expected 6 real category masks).', confMasks ? confMasks.length : 'null');
+          bgRemovalFailed = true;
           ctx.drawImage(subjectCanvas, 0, 0);
         }
       } else {
@@ -585,7 +618,8 @@
           <span style="color:${faceDetected ? '#059669' : '#DC2626'};">${faceDetected ? '\u2713' : '\u26a0'} Face ${faceDetected ? 'detected' : 'not clearly detected \u2014 try repositioning'}</span>
           <span style="color:#059669;">\u2713 Cropped to ${selectedCountry.widthMM}\u00d7${selectedCountry.heightMM}mm proportions</span>
         </div>
-      ` + (selectedCountry.note ? `<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0;">${selectedCountry.note}</p>` : '');
+      ` + (bgRemovalFailed ? '<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0 0 8px;">Background removal did not run successfully for this photo \u2014 the result still shows the original background. Try a different, clearer photo, or select &quot;Keep original&quot;.</p>' : '')
+        + (selectedCountry.note ? `<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0;">${selectedCountry.note}</p>` : '');
 
       resultCanvas.toBlob((blob) => {
         finalizeDownload(blob);

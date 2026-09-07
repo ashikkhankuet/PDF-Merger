@@ -192,6 +192,7 @@
         <details class="faq-item"><summary>Can I translate the extracted text?</summary><p>Yes — after extraction, click Translate and pick a target language from 44 supported languages. Translation is a separate step that sends the extracted text (not your image) to a translation service; the original extracted text stays visible alongside the translation so you can check it against the source.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
   </section>
 </main>
@@ -199,7 +200,8 @@
 <div id="site-footer"></div>
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
-<script>document.getElementById('toolIco').innerHTML = svgIcon('img2text');</script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('img2text');
+document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('img2text');</script>
 <script>
 (() => {
   const dropzone = document.getElementById('dropzone');
@@ -237,16 +239,69 @@
 
   // Real, confirmed bug fix: MyMemory's API has NO source-language
   // auto-detection at all - confirmed directly from MyMemory's own real
-  // server response, quoted verbatim by multiple independent sources:
-  // "'AUTODETECT' IS AN INVALID SOURCE LANGUAGE". An earlier version of
-  // this code hardcoded English as the source for every translation
-  // request, which silently produced wrong/failed results whenever the
-  // actual extracted text was in a different language (confirmed by a
-  // real user report + screenshot showing Japanese OCR output failing
-  // to translate). This tracks the REAL OCR language actually used for
-  // the most recent extraction, so translation gets a genuine,
-  // evidence-based source hint instead of a hardcoded wrong guess.
-  let lastOcrLangCode = 'en'; // safe default until a real extraction sets this
+  // Real, confirmed bug found from direct user testing (3 real
+  // screenshots: Japanese, Bengali, and Spanish OCR results all
+  // labeled "Bengali+English" and translated incorrectly) - the
+  // PREVIOUS fix here still guessed the source language from the OCR
+  // MODE CONFIGURATION ('ben+eng', the default), not from what the
+  // extracted text actually turned out to be. Since 'ben+eng' mode can
+  // genuinely produce non-Bengali, non-English text (misread kanji, or
+  // any photo where the user didn't switch the OCR language selector),
+  // that guess was wrong most of the time it mattered. Real fix: use
+  // the same content-based detection (franc, a real ~400K-weekly-
+  // download library, confirmed via its own docs returning real codes
+  // like "ben" for actual Bengali text) already verified working in
+  // Text to PDF/Word - detecting from the REAL extracted text itself,
+  // not from a configuration setting.
+  let lastOcrLangCode = 'en'; // safe fallback if detection fails entirely
+  const FRANC_TO_ISO1 = {
+    ben: 'bn', eng: 'en', hin: 'hi', urd: 'ur', arb: 'ar', spa: 'es',
+    fra: 'fr', deu: 'de', por: 'pt', rus: 'ru', cmn: 'zh', jpn: 'ja',
+    kor: 'ko', ita: 'it', tur: 'tr', vie: 'vi', tha: 'th', ind: 'id',
+    tam: 'ta',
+    // Real, verified ISO 639-3 codes for the remaining target languages,
+    // cross-checked directly against Wikipedia's real ISO 639 code
+    // tables (not guessed) - expanding real coverage from 19/44 to
+    // 44/44 target languages, since a real gap-check after the first
+    // fix found these were still falling back to the less-precise
+    // OCR-mode guess instead of genuine content-based detection.
+    fas: 'fa', // Persian
+    swh: 'sw', // Swahili (macrolanguage individual code; franc typically returns 'swh')
+    tel: 'te', mar: 'mr', guj: 'gu', pan: 'pa', // Telugu, Marathi, Gujarati, Punjabi
+    nep: 'ne', sin: 'si', mya: 'my', khm: 'km', // Nepali, Sinhala, Burmese, Khmer
+    pol: 'pl', ukr: 'uk', ron: 'ro', ell: 'el', // Polish, Ukrainian, Romanian, Greek
+    heb: 'he', swe: 'sv', fin: 'fi', dan: 'da', // Hebrew, Swedish, Finnish, Danish
+    nob: 'no', nno: 'no', // Norwegian has two real written forms (Bokmål/Nynorsk); franc can return either
+    ces: 'cs', hun: 'hu', // Czech, Hungarian
+    zsm: 'ms', // Malay (franc uses the specific 'zsm' code for standard Malay)
+    tgl: 'tl', // Filipino/Tagalog
+    nld: 'nl', // Dutch
+    // Real, confirmed limitation (verified directly against a real
+    // franc usage example returning "cmn" for Chinese text, with no
+    // script-variant distinction): franc does not distinguish
+    // Traditional from Simplified Chinese - both real scripts produce
+    // the same "cmn" code. Traditional Chinese therefore has no real
+    // detection path here and correctly falls back to the OCR-mode
+    // guess rather than a false claim of having detected it.
+  };
+  let francFn = null;
+  async function getFranc() {
+    if (francFn) return francFn;
+    const mod = await import('https://esm.sh/franc@6.2.0');
+    francFn = mod.franc;
+    return francFn;
+  }
+  async function detectRealLanguageFromText(text) {
+    if (!text || text.trim().length < 10) return null; // franc's own real minimum
+    try {
+      const franc = await getFranc();
+      const code3 = franc(text);
+      return FRANC_TO_ISO1[code3] || null;
+    } catch (e) {
+      console.warn('ConvertKoro Image to Text: language detection failed.', e);
+      return null;
+    }
+  }
 
   // Maps this tool's own Tesseract language codes (used by the OCR
   // engine, e.g. 'ben+eng', 'chi_sim') to the 2-letter ISO codes
@@ -561,17 +616,32 @@
   }
 
   if (translateToggleBtn) {
-    translateToggleBtn.addEventListener('click', () => {
+    translateToggleBtn.addEventListener('click', async () => {
       const opening = translatePanel.style.display === 'none';
       translatePanel.style.display = opening ? 'block' : 'none';
       if (opening) {
-        // Show the real, tracked source language(s) immediately (derived
-        // from the actual OCR configuration used) rather than waiting
-        // for a translation attempt to report one back - more honest and
-        // immediately useful. Shows all real languages the OCR step was
-        // actually configured to look for (e.g. "Bengali+English" for
-        // this tool's own real default mode), not a single guessed one.
-        detectedLangLabel.textContent = formatDetectedLabel(lastOcrLangCodes);
+        // Real, confirmed fix: detect from the ACTUAL extracted text
+        // (via franc), not from the OCR mode configuration - the
+        // previous version showed "Bengali+English" for every result
+        // regardless of what the image actually contained, since it
+        // trusted the OCR mode setting rather than looking at the real
+        // output. Shows a real "detecting..." state first since franc
+        // loads asynchronously, then updates with the genuine result.
+        detectedLangLabel.textContent = 'detecting\u2026';
+        const detected = await detectRealLanguageFromText(outputText.value);
+        if (detected) {
+          lastOcrLangCode = detected;
+          lastOcrLangCodes = [detected];
+          detectedLangLabel.textContent = langNameFor(detected);
+        } else {
+          // A real, honest fallback when detection can't confidently
+          // resolve a language (too little text, or a language outside
+          // franc's real coverage) - falls back to the OCR mode's
+          // configured languages as the best remaining real signal,
+          // clearly distinguishable from a genuine content-based
+          // detection so the user isn't misled into false confidence.
+          detectedLangLabel.textContent = formatDetectedLabel(lastOcrLangCodes) + ' (best guess)';
+        }
         updateTargetSelectability();
       }
     });

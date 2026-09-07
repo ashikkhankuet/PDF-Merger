@@ -154,11 +154,13 @@
         <details class="faq-item"><summary>Can I calculate someone else's age, or age on a future date?</summary><p>Yes — enter any date of birth and any "as of" date, past or future.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('clock');</script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('age-calc');</script>
 <script>
 (() => {
   const dobIn = document.getElementById('dobIn');

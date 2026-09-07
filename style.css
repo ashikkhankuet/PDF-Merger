@@ -1032,3 +1032,23 @@ body.mob-panel-open { overflow: hidden; }
 .newsletter-msg { font-size: 14.5px; font-weight: 500; margin-top: 8px; min-height: 18px; }
 .newsletter-msg.is-success { color: var(--ok); }
 .newsletter-msg.is-error { color: var(--err); }
+
+/* Related-tools suggestion section - appended after each tool's own
+   FAQ, never inserted between existing elements, so this addition
+   cannot disturb any current page layout. Deliberately understated
+   (a plain question + a few link chips) rather than styled like a
+   promotional banner, matching real research: cross-linking helps SEO
+   and discovery, but a suggestion that reads as an ad erodes trust -
+   the goal here is a natural, low-noise "by the way" moment, not
+   another call-to-action competing with the tool itself. */
+.related-tools { margin-top: 32px; padding: 20px 22px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); }
+.related-tools-q { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
+.related-tools-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.related-tool-link {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+  border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card);
+  color: var(--ink); font-size: 13.5px; font-weight: 500; text-decoration: none;
+  transition: border-color .15s ease, color .15s ease;
+}
+.related-tool-link:hover { border-color: var(--signal); color: var(--signal-dk); }
+.related-tool-link svg { width: 14px; height: 14px; flex-shrink: 0; }

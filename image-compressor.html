@@ -97,6 +97,7 @@
         <details class="faq-item"><summary>How do I compress an image to a specific size, like under 200KB?</summary><p>There's no target-size input — instead, lower the quality slider and check the resulting file size shown after compression, adjusting until it's under your target. Most photos reach under 200KB comfortably around 50&ndash;70% quality.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
   </section>
 </main>
@@ -104,6 +105,7 @@
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('compress');</script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('img-compress');</script>
 <script>
 (() => {
   const dropzone = document.getElementById('dropzone');

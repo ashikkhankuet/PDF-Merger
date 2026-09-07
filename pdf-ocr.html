@@ -96,12 +96,14 @@
         <details class="faq-item"><summary>Why is there a 15-page limit?</summary><p>OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('img2text');</script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('pdf-ocr');</script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 (() => {

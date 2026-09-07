@@ -104,12 +104,14 @@
         <details class="faq-item"><summary>Does the PNG keep a transparent background?</summary><p>Yes — if your SVG has no background fill, the exported PNG stays transparent.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('svgpen');</script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('svg2png');</script>
 <script>
 (() => {
   const dropzone = document.getElementById('dropzone');

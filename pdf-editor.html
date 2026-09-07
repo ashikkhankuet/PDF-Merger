@@ -254,6 +254,7 @@
         <details class="faq-item"><summary>Will my highlights and shapes be part of the actual PDF file?</summary><p>Yes &mdash; everything you add is drawn directly into the saved PDF, not a separate overlay, so it will show up correctly in any PDF viewer, not just this one.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes &mdash; it runs in any modern browser. On smaller screens the toolbar and panels adapt to a more compact layout, though precise editing is easier with a mouse or a large touchscreen.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div>
   </section>
 
@@ -261,6 +262,7 @@
 <div id="site-footer"></div>
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('pdfedit');</script>
 <script src="pdf-editor.js"></script>
 </body>
 </html>

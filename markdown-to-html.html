@@ -87,11 +87,13 @@
         <details class="faq-item"><summary>Can I copy the HTML into my own website?</summary><p>Yes — use the "Copy HTML source" button and paste it anywhere.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('markdown');</script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('md2html');</script>
 <script>
 (() => {
   const mdIn = document.getElementById('mdIn');

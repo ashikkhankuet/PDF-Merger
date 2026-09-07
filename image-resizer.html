@@ -121,12 +121,14 @@
         <details class="faq-item"><summary>What size should I use for Instagram or Facebook?</summary><p>There's no preset button — just type the dimensions in directly. Common sizes: Instagram square post 1080&times;1080, Facebook cover photo 820&times;312, LinkedIn banner 1584&times;396.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="drive-picker.js"></script>
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('resize');</script>
+<script>document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('img-resize');</script>
 <script>
 (() => {
   const dropzone = document.getElementById('dropzone');

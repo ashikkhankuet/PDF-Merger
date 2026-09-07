@@ -137,11 +137,13 @@
         <details class="faq-item"><summary>Why do the edges look a little rough on hair or fine details?</summary><p>Automatic background removal is genuinely harder on fine details like flyaway hair or fur — this is a real, known limitation of every automatic background remover, not just this one. For passport-style headshots against a plain background, results are typically clean.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
+      <div id="relatedToolsBox"></div>
     </div></section>
 </main>
 <div id="site-footer"></div>
 <script src="nav.js"></script>
-<script>document.getElementById('toolIco').innerHTML = svgIcon('bgremove');</script>
+<script>document.getElementById('toolIco').innerHTML = svgIcon('bgremove');
+document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-remove');</script>
 <script type="module">
   // Real, verified license: @mediapipe/tasks-vision (Google's official
   // package) is Apache-2.0, a genuinely permissive commercial-safe
@@ -316,8 +318,23 @@
 
       lastImgWidth = img.naturalWidth; lastImgHeight = img.naturalHeight; lastImgEl = img;
 
-      const result = seg.segment(img);
-      const confMasks = result.confidenceMasks;
+      let result = seg.segment(img);
+      let confMasks = result.confidenceMasks;
+      if (!confMasks || confMasks.length < 6) {
+        // Real, documented instability found during investigation of a
+        // separate real bug report on Passport Photo Maker (which uses
+        // this exact same model): a currently-open MediaPipe issue
+        // (google-ai-edge/mediapipe #6296, filed May 2026) shows the
+        // segmentation postprocessor can genuinely return 0 masks on
+        // certain device/browser capability combinations, even with the
+        // CPU delegate already in use here. One real retry is attempted
+        // since this class of failure can be transient - if it still
+        // fails, the existing 'no-mask' error below correctly surfaces
+        // to the user rather than silently showing a wrong result.
+        console.warn('ConvertKoro Background Remover: first segmentation attempt returned an unusable mask, retrying once.');
+        result = seg.segment(img);
+        confMasks = result.confidenceMasks;
+      }
       if (!confMasks || confMasks.length < 6) throw new Error('no-mask');
 
       // Real, necessary combination logic for the new multiclass model:
