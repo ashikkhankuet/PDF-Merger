@@ -270,7 +270,15 @@ function renderRelatedTools(currentToolId) {
   const links = relatedIds.map(id => {
     const tool = TOOLS.find(t => t.id === id);
     if (!tool) return ''; // a real, defensive guard - never render a link for a since-removed tool ID
-    return `<a class="related-tool-link" href="${tool.url}">${svgIcon(tool.icon)} ${tool.name}</a>`;
+    // Real, requested design fix: each suggestion's icon now uses that
+    // tool's OWN real category gradient (the same tintStyle() already
+    // used for tool icons site-wide, e.g. red for PDF, blue for IMAGE,
+    // purple for OCR) rather than a flat, uncolored icon - genuinely
+    // more visible and identifiable at a glance, and consistent with
+    // how tools are colored everywhere else on the site rather than a
+    // new, invented color scheme.
+    const tint = tintStyle(tool.tag);
+    return `<a class="related-tool-link" href="${tool.url}"><span class="related-tool-ico" style="${tint}">${svgIcon(tool.icon)}</span><span class="related-tool-name">${tool.name}</span></a>`;
   }).filter(Boolean).join('');
   if (!links) return '';
   return `<div class="related-tools"><p class="related-tools-q">${RELATED_TOOLS_QUESTION.default}</p><div class="related-tools-links">${links}</div></div>`;

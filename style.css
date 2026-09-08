@@ -1040,15 +1040,30 @@ body.mob-panel-open { overflow: hidden; }
    promotional banner, matching real research: cross-linking helps SEO
    and discovery, but a suggestion that reads as an ad erodes trust -
    the goal here is a natural, low-noise "by the way" moment, not
-   another call-to-action competing with the tool itself. */
-.related-tools { margin-top: 32px; padding: 20px 22px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); }
-.related-tools-q { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
-.related-tools-links { display: flex; flex-wrap: wrap; gap: 10px; }
+   another call-to-action competing with the tool itself.
+   Real, requested layout fix: this now sits in the FAQ's own two-
+   column grid (see .faq-related-grid below) instead of full-width
+   below the FAQ, using the genuinely empty space beside shorter FAQ
+   lists rather than wasting it. Cards are stacked vertically (one
+   below another, not wrapped in a row), sized larger, with a real,
+   colorful per-category icon badge (the same tintStyle() gradient
+   used for tool icons everywhere else on the site) so each suggestion
+   is genuinely identifiable at a glance, not a plain gray chip. */
+.faq-related-grid { display: grid; grid-template-columns: 1.3fr .7fr; gap: 40px; align-items: start; }
+@media (max-width: 860px) { .faq-related-grid { grid-template-columns: 1fr; gap: 28px; } }
+.related-tools { margin-top: 0; padding: 20px; border-radius: 14px; background: var(--paper); border: 1px solid var(--line); }
+.related-tools-q { font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 14px; }
+.related-tools-links { display: flex; flex-direction: column; gap: 10px; }
 .related-tool-link {
-  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
-  border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card);
-  color: var(--ink); font-size: 13.5px; font-weight: 500; text-decoration: none;
-  transition: border-color .15s ease, color .15s ease;
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border-radius: 10px; border: 1px solid var(--line-strong); background: var(--card);
+  color: var(--ink); font-size: 14.5px; font-weight: 600; text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
 }
-.related-tool-link:hover { border-color: var(--signal); color: var(--signal-dk); }
-.related-tool-link svg { width: 14px; height: 14px; flex-shrink: 0; }
+.related-tool-link:hover { border-color: var(--signal); transform: translateY(-1px); box-shadow: var(--shadow); }
+.related-tool-ico {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.related-tool-ico svg { width: 20px; height: 20px; }
+.related-tool-name { flex: 1; }
