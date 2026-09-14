@@ -8,6 +8,11 @@
 <meta property="og:description" content="Turn a phone photo into a clean, straightened PDF or Word document." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://convertkoro.com/document-scanner" />
+<meta property="og:image" content="https://convertkoro.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://convertkoro.com/og-image.png" />
 <link rel="canonical" href="https://convertkoro.com/document-scanner" />
 <title>Document Scanner — Free Online Tool | ConvertKoro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -510,7 +515,7 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('doc-s
     pageThumbs.innerHTML = pages.map((p, i) => {
       const filtered = applyFilterToCanvas(p.correctedCanvas, currentFilter);
       return `<div style="position:relative;width:100px;">
-        <img src="${filtered.toDataURL('image/jpeg', 0.7)}" style="width:100px;height:130px;object-fit:cover;border-radius:8px;border:1px solid var(--line-strong);" />
+        <img src="${filtered.toDataURL('image/jpeg', 0.7)}" alt="Scanned page ${i+1}" style="width:100px;height:130px;object-fit:cover;border-radius:8px;border:1px solid var(--line-strong);" />
         <span style="position:absolute;top:4px;left:4px;background:rgba(0,0,0,0.65);color:#fff;font-size:11px;padding:2px 6px;border-radius:5px;">${i+1}</span>
         <button data-i="${i}" class="removePageBtn" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);color:#fff;border:none;cursor:pointer;font-size:14px;line-height:1;">&times;</button>
       </div>`;

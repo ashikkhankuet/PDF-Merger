@@ -7,6 +7,7 @@
 <meta name="description" content="Trim an audio file to the section you need, entirely in your browser." />
 <meta name="keywords" content="audio trimmer, cut audio online, trim mp3, audio cutter, অডিও কাটা" />
 <meta property="og:title" content="Audio Trimmer — Cut MP3 or WAV Files Free | ConvertKoro" />
+<meta property="og:description" content="Trim an audio file to the section you need, entirely in your browser." />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -28,7 +29,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Trimmer","description":"Trim an audio file to the section you need, entirely in your browser.","url":"https://convertkoro.com/audio-trimmer","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the output always WAV?","acceptedAnswer":{"@type":"Answer","text":"WAV keeps this tool fast and dependency-free. Run the result through the Audio Converter afterward if you need MP3."}},{"@type":"Question","name":"What audio formats can I trim?","acceptedAnswer":{"@type":"Answer","text":"Any format your browser can play — MP3, WAV, M4A, OGG, and most common audio files."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -200,21 +201,21 @@
         progressFill.style.width = `${20 + ratio * 70}%`;
       });
       progressFill.style.width = '20%';
-      const { fetchFile } = FFmpeg;
+      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
       const inExt = ckExt(file.name) || 'mp3';
       const inName = 'input.' + inExt;
-      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+      await ffmpeg.writeFile(inName, await fetchFile(file));
 
       // -acodec pcm_s16le rather than -c copy: this tool always outputs
       // WAV regardless of input format (matches the FAQ's existing,
       // accurate claim), so a real re-encode to WAV's own codec is
       // correct here - unlike Video Trimmer's stream-copy approach,
       // which only works when input and output share the same codec.
-      await ffmpeg.run('-i', inName, '-ss', String(start), '-to', String(end), '-vn', '-acodec', 'pcm_s16le', 'output.wav');
+      await ffmpeg.exec(['-i', inName, '-ss', String(start), '-to', String(end), '-vn', '-acodec', 'pcm_s16le', 'output.wav']);
 
       let data;
       try {
-        data = ffmpeg.FS('readFile', 'output.wav');
+        data = (await ffmpeg.readFile('output.wav'));
       } catch (readErr) {
         throw new Error('encode-failed');
       }

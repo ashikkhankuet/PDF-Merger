@@ -7,6 +7,7 @@
 <meta name="description" content="Convert video between MP4 and WebM, entirely in your browser." />
 <meta name="keywords" content="video converter, mp4 to webm, webm to mp4, video format converter, ভিডিও কনভার্টার" />
 <meta property="og:title" content="Video Converter — Convert MP4, WebM Free | ConvertKoro" />
+<meta property="og:description" content="Convert video between MP4 and WebM, entirely in your browser." />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -28,7 +29,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video Converter","description":"Convert video between MP4 and WebM, entirely in your browser.","url":"https://convertkoro.com/video-converter","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video Converter","item":"https://convertkoro.com/video-converter"}]}</script>
@@ -218,16 +219,16 @@
       });
       progressFill.style.width = '20%';
       progressLabel.textContent = 'Converting\u2026 this can take a while';
-      const { fetchFile } = FFmpeg;
+      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
       const ext = ckExt(file.name);
       const inName = 'input.' + ext;
-      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+      await ffmpeg.writeFile(inName, await fetchFile(file));
       const outArgs = targetFmt === 'webm'
         ? ['-i', inName, '-c:v', 'libvpx', '-b:v', '1M', '-c:a', 'libvorbis', 'output.webm']
         : ['-i', inName, '-c:v', 'libx264', '-preset', 'faster', '-c:a', 'aac', 'output.mp4'];
-      await ffmpeg.run(...outArgs);
+      await ffmpeg.exec(outArgs);
       const outFile = targetFmt === 'webm' ? 'output.webm' : 'output.mp4';
-      const data = ffmpeg.FS('readFile', outFile);
+      const data = (await ffmpeg.readFile(outFile));
       const blob = new Blob([data.buffer], { type: targetFmt === 'webm' ? 'video/webm' : 'video/mp4' });
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);

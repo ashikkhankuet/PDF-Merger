@@ -7,6 +7,7 @@
 <meta name="description" content="Resize a video to exact pixel dimensions, entirely in your browser." />
 <meta name="keywords" content="video resizer, resize video online, change video dimensions, ভিডিও রিসাইজ" />
 <meta property="og:title" content="Video Resizer — Resize Video Online Free | ConvertKoro" />
+<meta property="og:description" content="Resize a video to exact pixel dimensions, entirely in your browser." />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -28,7 +29,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video Resizer","description":"Resize a video to exact pixel dimensions, entirely in your browser.","url":"https://convertkoro.com/video-resizer","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video Resizer","item":"https://convertkoro.com/video-resizer"}]}</script>
@@ -188,10 +189,10 @@
       });
       progressFill.style.width = '20%';
       progressLabel.textContent = 'Resizing\u2026';
-      const { fetchFile } = FFmpeg;
+      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
       const ext = ckExt(file.name);
       const inName = 'input.' + ext;
-      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+      await ffmpeg.writeFile(inName, await fetchFile(file));
       let w = Math.max(16, Math.round((parseInt(wIn.value) || 1280) / 2) * 2);
       let h = Math.max(16, Math.round((parseInt(hIn.value) || 720) / 2) * 2);
       // -c:a aac (not the previous -c:a copy) - a real, confirmed risk
@@ -206,8 +207,8 @@
       // silently dropped. Re-encoding to AAC is universally MP4-safe
       // and removes this risk entirely, matching the same choice
       // already made in Video Compressor.
-      await ffmpeg.run('-i', inName, '-vf', `scale=${w}:${h}`, '-c:a', 'aac', '-b:a', '128k', 'output.mp4');
-      const data = ffmpeg.FS('readFile', 'output.mp4');
+      await ffmpeg.exec(['-i', inName, '-vf', `scale=${w}:${h}`, '-c:a', 'aac', '-b:a', '128k', 'output.mp4']);
+      const data = (await ffmpeg.readFile('output.mp4'));
       const blob = new Blob([data.buffer], { type: 'video/mp4' });
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);

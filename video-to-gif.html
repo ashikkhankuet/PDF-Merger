@@ -7,6 +7,7 @@
 <meta name="description" content="Turn a video clip into an animated GIF, entirely in your browser." />
 <meta name="keywords" content="video to gif, convert video to gif, mp4 to gif, ভিডিও থেকে জিফ" />
 <meta property="og:title" content="Video to GIF Converter — Free Online Tool | ConvertKoro" />
+<meta property="og:description" content="Turn a video clip into an animated GIF, entirely in your browser." />
 <meta property="og:image" content="https://convertkoro.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -28,7 +29,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video to GIF","description":"Turn a video clip into an animated GIF, entirely in your browser.","url":"https://convertkoro.com/video-to-gif","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video to GIF","item":"https://convertkoro.com/video-to-gif"}]}</script>
@@ -189,10 +190,10 @@
       });
       progressFill.style.width = '20%';
       progressLabel.textContent = 'Rendering GIF\u2026';
-      const { fetchFile } = FFmpeg;
+      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
       const ext = ckExt(file.name);
       const inName = 'input.' + ext;
-      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+      await ffmpeg.writeFile(inName, await fetchFile(file));
       const start = Math.max(0, parseFloat(startIn.value) || 0);
       const dur = Math.max(0.5, Math.min(15, parseFloat(durIn.value) || 5));
       const width = Math.max(100, parseInt(widthIn.value) || 480);
@@ -206,12 +207,12 @@
       // this is the standard fix, not an experimental tweak). Done in a
       // single ffmpeg invocation via split+filter_complex rather than two
       // separate passes/files, since that's supported and simpler here.
-      await ffmpeg.run(
+      await ffmpeg.exec([
         '-ss', String(start), '-t', String(dur), '-i', inName,
         '-filter_complex', `[0:v]fps=10,scale=${width}:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse`,
         'output.gif'
-      );
-      const data = ffmpeg.FS('readFile', 'output.gif');
+      ]);
+      const data = (await ffmpeg.readFile('output.gif'));
       const blob = new Blob([data.buffer], { type: 'image/gif' });
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
