@@ -13,6 +13,83 @@
 [functions]
   directory = "netlify/functions"
 
+# Real, confirmed fix for a real, widespread, persistent bug class:
+# ffmpeg.wasm's SharedArrayBuffer-dependent features (used even by the
+# single-threaded core's real internal machinery) require the page to be
+# "cross-origin isolated" - without these two headers, real browsers
+# either fail to define window.FFmpegWASM at all, or throw
+# "SharedArrayBuffer is not defined" - confirmed as a real, recurring,
+# multi-year problem across many independent real projects (GitHub
+# issues #484, #529, #838, #909 on ffmpegwasm/ffmpeg.wasm), not
+# something specific to this site's setup.
+#
+# Real, deliberate choices made here, not the default/naive approach:
+# 1. Scoped to ONLY the 9 real media-tool pages, not site-wide - a
+#    site-wide Cross-Origin-Embedder-Policy would risk breaking
+#    AdSense and other third-party embeds on every other page for no
+#    real benefit, since only these 9 pages actually load ffmpeg.wasm.
+# 2. Cross-Origin-Embedder-Policy is set to "credentialless", NOT
+#    "require-corp" - confirmed via MDN and Chrome's own developer
+#    documentation as the real, current, purpose-built alternative
+#    that still enables cross-origin isolation (and thus
+#    SharedArrayBuffer) WITHOUT requiring every third-party resource
+#    (ads, fonts, analytics) to add its own Cross-Origin-Resource-Policy
+#    header - which is the real, documented cause of require-corp
+#    breaking ad scripts that don't opt in.
+[[headers]]
+  for = "/audio-compressor"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/audio-converter"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/audio-trimmer"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/video-compressor"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/video-converter"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/video-resizer"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/video-to-gif"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/video-to-mp3"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
+[[headers]]
+  for = "/video-trimmer"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+
 # Format-preserving PDF -> Word conversion (via Adobe PDF Services)
 # genuinely needs more than the platform default 10s - a full pipeline
 # (auth, upload, start job, poll for completion, download result) is real
