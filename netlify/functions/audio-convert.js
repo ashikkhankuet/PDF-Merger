@@ -1,8 +1,7 @@
-const { execFile } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
@@ -27,66 +26,54 @@ exports.handler = async (event) => {
 
     const fileBuffer = Buffer.from(file, 'base64');
     if (fileBuffer.length > MAX_FILE_SIZE) {
+      if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
       return { statusCode: 413, body: JSON.stringify({ error: 'File too large' }) };
     }
     fs.writeFileSync(inputFile, fileBuffer);
 
-    const args = ['-i', inputFile, '-vn'];
+    let codec = 'libmp3lame';
+    let bitrate = '192k';
     
-    if (format === 'mp3') {
-      args.push('-acodec', 'libmp3lame', '-b:a', '192k');
-    } else if (format === 'wav') {
-      args.push('-acodec', 'pcm_s16le');
+    if (format === 'wav') {
+      codec = 'pcm_s16le';
+      bitrate = '';
     } else if (format === 'ogg') {
-      args.push('-acodec', 'libvorbis', '-q:a', '5');
+      codec = 'libvorbis';
+      bitrate = '-q:a 5';
     } else if (format === 'aac') {
-      args.push('-acodec', 'aac', '-b:a', '192k');
+      codec = 'aac';
+      bitrate = '192k';
     }
-    
-    args.push(outputFile);
 
-    return new Promise((resolve) => {
-      execFile(ffmpegPath, args, { maxBuffer: 10 * 1024 * 1024, timeout: 60000 }, (error, stdout, stderr) => {
-        if (error) {
-          console.error('FFmpeg error:', error.message);
-          if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
-          return resolve({
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Processing failed' })
-          });
-        }
+    const cmd = bitrate 
+      ? `ffmpeg -i "${inputFile}" -vn -acodec ${codec} -b:a ${bitrate} "${outputFile}" -y 2>&1`
+      : `ffmpeg -i "${inputFile}" -vn -acodec ${codec} "${outputFile}" -y 2>&1`;
 
-        try {
-          if (!fs.existsSync(outputFile)) {
-            if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
-            return resolve({
-              statusCode: 500,
-              body: JSON.stringify({ error: 'No output file' })
-            });
-          }
+    try {
+      execSync(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: 60000 });
+    } catch (err) {
+      if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
+      return { statusCode: 500, body: JSON.stringify({ error: 'FFmpeg failed' }) };
+    }
 
-          const output = fs.readFileSync(outputFile);
-          const base64 = output.toString('base64');
-          fs.rmSync(tempDir, { recursive: true, force: true });
+    if (!fs.existsSync(outputFile)) {
+      if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
+      return { statusCode: 500, body: JSON.stringify({ error: 'No output' }) };
+    }
 
-          resolve({
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              success: true,
-              file: base64,
-              size: output.length
-            })
-          });
-        } catch (err) {
-          if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
-          resolve({
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Read failed' })
-          });
-        }
-      });
-    });
+    const output = fs.readFileSync(outputFile);
+    const base64 = output.toString('base64');
+    fs.rmSync(tempDir, { recursive: true, force: true });
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        file: base64,
+        size: output.length
+      })
+    };
 
   } catch (error) {
     if (tempDir && fs.existsSync(tempDir)) {

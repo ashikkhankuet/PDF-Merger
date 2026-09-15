@@ -1,8 +1,5 @@
 {
   "name": "convertkoro-functions",
   "version": "1.0.0",
-  "description": "ConvertKoro media processing functions",
-  "dependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.1.0"
-  }
+  "description": "ConvertKoro media processing"
 }
