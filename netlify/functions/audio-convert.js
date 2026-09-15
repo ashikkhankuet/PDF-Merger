@@ -2,7 +2,7 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const ffmpegPath = require('ffmpeg-static');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
@@ -48,7 +48,7 @@ exports.handler = async (event) => {
     return new Promise((resolve) => {
       execFile(ffmpegPath, args, { maxBuffer: 10 * 1024 * 1024, timeout: 60000 }, (error, stdout, stderr) => {
         if (error) {
-          console.error('FFmpeg error:', error);
+          console.error('FFmpeg error:', error.message);
           if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
           return resolve({
             statusCode: 500,
