@@ -1,0 +1,8 @@
+{
+  "name": "convertkoro-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for ConvertKoro media processing",
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.2"
+  }
+}
