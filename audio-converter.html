@@ -205,46 +205,64 @@
     convertBtn.disabled = true;
     const targetFmt = document.querySelector('input[name="fmt"]:checked').value;
     try {
-      progressFill.style.width = '30%';
-      progressLabel.textContent = 'Uploading to converter\u2026';
+      progressFill.style.width = '20%';
+      progressLabel.textContent = 'Uploading file\u2026';
       
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // Use free online-convert.com API
-      const response = await fetch('https://www.online-convert.com/upload-file', {
-        method: 'POST',
-        body: formData
+      const fileBuffer = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
       });
       
-      if (!response.ok) throw new Error('Upload failed');
+      const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
       
-      progressFill.style.width = '60%';
+      progressFill.style.width = '40%';
       progressLabel.textContent = `Converting to ${targetFmt.toUpperCase()}\u2026`;
       
-      // Get the file key from response
-      const data = await response.json();
-      const fileKey = data.file_key;
-      
-      // Request conversion
-      const convertResponse = await fetch('https://www.online-convert.com/api/convert', {
+      // Try backend first
+      let response = await fetch('/.netlify/functions/convert-audio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          'file_key': fileKey,
-          'format': targetFmt,
-          'converterin': 'audio'
-        })
-      });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: base64File, format: targetFmt })
+      }).catch(() => ({ ok: false, status: 0 }));
       
-      if (!convertResponse.ok) throw new Error('Conversion failed');
+      // If backend fails or returns 503, use web API fallback
+      if (!response.ok) {
+        progressFill.style.width = '45%';
+        progressLabel.textContent = 'Using backup converter\u2026';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          response = await fetch('https://api.cloudconvert.com/v2/upload', {
+            method: 'POST',
+            body: formData,
+            headers: { 'Authorization': 'Bearer' }
+          }).catch(() => ({ ok: false }));
+          
+          if (!response.ok) throw new Error('Converter unavailable');
+        } catch {
+          throw new Error('All converters unavailable');
+        }
+      }
       
-      progressFill.style.width = '90%';
-      progressLabel.textContent = 'Downloading\u2026';
+      progressFill.style.width = '80%';
       
-      const blob = await convertResponse.blob();
+      if (!response.ok) throw new Error('Conversion failed');
+      
+      const result = await response.json();
+      if (!result.success || !result.file) throw new Error('No output');
+      
+      const binaryString = atob(result.file);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: targetFmt === 'wav' ? 'audio/wav' : 'audio/mpeg' });
+      
       progressFill.style.width = '100%';
-      
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
       downloadBtn.setAttribute('download', `${baseName}.${targetFmt}`);
@@ -253,7 +271,7 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Conversion service error. Please try a smaller file or different format.';
+      errText.textContent = 'Conversion service temporarily unavailable. Please try again.';
       console.error('Error:', err);
       errBox.classList.add('show');
     }
