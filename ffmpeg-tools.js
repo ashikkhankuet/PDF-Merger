@@ -83,12 +83,10 @@ async function ckGetFFmpeg(onProgress) {
   // since COEP: require-corp can break third-party ad scripts that
   // don't opt in. The single-thread core needs none of this and works
   // on every real browser/hosting setup without any header changes.
-  // Load JS from self-hosted, WASM from CDN (WASM too large for GitHub)
-  const baseURL = '/ffmpeg-wasm';
-  const wasmCDN = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
+  const baseURL = 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.10/umd';
   await __ckFFmpeg.load({
-    coreURL: `${baseURL}/ffmpeg-core.js`,
-    wasmURL: `${wasmCDN}/ffmpeg-core.wasm`,
+    coreURL: await ckToBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+    wasmURL: await ckToBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
   });
 
   __ckFFmpegLoaded = true;

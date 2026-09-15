@@ -29,8 +29,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
-<script src="ffmpeg-tools.js"></script>
+
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Converter","description":"Convert audio files to MP3 or WAV, entirely in your browser.","url":"https://convertkoro.com/audio-converter","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What formats can I convert from?","acceptedAnswer":{"@type":"Answer","text":"MP3, WAV, M4A, OGG, FLAC, AAC, and WMA all convert reliably \u2014 a real audio engine runs in your browser, not just native browser decoding."}},{"@type":"Question","name":"Why choose WAV over MP3?","acceptedAnswer":{"@type":"Answer","text":"WAV is lossless and instant to produce, but larger. MP3 is much smaller and takes a bit longer to encode, since it runs a real MP3 encoder in your browser."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Audio Converter","item":"https://convertkoro.com/audio-converter"}]}</script>
@@ -207,45 +206,49 @@
     convertBtn.disabled = true;
     const targetFmt = document.querySelector('input[name="fmt"]:checked').value;
     try {
-      // Rebuilt on ffmpeg.wasm, replacing the previous
-      // AudioContext.decodeAudioData() + lamejs pipeline - same real bug
-      // class confirmed and fixed on Audio Compressor: files with
-      // embedded ID3 album art (a common, valid MP3 feature) could
-      // silently decode to near-total silence via the browser's native
-      // decoder, while ffmpeg correctly handles them. See
-      // audio-compressor.html for the full root-cause writeup and the
-      // real user file this was verified against.
-      progressFill.style.width = '10%';
-      progressLabel.textContent = 'Loading audio engine\u2026';
-      const ffmpeg = await ckGetFFmpeg((ratio) => {
-        progressFill.style.width = `${20 + ratio * 70}%`;
-        progressLabel.textContent = targetFmt === 'mp3' ? 'Encoding MP3\u2026' : 'Encoding WAV\u2026';
-      });
       progressFill.style.width = '20%';
-      progressLabel.textContent = targetFmt === 'mp3' ? 'Encoding MP3\u2026' : 'Encoding WAV\u2026';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const inExt = ckExt(file.name) || 'mp3';
-      const inName = 'input.' + inExt;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-
-      const outName = targetFmt === 'wav' ? 'output.wav' : 'output.mp3';
-      if (targetFmt === 'wav') {
-        await ffmpeg.exec(['-i', inName, '-vn', '-acodec', 'pcm_s16le', outName]);
-      } else {
-        await ffmpeg.exec(['-i', inName, '-vn', '-acodec', 'libmp3lame', '-b:a', '128k', outName]);
+      progressLabel.textContent = 'Uploading file\u2026';
+      
+      // Read file
+      const fileBuffer = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
+      });
+      
+      const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+      
+      progressFill.style.width = '40%';
+      progressLabel.textContent = 'Processing audio\u2026';
+      
+      // Call backend
+      const response = await fetch('/.netlify/functions/audio-convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: base64File, format: targetFmt })
+      });
+      
+      progressFill.style.width = '80%';
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Server error');
       }
-
-      let data;
-      try {
-        data = (await ffmpeg.readFile(outName));
-      } catch (readErr) {
-        throw new Error('encode-failed');
+      
+      const result = await response.json();
+      if (!result.success || !result.file) {
+        throw new Error('No output received');
       }
-      if (!data || data.length === 0) {
-        throw new Error('empty-output');
+      
+      // Convert base64 to blob
+      const binaryString = atob(result.file);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
       }
-
-      const blob = new Blob([data.buffer], { type: targetFmt === 'wav' ? 'audio/wav' : 'audio/mp3' });
+      const blob = new Blob([bytes], { type: targetFmt === 'wav' ? 'audio/wav' : 'audio/mpeg' });
+      
       progressFill.style.width = '100%';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
@@ -255,12 +258,8 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      const knownMessages = {
-        'encode-failed': 'Couldn\u2019t find playable audio in this file \u2014 it may be corrupted or contain no audio track.',
-        'empty-output': 'The encoder produced an empty file for this audio \u2014 please try again.',
-      };
-      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this audio file \u2014 try a different format.';
-      console.error('ConvertKoro Audio Converter: conversion failed.', err);
+      errText.textContent = err.message || 'Couldn\u2019t process this audio file.';
+      console.error('Audio Converter error:', err);
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;

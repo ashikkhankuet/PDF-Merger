@@ -29,8 +29,6 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
-<script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Compressor","description":"Shrink an audio file's size with a bitrate slider, entirely in your browser.","url":"https://convertkoro.com/audio-compressor","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the output always MP3?","acceptedAnswer":{"@type":"Answer","text":"MP3 at a lower bitrate is what actually shrinks the file &mdash; WAV can't be compressed this way since it's uncompressed by design."}},{"@type":"Question","name":"What bitrate should I pick?","acceptedAnswer":{"@type":"Answer","text":"96 kbps is a solid balance for speech and podcasts. For music, 128&ndash;192 kbps keeps more detail at a larger size."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Audio Compressor","item":"https://convertkoro.com/audio-compressor"}]}</script>
@@ -199,57 +197,55 @@
       // ffmpeg.wasm is already used successfully elsewhere on this site
       // (Video to MP3) for exactly this decode-then-encode job, so this
       // switches to the already-proven-correct engine instead of
-      // patching the fragile native path further.
-      progressFill.style.width = '10%';
-      const ffmpeg = await ckGetFFmpeg((ratio) => {
-        progressFill.style.width = `${20 + ratio * 70}%`;
-      });
       progressFill.style.width = '20%';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const ext = ckExt(file.name) || 'mp3';
-      const inName = 'input.' + ext;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-
+      progressLabel.textContent = 'Uploading file\u2026';
+      
+      const fileBuffer = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
+      });
+      
+      const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
       const kbps = parseInt(brSlider.value);
-      await ffmpeg.exec(['-i', inName, '-vn', '-acodec', 'libmp3lame', '-b:a', `${kbps}k`, 'output.mp3']);
-
-      let data;
-      try {
-        data = (await ffmpeg.readFile('output.mp3'));
-      } catch (readErr) {
-        // ffmpeg completing without producing a readable output file
-        // means the encode genuinely failed partway (e.g. no audio
-        // stream found in the input) - a real, distinct failure from a
-        // successful-but-empty result, so it gets its own message.
-        throw new Error('encode-failed');
+      
+      progressFill.style.width = '40%';
+      progressLabel.textContent = 'Compressing audio\u2026';
+      
+      const response = await fetch('/.netlify/functions/audio-convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: base64File, format: 'mp3', bitrate: kbps })
+      });
+      
+      progressFill.style.width = '80%';
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Server error');
       }
-      if (!data || data.length === 0) {
-        // Belt-and-suspenders: even with ffmpeg, if the output file
-        // exists but is empty this is the same "technically valid,
-        // actually silent" outcome the previous pipeline could produce -
-        // caught here rather than shipped as a 0-byte download.
-        throw new Error('empty-output');
+      
+      const result = await response.json();
+      if (!result.success || !result.file) {
+        throw new Error('No output received');
       }
-
-      const blob = new Blob([data.buffer], { type: 'audio/mp3' });
+      
+      const binaryString = atob(result.file);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'audio/mp3' });
       progressFill.style.width = '100%';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       downloadBtn.href = URL.createObjectURL(blob);
       downloadBtn.setAttribute('download', `${baseName}-compressed.mp3`);
-      // Unlike the PDF/image compressors, this always converts to MP3
-      // regardless of input format, so falling back to "keep the original
-      // bytes" isn't right here - handing back a WAV/FLAC/etc under an
-      // .mp3 filename would be its own, worse bug. Instead: keep the real
-      // MP3 output either way (conversion to MP3 is still useful even if
-      // this particular file happens not to shrink, e.g. a high bitrate
-      // slider against an already-small source), but report the size
-      // change honestly instead of a floor-clamped-at-0% claim that hides
-      // a real increase.
       const sizeChangePct = Math.round((1 - blob.size/file.size) * 100);
       resultTitle.textContent = `${baseName}-compressed.mp3 is ready`;
       resultMeta.textContent = sizeChangePct >= 0
         ? `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${sizeChangePct}% smaller)`
-        : `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger \u2014 try a lower bitrate for real savings)`;
+        : `${fmtSize(file.size)} \u2192 ${fmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger)`;
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
