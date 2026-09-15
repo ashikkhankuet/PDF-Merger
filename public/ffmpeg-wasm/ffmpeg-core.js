@@ -1,4 +1,4 @@
-	// Shared helpers for ffmpeg.wasm-based audio/video tools.
+// Shared helpers for ffmpeg.wasm-based audio/video tools.
 // Loaded after the ffmpeg CDN script on each media tool page.
 //
 // REAL, CONFIRMED BUG FIX (found via a direct user report - screenshots
