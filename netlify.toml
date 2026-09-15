@@ -12,14 +12,6 @@
 # rule this out as the cause.
 [functions]
   directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# Increase function timeout for media processing
-[functions."convert-audio"]
-  timeout = 60
-
-[functions."convert-video"]
-  timeout = 120
 
 # Real, confirmed fix for a real, widespread, persistent bug class:
 # ffmpeg.wasm's SharedArrayBuffer-dependent features (used even by the
