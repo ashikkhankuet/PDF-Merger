@@ -200,13 +200,17 @@
   clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; formatRow.style.display='none'; convertBtn.disabled=true; resultBox.classList.remove('show'); });
 
   convertBtn.addEventListener('click', async () => {
-    errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
+    errBox.classList.remove('show');
+    resultBox.classList.remove('show');
+    progressWrap.classList.add('show');
+    progressFill.style.width = '5%';
     convertBtn.disabled = true;
+    
     const targetFmt = document.querySelector('input[name="fmt"]:checked').value;
+    
     try {
       progressFill.style.width = '20%';
-      progressLabel.textContent = 'Uploading file\u2026';
+      progressLabel.textContent = 'Preparing file\u2026';
       
       const fileBuffer = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -220,37 +224,13 @@
       progressFill.style.width = '40%';
       progressLabel.textContent = `Converting to ${targetFmt.toUpperCase()}\u2026`;
       
-      // Try backend first
-      let response = await fetch('/.netlify/functions/convert-audio', {
+      const response = await fetch('/.netlify/functions/convert-audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: base64File, format: targetFmt })
-      }).catch(() => ({ ok: false, status: 0 }));
+      });
       
-      // If backend fails or returns 503, use web API fallback
-      if (!response.ok) {
-        progressFill.style.width = '45%';
-        progressLabel.textContent = 'Using backup converter\u2026';
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-          response = await fetch('https://api.cloudconvert.com/v2/upload', {
-            method: 'POST',
-            body: formData,
-            headers: { 'Authorization': 'Bearer' }
-          }).catch(() => ({ ok: false }));
-          
-          if (!response.ok) throw new Error('Converter unavailable');
-        } catch {
-          throw new Error('All converters unavailable');
-        }
-      }
-      
-      progressFill.style.width = '80%';
-      
-      if (!response.ok) throw new Error('Conversion failed');
+      if (!response.ok) throw new Error('Backend error');
       
       const result = await response.json();
       if (!result.success || !result.file) throw new Error('No output');
@@ -271,7 +251,7 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Conversion service temporarily unavailable. Please try again.';
+      errText.textContent = 'Conversion failed. Please try again.';
       console.error('Error:', err);
       errBox.classList.add('show');
     }
