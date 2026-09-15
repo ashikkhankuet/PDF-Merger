@@ -1,0 +1,8 @@
+{
+  "name": "convertkoro-functions",
+  "version": "1.0.0",
+  "description": "ConvertKoro media processing functions",
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  }
+}
