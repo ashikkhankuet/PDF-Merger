@@ -29,7 +29,6 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Trimmer","description":"Trim an audio file to the section you need, entirely in your browser.","url":"https://convertkoro.com/audio-trimmer","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the output always WAV?","acceptedAnswer":{"@type":"Answer","text":"WAV keeps this tool fast and dependency-free. Run the result through the Audio Converter afterward if you need MP3."}},{"@type":"Question","name":"What audio formats can I trim?","acceptedAnswer":{"@type":"Answer","text":"Any format your browser can play — MP3, WAV, M4A, OGG, and most common audio files."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -197,6 +196,8 @@
       const end = Math.min(duration, parseFloat(endIn.value) || duration);
       if (end <= start) throw new Error('too-short');
 
+      const compat = ckMediaCompatibility(file);
+      if (!compat.ok) throw new Error(compat.message);
       const ffmpeg = await ckGetFFmpeg((ratio) => {
         progressFill.style.width = `${20 + ratio * 70}%`;
       });

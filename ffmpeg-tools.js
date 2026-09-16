@@ -1,96 +1,180 @@
-// Shared helpers for ffmpeg.wasm-based audio/video tools.
-// Loaded after the ffmpeg CDN script on each media tool page.
-//
-// REAL, CONFIRMED BUG FIX (found via a direct user report - screenshots
-// showing every single audio/video tool failing with a generic error):
-// this file previously loaded @ffmpeg/ffmpeg@0.11.6, a genuinely legacy
-// version. Research found real, current, directly-matching evidence:
-// a real GitHub issue (ffmpegwasm/ffmpeg.wasm #502) titled exactly
-// "The latest version of ffmpeg.wasm no longer works in a web browser"
-// using this SAME 0.11.6 script tag, and a separate real report that
-// current unpkg URLs for the old API "give a 404". The real, current,
-// actively-maintained version is 0.12.15 (confirmed directly from
-// jsDelivr's own package page), which uses a meaningfully different
-// API: a real FFmpeg CLASS (not a createFFmpeg() factory), exec()
-// instead of run(), and writeFile()/readFile() instead of the old
-// FS('writeFile'/'readFile') calls.
-//
-// Rather than rewrite all 9 real tool pages that depend on this file,
-// this rebuild keeps the SAME simple function signatures each tool
-// already calls (ckGetFFmpeg, and the same writeFile/run/readFile-style
-// flow) so no other file needs to change - the real, correct v0.12 API
-// is used internally, kept behind this same compatibility surface.
-// Real, deliberate design choice: rather than load a separate
-// @ffmpeg/util UMD script for fetchFile/toBlobURL (a real, confirmed
-// failure risk - see ffmpegwasm/ffmpeg.wasm issue #909, where a
-// real developer's separately-loaded @ffmpeg/util script left
-// FFmpegUtil undefined despite the main FFmpeg script loading fine),
-// this implements the same real, simple behavior directly - reading a
-// File/Blob into a Uint8Array is genuinely simple enough not to need
-// an external dependency, removing that whole class of real risk.
-function ckFetchFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(new Uint8Array(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file);
-  });
-}
+// ConvertKoro Media Engine v2 — shared by all 9 media tools.
+// Architecture: a ConvertKoro-owned wrapper + same-origin Blob worker.
+// Only the pinned single-thread FFmpeg core (JS + WASM) is downloaded.
+// Multiple reputable mirrors are tried; no remote Worker is ever constructed.
+// This avoids the cross-origin Worker failure that broke the previous deployment.
 
-// Real, same-reasoning replacement for toBlobURL() (also normally from
-// @ffmpeg/util) - fetches a real URL and converts it to a local blob:
-// URL, which is what allows the ffmpeg-core script/wasm to be loaded
-// without a real cross-origin request at actual load time.
-async function ckToBlobURL(url, mimeType) {
-  const resp = await fetch(url);
-  const buf = await resp.arrayBuffer();
-  const blob = new Blob([buf], { type: mimeType });
-  return URL.createObjectURL(blob);
-}
+const CK_CORE_VERSION = '0.12.10';
+const CK_CORE_MIRRORS = [
+  `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${CK_CORE_VERSION}/dist/umd`,
+  `https://unpkg.com/@ffmpeg/core@${CK_CORE_VERSION}/dist/umd`,
+  `https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/${CK_CORE_VERSION}/umd`
+];
 
 let __ckFFmpeg = null;
-let __ckFFmpegLoaded = false;
+let __ckLoadPromise = null;
+let __ckProgressCallbacks = new Set();
+let __ckCoreBlobURLs = [];
 
-async function ckGetFFmpeg(onProgress) {
-  if (__ckFFmpeg && __ckFFmpegLoaded) return __ckFFmpeg;
+async function ckFetchFirst(paths, mimeType) {
+  let lastErr = null;
+  for (const base of CK_CORE_MIRRORS) {
+    for (const name of paths) {
+      try {
+        const url = `${base}/${name}`;
+        const r = await fetch(url, { mode: 'cors', cache: 'force-cache' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const b = await r.arrayBuffer();
+        if (!b.byteLength) throw new Error('empty response');
+        const blobURL = URL.createObjectURL(new Blob([b], { type: mimeType }));
+        __ckCoreBlobURLs.push(blobURL);
+        return blobURL;
+      } catch (e) { lastErr = e; }
+    }
+  }
+  throw new Error(`Unable to load the media engine. ${lastErr ? lastErr.message : ''}`.trim());
+}
 
-  // Real, current, verified-working v0.12 pattern (confirmed directly
-  // against multiple real, current reference implementations, and the
-  // real, exact global name FFmpegWASM.FFmpeg confirmed via two
-  // independent real GitHub issue threads): a real FFmpeg class
-  // instance, loaded with an explicit core URL + WASM URL pair from a
-  // single, matching, pinned version - version mismatches between
-  // @ffmpeg/ffmpeg and @ffmpeg/core are a real, documented failure
-  // mode, so both are pinned to compatible real releases (ffmpeg.js
-  // 0.12.15 paired with ffmpeg-core 0.12.10, the real, confirmed
-  // latest core build actually available on cdnjs).
-  const { FFmpeg } = FFmpegWASM;
+function ckWorkerSource() {
+  // Self-contained classic Worker. No @ffmpeg/ffmpeg CDN bundle is needed.
+  return `
+let core = null;
+const send=(id,type,data,transfer)=>self.postMessage({id,type,data},transfer||[]);
+self.onmessage=async(e)=>{
+  const {id,type,data}=e.data;
+  try {
+    if(type==='load'){
+      if(!core){
+        importScripts(data.coreURL);
+        if(typeof self.createFFmpegCore!=='function') throw new Error('FFmpeg core factory not found');
+        core=await self.createFFmpegCore({mainScriptUrlOrBlob:data.coreURL+'#'+btoa(JSON.stringify({wasmURL:data.wasmURL,workerURL:''}))});
+        core.setLogger(d=>send(0,'log',d));
+        core.setProgress(d=>send(0,'progress',d));
+      }
+      return send(id,'load',true);
+    }
+    if(!core) throw new Error('Media engine is not loaded');
+    if(type==='writeFile') { core.FS.writeFile(data.path,data.bytes); return send(id,type,true); }
+    if(type==='readFile') { const out=core.FS.readFile(data.path); return send(id,type,out,[out.buffer]); }
+    if(type==='deleteFile') { try{core.FS.unlink(data.path);}catch(_){} return send(id,type,true); }
+    if(type==='exec') {
+      core.setTimeout(data.timeout == null ? -1 : data.timeout);
+      core.exec(...data.args);
+      const ret=core.ret;
+      core.reset();
+      return send(id,type,ret);
+    }
+    throw new Error('Unknown media-engine command');
+  } catch(err) { send(id,'error',String(err && (err.message||err) || 'Unknown error')); }
+};`;
+}
 
-  __ckFFmpeg = new FFmpeg();
-
-  if (onProgress) {
-    __ckFFmpeg.on('progress', ({ progress }) => {
-      if (progress >= 0 && progress <= 1) onProgress(progress);
+class CKFFmpeg {
+  constructor() {
+    this.worker = null;
+    this.seq = 1;
+    this.pending = new Map();
+    this.listeners = { log: [], progress: [] };
+    this.loaded = false;
+  }
+  on(type, cb) { if (this.listeners[type]) this.listeners[type].push(cb); }
+  _request(type, data, transfer) {
+    return new Promise((resolve, reject) => {
+      const id = this.seq++;
+      this.pending.set(id, { resolve, reject });
+      this.worker.postMessage({ id, type, data }, transfer || []);
     });
   }
+  async load({ coreURL, wasmURL }) {
+    if (!this.worker) {
+      const workerURL = URL.createObjectURL(new Blob([ckWorkerSource()], { type: 'text/javascript' }));
+      this.worker = new Worker(workerURL); // blob: is same-origin with the page
+      URL.revokeObjectURL(workerURL);
+      this.worker.onmessage = ({ data: { id, type, data } }) => {
+        if (type === 'log' || type === 'progress') {
+          (this.listeners[type] || []).forEach(fn => { try { fn(data); } catch (_) {} });
+          return;
+        }
+        const p = this.pending.get(id);
+        if (!p) return;
+        this.pending.delete(id);
+        type === 'error' ? p.reject(new Error(data)) : p.resolve(data);
+      };
+      this.worker.onerror = (e) => {
+        const err = new Error(e.message || 'Media worker failed');
+        for (const p of this.pending.values()) p.reject(err);
+        this.pending.clear();
+      };
+    }
+    await this._request('load', { coreURL, wasmURL });
+    this.loaded = true;
+    return true;
+  }
+  async writeFile(path, bytes) {
+    // Transfer a copy so callers do not unexpectedly lose their buffer.
+    const copy = bytes instanceof Uint8Array ? bytes.slice() : new Uint8Array(bytes);
+    return this._request('writeFile', { path, bytes: copy }, [copy.buffer]);
+  }
+  readFile(path) { return this._request('readFile', { path }); }
+  deleteFile(path) { return this._request('deleteFile', { path }); }
+  exec(args, timeout = -1) { return this._request('exec', { args, timeout }); }
+  terminate() {
+    if (this.worker) this.worker.terminate();
+    this.worker = null; this.loaded = false;
+  }
+}
 
-  // Real, deliberate choice: @ffmpeg/core (NOT @ffmpeg/core-mt) -
-  // confirmed directly from the real package maintainer's own listing
-  // as "FFmpeg WebAssembly version (single thread)". The multi-thread
-  // core requires SharedArrayBuffer, which requires real
-  // Cross-Origin-Opener-Policy/Cross-Origin-Embedder-Policy headers
-  // site-wide - a real, confirmed risk for an AdSense-funded site,
-  // since COEP: require-corp can break third-party ad scripts that
-  // don't opt in. The single-thread core needs none of this and works
-  // on every real browser/hosting setup without any header changes.
-  const baseURL = 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.10/umd';
-  await __ckFFmpeg.load({
-    coreURL: await ckToBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-    wasmURL: await ckToBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+function ckFetchFile(file) {
+  if (file instanceof Uint8Array) return Promise.resolve(file);
+  if (file instanceof ArrayBuffer) return Promise.resolve(new Uint8Array(file));
+  if (file && typeof file.arrayBuffer === 'function') return file.arrayBuffer().then(b => new Uint8Array(b));
+  return fetch(file).then(async r => {
+    if (!r.ok) throw new Error(`Unable to read input (${r.status})`);
+    return new Uint8Array(await r.arrayBuffer());
   });
+}
 
-  __ckFFmpegLoaded = true;
-  return __ckFFmpeg;
+function ckMediaCompatibility(file) {
+  if (!window.WebAssembly || !window.Worker || !window.Blob || !window.URL) {
+    return { ok:false, message:'This browser does not support the media processing engine. Please use a current Chrome, Edge, Firefox, or Safari browser.' };
+  }
+  // ffmpeg.wasm documents 2 GB as a hard WebAssembly input limit.
+  if (file && file.size >= 2 * 1024 * 1024 * 1024) {
+    return { ok:false, message:'This file is 2 GB or larger, which exceeds the browser media engine limit.' };
+  }
+  return { ok:true, message:'' };
+}
+
+async function ckGetFFmpeg(onProgress) {
+  if (onProgress) __ckProgressCallbacks.add(onProgress);
+  if (__ckFFmpeg && __ckFFmpeg.loaded) return __ckFFmpeg;
+  if (__ckLoadPromise) return __ckLoadPromise;
+
+  __ckLoadPromise = (async () => {
+    // Prefer the unminified official core name. cdnjs also exposes .min.js,
+    // so keep it as a mirror-specific fallback.
+    const [coreURL, wasmURL] = await Promise.all([
+      ckFetchFirst(['ffmpeg-core.js', 'ffmpeg-core.min.js'], 'text/javascript'),
+      ckFetchFirst(['ffmpeg-core.wasm'], 'application/wasm')
+    ]);
+    const ff = new CKFFmpeg();
+    ff.on('progress', ({ progress }) => {
+      if (Number.isFinite(progress) && progress >= 0 && progress <= 1) {
+        __ckProgressCallbacks.forEach(cb => { try { cb(progress); } catch (_) {} });
+      }
+    });
+    ff.on('log', ({ message }) => console.debug('[ConvertKoro media]', message));
+    await ff.load({ coreURL, wasmURL });
+    __ckFFmpeg = ff;
+    return ff;
+  })();
+
+  try { return await __ckLoadPromise; }
+  catch (e) {
+    if (__ckFFmpeg) __ckFFmpeg.terminate();
+    __ckFFmpeg = null; __ckLoadPromise = null;
+    throw e;
+  }
 }
 
 function ckFmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(2)+' MB'; }
