@@ -143,7 +143,7 @@
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; img=null; fileList.innerHTML=''; cleanBtn.disabled=true; } });
-  clearBtn.addEventListener('click', () => { file=null; img=null; fileList.innerHTML=''; cleanBtn.disabled=true; resultBox.classList.remove('show'); });
+  clearBtn.addEventListener('click', () => { file=null; img=null; fileList.innerHTML=''; cleanBtn.disabled=true; resultBox.classList.remove('show'); errBox.classList.remove('show'); });
 
   cleanBtn.addEventListener('click', () => {
     const canvas = document.createElement('canvas');

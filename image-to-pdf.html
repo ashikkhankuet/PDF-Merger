@@ -277,7 +277,7 @@
     const mv = e.target.closest('.fmove');
     if (mv) { const j = i + +mv.dataset.dir; if (j<0||j>=files.length) return; [files[i],files[j]]=[files[j],files[i]]; render(); }
   });
-  clearBtn.addEventListener('click', () => { files = []; rotations.clear(); render(); });
+  clearBtn.addEventListener('click', () => { files = []; rotations.clear(); errBox.classList.remove('show'); progressWrap.classList.remove('show'); render(); });
 
   async function loadImageBitmap(file) {
     const buf = await file.arrayBuffer();

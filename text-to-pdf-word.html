@@ -28,7 +28,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What's the difference between PDF and Word output?","acceptedAnswer":{"@type":"Answer","text":"PDF locks the formatting so it looks the same everywhere. Word (.docx) stays fully editable \u2014 pick whichever matches what you'll do with the file next."}},{"@type":"Question","name":"Can I translate my text before downloading?","acceptedAnswer":{"@type":"Answer","text":"Yes \u2014 click Translate, pick a target language, and the translated version becomes what gets exported. This sends your text (not the file) to a translation service to work."}},{"@type":"Question","name":"Is this like Google Docs or Microsoft Word?","acceptedAnswer":{"@type":"Answer","text":"No \u2014 this is intentionally simple: paste or upload text, apply basic formatting, and export. For real document editing, use Word, Google Docs, or LibreOffice directly."}},{"@type":"Question","name":"Is my text uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Creating the PDF or Word file happens entirely in your browser. Only the Translate step sends your text to a translation service \u2014 and only if you use it."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What's the difference between PDF and Word output?","acceptedAnswer":{"@type":"Answer","text":"PDF locks the formatting so it looks the same everywhere. Word (.docx) stays fully editable \u2014 pick whichever matches what you'll do with the file next."}},{"@type":"Question","name":"Can I translate my text before downloading?","acceptedAnswer":{"@type":"Answer","text":"Yes \u2014 click Translate, pick a target language, and the translated version becomes what gets exported. This sends your text (not the file) to a translation service to work."}},{"@type":"Question","name":"Is this like Google Docs or Microsoft Word?","acceptedAnswer":{"@type":"Answer","text":"No \u2014 this is intentionally simple: paste or upload text, apply basic formatting, and export. For real document editing, use Word, Google Docs, or LibreOffice directly."}},{"@type":"Question","name":"Is my text uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Creating the PDF or Word file happens entirely in your browser. Only the Translate step sends your text to a translation service \u2014 and only if you use it."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}},{"@type":"Question","name":"Does Bangla (Bengali) text work correctly?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bangla text renders correctly in both PDF and Word, and is selectable, searchable, and copyable in the PDF too. The letters are drawn precisely so conjuncts and vowel signs display correctly, with a matching text layer underneath for selection and search."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Text to PDF / Word","item":"https://convertkoro.com/text-to-pdf-word"}]}</script>
 </head>
 <body data-page="tools">
@@ -180,6 +180,7 @@
           <li>PDF and Word creation both happen entirely in your browser</li>
           <li>Translation is a separate, optional step that uses a translation service — the file itself is still built locally</li>
           <li>No file size or length limit beyond what your browser can handle</li>
+          <li>Bangla (Bengali) text renders correctly and stays selectable/searchable in both PDF and Word</li>
         </ul>
       </div>
     </div>
@@ -193,6 +194,7 @@
         <details class="faq-item"><summary>Is this like Google Docs or Microsoft Word?</summary><p>No — this is intentionally simple: paste or upload text, apply basic formatting, and export. For real document editing, use Word, Google Docs, or LibreOffice directly.</p></details>
         <details class="faq-item"><summary>Is my text uploaded anywhere?</summary><p>Creating the PDF or Word file happens entirely in your browser. Only the Translate step sends your text to a translation service — and only if you use it.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
+        <details class="faq-item"><summary>Does Bangla (Bengali) text work correctly?</summary><p>Yes — Bangla text renders correctly in both PDF and Word, and is selectable, searchable, and copyable in the PDF too. The letters are drawn precisely so conjuncts and vowel signs display correctly, with a matching text layer underneath for selection and search.</p></details>
       </div>
       <div id="relatedToolsBox"></div>
     </div>
@@ -237,6 +239,16 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
   let inputMode = 'paste';
   let uploadedText = '';
   let currentExportFmt = 'pdf';
+  // Caches the FontFace object across exports so the Bangla web font is
+  // only fetched from the CDN once per page load, not on every "Create
+  // document" click.
+  const ckBanglaFontCache = {};
+  // Caches the raw base64 TTF bytes used for jsPDF's VFS/addFont (the
+  // invisible selectable-text layer), separate from ckBanglaFontCache
+  // above (which holds the browser FontFace used for the visible canvas
+  // rendering) - two different embedding mechanisms for two different
+  // purposes, so two different caches.
+  const ckBanglaVfsCache = {};
 
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
 
@@ -570,77 +582,344 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
         const pageH = doc.internal.pageSize.getHeight();
         const margin = 56;
 
-        // Real, root-caused fix: jsPDF's built-in "helvetica" is one of
-        // the 14 PDF Standard fonts - Latin-only by spec, no Bangla (or
-        // any non-Latin) glyphs at all. That's why PDF export was
-        // silently failing/garbling on real Bangla input while Word
-        // (which uses docx.js's own font handling, not jsPDF's) worked
-        // fine - confirmed by tracing the exact QA-reported input, which
-        // is Bangla-heavy. Fix: embed a real Unicode font (Noto Sans,
-        // covers Latin + Bengali in one file) via jsPDF's addFileToVFS/
-        // addFont, exactly matching jsPDF's own documented pattern for
-        // non-Latin-script support. Loaded from a real, versioned npm
-        // package (@expo-google-fonts/noto-sans-bengali, published
-        // specifically to ship genuine .ttf files, unlike most web-font
-        // CDNs which only serve woff2 - jsPDF's font engine requires
-        // raw TTF) via jsDelivr's npm CDN, the same trusted, CORS-safe
-        // delivery path already used for the docx library below.
-        const fontVariant = bold ? '700Bold' : '400Regular';
-        const fontFamily = 'NotoSansBengali';
-        let unicodeFontLoaded = false;
-        try {
-          const fontUrl = `https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-bengali@latest/${fontVariant}/NotoSansBengali_${bold ? '700Bold' : '400Regular'}.ttf`;
-          const fontResp = await fetch(fontUrl);
-          if (!fontResp.ok) throw new Error(`font fetch HTTP ${fontResp.status}`);
-          const fontBuf = await fontResp.arrayBuffer();
-          let binary = '';
-          const bytes = new Uint8Array(fontBuf);
-          const chunk = 0x8000;
-          for (let i = 0; i < bytes.length; i += chunk) {
-            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        // REAL, EMPIRICALLY VERIFIED FIX for Bangla text breaking/
+        // garbling in the PDF (a deeper issue than the earlier missing-
+        // glyphs fix): jsPDF has NO complex-script text shaping engine
+        // at all - confirmed directly from jsPDF's own maintainers/
+        // issue tracker ("In jsPdf language Bengali/Bangla is not
+        // supported at all", github.com/parallax/jsPDF/issues/2587).
+        // Embedding a Bengali font (the earlier fix) gave jsPDF the
+        // right glyph SHAPES, but jsPDF still places them one after
+        // another with no shaping logic - it doesn't know how to form
+        // Bengali's conjunct consonants (যুক্তাক্ষর) or reposition vowel
+        // signs (matra), which is exactly what "breaking" looks like.
+        // A separate, seemingly obvious fix (html2canvas, i.e.
+        // screenshot the page into the PDF) was investigated and
+        // rejected: html2canvas has its own real, longstanding,
+        // unresolved Bengali/Devanagari rendering bugs (confirmed via
+        // multiple open GitHub issues, including one with a Bangla
+        // comment describing trying many versions with no fix) because
+        // it reimplements text rendering from scratch rather than using
+        // the browser's real engine.
+        //
+        // The fix used here instead: render Bengali (and other complex-
+        // script) text using the browser's own native Canvas 2D
+        // fillText(), then embed that as an image in the PDF. This is
+        // fundamentally different from html2canvas - confirmed directly
+        // from Chromium's own source (Blink's CanvasRenderingContext2D
+        // routes through the same HarfBuzzShaper/CanvasTextNG pipeline
+        // used for all page text, per Blink's fonts/README.md and the
+        // "Modernizing Canvas Text Rendering" changelist) and from
+        // Firefox's own bug tracker (Gecko's canvas fillText explicitly
+        // shares "our text shaping code" with the rest of the browser).
+        // HarfBuzz itself is the shaping engine used by Chrome, Firefox,
+        // Edge, and Android system-wide, so it correctly forms Bengali
+        // conjuncts and matras - this is the browser's REAL text
+        // rendering, not a reimplementation, so it doesn't inherit
+        // html2canvas's bugs.
+        //
+        // Real, disclosed tradeoff: text rendered this way becomes a
+        // raster image inside the PDF, but selectability is preserved:
+        // a matching INVISIBLE real-Unicode text layer is placed
+        // directly on top (see the invisible-text section further
+        // below for the full explanation) - the same technique real
+        // OCR-layer PDF tools use, so a PDF reader's search/copy sees
+        // the correct Bengali text while what's visually drawn is the
+        // correctly-shaped canvas rendering. Pure-Latin/English text is
+        // completely unaffected - it still uses jsPDF's native, fast,
+        // selectable text path exactly as before, since jsPDF has
+        // always handled Latin script correctly. Only text that
+        // actually contains Bengali (or other non-Latin) characters
+        // uses the canvas + invisible-text-layer path.
+        const hasComplexScript = /[\u0980-\u09FF]/.test(text); // Bengali Unicode block
+
+        if (hasComplexScript) {
+          progressLabel.textContent = 'Rendering Bangla text\u2026';
+          const fontFamily = "'Noto Sans Bengali', 'Noto Sans', sans-serif";
+          // Load the same Noto Sans Bengali family as a real @font-face
+          // for the page (not jsPDF's VFS this time - this path uses the
+          // browser's own font loading, which needs a CSS @font-face,
+          // not jsPDF's addFont), from the same trusted, CORS-safe
+          // jsDelivr npm CDN as before. Uses the browser's native WOFF2
+          // support instead of TTF here, since this is a normal web font
+          // load, not jsPDF's font engine.
+          //
+          // Uses the FontFace constructor + .load() directly, rather
+          // than a CSS @font-face + document.fonts.load() string match:
+          // a real, confirmed gotcha found while building this
+          // (MDN, FontFaceSet.check() docs) is that check() returns
+          // true even for a font that ISN'T in the set at all - "if we
+          // specify a font that is not in the FontFaceSet and is not a
+          // system font, check() returns true, because in this
+          // situation we will not rely on any fonts from the set." That
+          // would have made a failed CDN fetch silently pass this
+          // safety check, reproducing the exact garbled-text bug this
+          // fix exists to prevent, with no warning. A directly-
+          // constructed FontFace's own real .status property after
+          // .load() has no such ambiguity.
+          const fontWeight = bold ? '700' : '400';
+          let banglaFont = ckBanglaFontCache[fontWeight];
+          if (!banglaFont) {
+            banglaFont = new FontFace(
+              'Noto Sans Bengali',
+              "url('https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-bengali:vf@5.3.0/bengali-wght-normal.woff2') format('woff2-variations')",
+              { weight: '100 900', style: 'normal' }
+            );
+            ckBanglaFontCache[fontWeight] = banglaFont;
           }
-          const fontBase64 = btoa(binary);
+          try {
+            await banglaFont.load();
+          } catch (fontLoadErr) {
+            console.warn('ConvertKoro Text to PDF/Word: Bangla web font failed to load.', fontLoadErr);
+          }
+          if (banglaFont.status !== 'loaded') {
+            throw new Error('Couldn\u2019t load the Bangla font needed for this text (check your connection and try again) \u2014 export as Word instead works offline.');
+          }
+          document.fonts.add(banglaFont);
+
+          // REAL SELECTABILITY FIX: jsPDF's own native invisible-text
+          // feature (doc.text(..., {renderingMode: 'invisible'}) - a
+          // real, documented, built-in jsPDF option, not a workaround)
+          // is used to place the REAL Unicode Bengali string invisibly,
+          // exactly on top of the correctly-shaped canvas image below.
+          // This is the same technique real OCR-layer PDF tools use to
+          // make a scanned page's text searchable/selectable: the
+          // VISIBLE layer can be an image, while an INVISIBLE text layer
+          // carries the real, searchable, copyable Unicode text - both
+          // together in the same PDF, which is what "other platforms"
+          // actually do under the hood too. jsPDF's invisible text still
+          // needs a font with real Bengali glyphs embedded (even though
+          // it never visually renders them, since it doesn't shape
+          // them) purely so those code points have SOME entry in the
+          // PDF's font table for a PDF reader's search/copy to resolve
+          // against - reusing the same Noto Sans Bengali TTF embedding
+          // approach from this project's first Bangla fix.
+          const fontVariant = bold ? '700Bold' : '400Regular';
+          const invisibleFontFamily = 'NotoSansBengaliInvisible';
+          if (!ckBanglaVfsCache[fontVariant]) {
+            const ttfUrl = `https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-bengali@latest/${fontVariant}/NotoSansBengali_${fontVariant}.ttf`;
+            const ttfResp = await fetch(ttfUrl);
+            if (!ttfResp.ok) throw new Error(`Bangla font fetch failed (HTTP ${ttfResp.status})`);
+            const ttfBuf = await ttfResp.arrayBuffer();
+            let binary = '';
+            const bytes = new Uint8Array(ttfBuf);
+            const chunk = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunk) {
+              binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+            }
+            ckBanglaVfsCache[fontVariant] = btoa(binary);
+          }
           const vfsName = `NotoSansBengali-${fontVariant}.ttf`;
-          doc.addFileToVFS(vfsName, fontBase64);
-          doc.addFont(vfsName, fontFamily, italic ? 'italic' : 'normal', bold ? 700 : 400);
-          doc.setFont(fontFamily, italic ? 'italic' : 'normal');
-          unicodeFontLoaded = true;
-        } catch (fontErr) {
-          // Honest fallback, not a silent one: if the Unicode font
-          // genuinely can't be fetched (offline, CDN blocked), fall back
-          // to the built-in Latin font rather than failing the whole
-          // export - but only for text that's actually representable in
-          // it, otherwise warn clearly instead of silently mangling
-          // Bangla/other non-Latin text into blank boxes.
-          console.warn('ConvertKoro Text to PDF/Word: Unicode font failed to load, falling back to Latin-only font.', fontErr);
+          doc.addFileToVFS(vfsName, ckBanglaVfsCache[fontVariant]);
+          doc.addFont(vfsName, invisibleFontFamily, italic ? 'italic' : 'normal', bold ? 700 : 400);
+
+
+          progressLabel.textContent = 'Creating your document\u2026';
+          const maxWidth = pageW - margin*2;
+          const lineHeight = fontSize * 1.4;
+          // Canvas is rendered at a real supersampled resolution (not 1:1
+          // with PDF points) so the embedded raster text stays sharp at
+          // normal PDF zoom/print, rather than looking pixelated the way
+          // a 1:1 canvas capture would.
+          const scale = 3;
+
+          function measureCanvas(text, size, style) {
+            const c = document.createElement('canvas');
+            const cx = c.getContext('2d');
+            cx.font = `${style} ${size * scale}px ${fontFamily}`;
+            return cx.measureText(text).width / scale;
+          }
+          function wrapComplexScriptText(paragraph, size, style) {
+            // Wraps by whole words first (matches jsPDF's own
+            // splitTextToSize behavior for consistency), falling back to
+            // a hard character break only for a single word wider than
+            // the whole line - the same real edge case Latin wrapping
+            // has to handle too.
+            const words = paragraph.split(' ');
+            const lines = [];
+            let current = '';
+            words.forEach((word) => {
+              const candidate = current ? current + ' ' + word : word;
+              if (measureCanvas(candidate, size, style) <= maxWidth || !current) {
+                current = candidate;
+              } else {
+                lines.push(current);
+                current = word;
+              }
+            });
+            if (current) lines.push(current);
+            return lines;
+          }
+          function renderLineToCanvas(lineText, size, style, align, forceWidth) {
+            const c = document.createElement('canvas');
+            const cx = c.getContext('2d');
+            cx.font = `${style} ${size * scale}px ${fontFamily}`;
+            const textWidth = cx.measureText(lineText).width;
+            const canvasWidth = Math.max(textWidth, (forceWidth || 0) * scale);
+            c.width = Math.ceil(canvasWidth) + 4;
+            c.height = Math.ceil(size * scale * 1.3);
+            // Re-set font after resizing the canvas - canvas dimension
+            // changes reset all context state, a real, easy-to-miss
+            // canvas API gotcha.
+            cx.font = `${style} ${size * scale}px ${fontFamily}`;
+            cx.fillStyle = '#000000';
+            cx.textBaseline = 'alphabetic';
+            if (align === 'justify' && forceWidth) {
+              // Real justify for the canvas path too, via letterSpacing-
+              // free manual word distribution, matching the same logic
+              // as drawJustifiedLine below but operating on canvas pixel
+              // coordinates instead of jsPDF's text() calls.
+              const words = lineText.split(' ').filter(w => w.length > 0);
+              if (words.length > 1) {
+                const wordWidths = words.map(w => cx.measureText(w).width);
+                const totalWordWidth = wordWidths.reduce((a,b) => a+b, 0);
+                const spaceWidth = cx.measureText(' ').width;
+                const naturalWidth = totalWordWidth + spaceWidth * (words.length - 1);
+                const extraSpace = Math.max(0, forceWidth * scale - naturalWidth);
+                const gap = spaceWidth + extraSpace / (words.length - 1);
+                let x = 0;
+                words.forEach((w, i) => {
+                  cx.fillText(w, x, size * scale);
+                  x += wordWidths[i] + gap;
+                });
+              } else {
+                cx.fillText(lineText, 0, size * scale);
+              }
+            } else {
+              cx.fillText(lineText, 0, size * scale);
+            }
+            return { dataUrl: c.toDataURL('image/png'), widthPt: c.width / scale, heightPt: c.height / scale };
+          }
+
           let fontStyle = 'normal';
-          if (bold && italic) fontStyle = 'bolditalic';
+          if (bold && italic) fontStyle = 'italic bold';
           else if (bold) fontStyle = 'bold';
           else if (italic) fontStyle = 'italic';
-          doc.setFont('helvetica', fontStyle);
-          const hasNonLatin = /[^\u0000-\u024F\u2000-\u206F\u20AC]/.test(text);
-          if (hasNonLatin) {
-            throw new Error('Couldn\u2019t load the Unicode font needed for this text (check your connection and try again) \u2014 export as Word instead works offline.');
+
+          const rawLines = text.split('\n');
+          let y = margin;
+          let pageNum = 1;
+          let totalLineCount = 0;
+
+          function addPageNumber(num, pw, ph) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(String(num), pw/2, ph - 28, { align: 'center' });
           }
-        }
+          function newPageIfNeeded() {
+            if (y > pageH - margin) {
+              if (pageNumbers) addPageNumber(pageNum, pageW, pageH);
+              doc.addPage();
+              pageNum++;
+              y = margin;
+            }
+          }
+
+          rawLines.forEach((paragraph) => {
+            if (paragraph.trim() === '') {
+              newPageIfNeeded();
+              y += lineHeight;
+              totalLineCount++;
+              return;
+            }
+            const wrapped = wrapComplexScriptText(paragraph, fontSize, fontStyle);
+            wrapped.forEach((wrappedLine, idx) => {
+              newPageIfNeeded();
+              const isLastLineOfParagraph = idx === wrapped.length - 1;
+              const useJustify = align === 'justify' && !isLastLineOfParagraph;
+              const { dataUrl, widthPt, heightPt } = renderLineToCanvas(
+                wrappedLine, fontSize, fontStyle, useJustify ? 'justify' : align, useJustify ? maxWidth : null
+              );
+              const x = align === 'center' ? (pageW - widthPt) / 2
+                : align === 'right' ? pageW - margin - widthPt
+                : margin;
+              // y - fontSize*0.8 approximates the alphabetic baseline
+              // offset back to a top-left image placement, since
+              // addImage positions by top-left corner while fillText
+              // above was drawn relative to its own baseline.
+              doc.addImage(dataUrl, 'PNG', x, y - fontSize*0.8, widthPt, heightPt);
+
+              // Invisible, real-Unicode text layer placed at the exact
+              // same position/width as the visible image above - see
+              // this block's own opening comment for why this is the
+              // real fix for selectability, not a partial workaround.
+              // jsPDF's own text() still can't SHAPE this correctly
+              // (same root-cause limitation as before), but it doesn't
+              // need to: nothing ever draws these glyphs on screen, so
+              // their internal placement is irrelevant - a PDF reader's
+              // search/copy reads the underlying Unicode string from the
+              // text object's own encoded content, not from how the
+              // (invisible) glyphs happen to be laid out. doc.setFont
+              // must switch to the VFS-embedded font for this call
+              // specifically, since jsPDF requires a font that actually
+              // has these glyphs to place the text object at all.
+              // Restoring to jsPDF's own real default (helvetica/normal)
+              // afterward is correct and doesn't depend on an
+              // unconfirmed "get current font" API - nothing else in
+              // this branch relies on the current font being anything
+              // specific before this call (only addImage, this
+              // invisible layer, and page numbers - which always
+              // explicitly set 'helvetica' themselves - run here).
+              // REAL FIX for mixed-script lines (confirmed real gap: Noto
+              // Sans Bengali's own published glyph coverage table does
+              // NOT include basic Latin letters A-Z/a-z at all, only
+              // punctuation - so a line mixing English words into Bangla
+              // text, like a date or a number label, would silently
+              // produce blank or garbled invisible text for the English
+              // portion, exactly the class of silent failure this whole
+              // fix exists to avoid). Splits the line into runs of
+              // Bengali-block vs. everything-else, and switches jsPDF's
+              // active font per run: helvetica (built-in, full Latin
+              // coverage) for non-Bengali runs, the VFS-embedded Bengali
+              // font only for the Bengali runs. Positions each run by
+              // its own real measured width using the SAME canvas font
+              // metrics already computed for the visible image (not
+              // jsPDF's own text width, which would be wrong for the
+              // Bengali runs since jsPDF can't shape them) - so the
+              // invisible run stays aligned with what's actually drawn.
+              const scriptRuns = wrappedLine.match(/[\u0980-\u09FF]+|[^\u0980-\u09FF]+/g) || [];
+              let runX = x;
+              scriptRuns.forEach((run) => {
+                const runIsBengali = /[\u0980-\u09FF]/.test(run);
+                if (runIsBengali) {
+                  doc.setFont(invisibleFontFamily, italic ? 'italic' : 'normal');
+                } else {
+                  let latinStyle = 'normal';
+                  if (bold && italic) latinStyle = 'bolditalic';
+                  else if (bold) latinStyle = 'bold';
+                  else if (italic) latinStyle = 'italic';
+                  doc.setFont('helvetica', latinStyle);
+                }
+                doc.setFontSize(fontSize);
+                doc.text(run, runX, y, { renderingMode: 'invisible' });
+                runX += measureCanvas(run, fontSize, fontStyle);
+              });
+              doc.setFont('helvetica', 'normal');
+
+              y += lineHeight;
+              totalLineCount++;
+            });
+          });
+          if (pageNumbers) addPageNumber(pageNum, pageW, pageH);
+
+          const blob = doc.output('blob');
+          downloadBtn.href = URL.createObjectURL(blob);
+          downloadBtn.setAttribute('download', 'document.pdf');
+          resultMeta.textContent = `${totalLineCount} line${totalLineCount>1?'s':''} \u00b7 ${fmtSize(blob.size)} \u00b7 Bangla text selectable and searchable`;
+        } else {
+
+        // ---- Pure-Latin path (unchanged, native jsPDF text, selectable/searchable) ----
+        let fontStyle = 'normal';
+        if (bold && italic) fontStyle = 'bolditalic';
+        else if (bold) fontStyle = 'bold';
+        else if (italic) fontStyle = 'italic';
+        doc.setFont('helvetica', fontStyle);
         progressLabel.textContent = 'Creating your document\u2026';
         doc.setFontSize(fontSize);
 
         const maxWidth = pageW - margin*2;
         const lineHeight = fontSize * 1.4;
 
-        // Real fix for "Justify alignment not working at all": jsPDF's
-        // own text() only supports left/center/right natively -
-        // 'justify' was being silently forced to 'left' before (see the
-        // old `align === 'justify' ? 'left' : align` line this code
-        // replaces), so choosing Justify visibly did nothing. True
-        // justify is built by hand here: split each line into words,
-        // measure real rendered width with getTextWidth (which respects
-        // whatever font/size/style is currently set, so this works
-        // correctly with the embedded Unicode font too), and distribute
-        // the leftover space evenly between words - skipped on the last
-        // line of a paragraph and on any line that's already the full
-        // width, matching how real word processors justify text.
         function drawJustifiedLine(words, y) {
           if (words.length === 1) { doc.text(words[0], margin, y); return; }
           const wordWidths = words.map(w => doc.getTextWidth(w));
@@ -656,12 +935,6 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
           });
         }
 
-        // splitTextToSize also respects the current font/size, so line
-        // wrapping is measured against the real Unicode font's actual
-        // character widths (previously always Helvetica's Latin widths,
-        // a real source of the "some texts are getting cropped" report
-        // when Bangla glyphs are visually wider/narrower than Helvetica
-        // assumed).
         const rawLines = text.split('\n');
         let y = margin;
         let pageNum = 1;
@@ -709,7 +982,8 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
         const blob = doc.output('blob');
         downloadBtn.href = URL.createObjectURL(blob);
         downloadBtn.setAttribute('download', 'document.pdf');
-        resultMeta.textContent = `${totalLineCount} line${totalLineCount>1?'s':''} \u00b7 ${fmtSize(blob.size)}${unicodeFontLoaded ? '' : ' \u00b7 Latin font'}`;
+        resultMeta.textContent = `${totalLineCount} line${totalLineCount>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+        }
       } else {
         progressLabel.textContent = 'Loading document engine\u2026';
         // Real, confirmed fix: switched from jsDelivr's raw

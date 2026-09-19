@@ -205,7 +205,7 @@
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; fileList.innerHTML=''; splitBtn.disabled=true; splitOptions.style.display='none'; } });
-  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; splitBtn.disabled=true; splitOptions.style.display='none'; resultBox.classList.remove('show'); rangeInput.value=''; });
+  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; splitBtn.disabled=true; splitOptions.style.display='none'; resultBox.classList.remove('show'); errBox.classList.remove('show'); progressWrap.classList.remove('show'); rangeInput.value=''; });
 
   function parseRange(str, max) {
     const indices = new Set();

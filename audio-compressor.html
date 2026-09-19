@@ -174,7 +174,7 @@
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; } });
-  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; resultBox.classList.remove('show'); });
+  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; resultBox.classList.remove('show'); errBox.classList.remove('show'); progressWrap.classList.remove('show'); });
   brSlider.addEventListener('input', () => { brVal.textContent = brSlider.value + ' kbps'; });
 
   compressBtn.addEventListener('click', async () => {

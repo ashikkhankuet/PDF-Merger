@@ -172,8 +172,11 @@
     preview.onloadedmetadata = () => {
       duration = preview.duration;
       endIn.value = duration.toFixed(1);
+      startIn.max = Math.max(0, duration - 0.1).toFixed(1);
+      endIn.max = duration.toFixed(1);
       durInfo.textContent = `Full length: ${duration.toFixed(1)}s`;
       trimBtn.disabled = false;
+      validateRange();
     };
     preview.onerror = () => {
       errText.textContent = 'Couldn\u2019t read this audio file.';
@@ -186,24 +189,70 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  clearBtn.addEventListener('click', () => { file=null; duration=null; editWrap.style.display='none'; trimBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  // Real, confirmed bug fix: Start had no upper bound against the
+  // audio's real length at all, and End was silently clamped down to
+  // fit rather than telling the person what was actually wrong - so a
+  // start time past the end of the clip (or start === end) could reach
+  // the conversion step and come back with an empty/near-empty file
+  // with no clear explanation. Checked live as the person types.
+  function validateRange() {
+    if (duration === null) return true;
+    const start = parseFloat(startIn.value);
+    const end = parseFloat(endIn.value);
+    if (isNaN(start) || isNaN(end)) return true;
+    if (start >= duration) {
+      errText.textContent = `Start time (${start}s) is past the end of this ${duration.toFixed(1)}s audio file \u2014 pick a start time before ${duration.toFixed(1)}s.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    if (end > duration) {
+      errText.textContent = `End time (${end}s) is past the end of this ${duration.toFixed(1)}s audio file \u2014 the latest possible end time is ${duration.toFixed(1)}s.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    if (start === end) {
+      errText.textContent = `Start and end are both ${start}s \u2014 a difference between them is required to create a clip.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    if (start > end) {
+      errText.textContent = `Start (${start}s) is after end (${end}s) \u2014 start must come before end.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    errBox.classList.remove('show');
+    trimBtn.disabled = false;
+    return true;
+  }
+  startIn.addEventListener('input', validateRange);
+  endIn.addEventListener('input', validateRange);
+
+  clearBtn.addEventListener('click', () => {
+    file = null;
+    duration = null;
+    editWrap.style.display = 'none';
+    trimBtn.disabled = true;
+    resultBox.classList.remove('show');
+    errBox.classList.remove('show');
+    progressWrap.classList.remove('show');
+    fileInput.value = '';
+    preview.removeAttribute('src');
+    preview.load();
+  });
 
   trimBtn.addEventListener('click', async () => {
+    if (!validateRange()) return;
     errBox.classList.remove('show'); resultBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '2%';
     progressLabel.textContent = 'Uploading\u2026';
     trimBtn.disabled = true;
     const start = Math.max(0, parseFloat(startIn.value) || 0);
-    const end = Math.min(duration, parseFloat(endIn.value) || duration);
+    const end = parseFloat(endIn.value);
     const baseName = file.name.replace(/\.[^.]+$/, '');
-
-    if (end <= start) {
-      progressWrap.classList.remove('show');
-      errText.textContent = 'End must be after start.';
-      errBox.classList.add('show');
-      trimBtn.disabled = false;
-      return;
-    }
 
     try {
       const blob = await ckProcessMediaServerSide(file, 'audio-trim', { start, end }, (pct, label) => {

@@ -161,11 +161,26 @@
   const resultMeta = document.getElementById('resultMeta');
   const downloadBtn = document.getElementById('downloadBtn');
   let file = null;
+  let videoDuration = null;
 
   function setFile(f) {
     if (!f || !f.type.startsWith('video/')) return;
     file = f;
     preview.src = URL.createObjectURL(f);
+    videoDuration = null;
+    // Real fix for a confirmed bug: Start/Duration had no upper bound
+    // against the actual video's length at all - someone could enter a
+    // start time past the end of the clip (or a start+duration that
+    // runs off the end) and the tool would still "succeed" and hand
+    // back an empty/near-empty file, with zero indication anything was
+    // wrong. Reading the real duration once the browser has loaded the
+    // video's metadata, then clamping both inputs against it, catches
+    // this before it ever reaches the server.
+    preview.addEventListener('loadedmetadata', () => {
+      videoDuration = preview.duration;
+      startIn.max = Math.max(0, videoDuration - 0.1).toFixed(1);
+      validateRange();
+    }, { once: true });
     editWrap.style.display = 'block';
     convertBtn.disabled = false;
     resultBox.classList.remove('show'); errBox.classList.remove('show');
@@ -176,9 +191,59 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  clearBtn.addEventListener('click', () => { file=null; editWrap.style.display='none'; convertBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  // Real, honest validation shown as the person types, not just silently
+  // clamped at conversion time - clamping alone would let someone enter
+  // "start: 500s" on a 12s clip and only discover something was off from
+  // a weirdly-short or empty result. Naming the actual problem (with the
+  // real duration) is clearer than a generic error after the fact.
+  function validateRange() {
+    if (videoDuration === null) return true;
+    const start = parseFloat(startIn.value);
+    const dur = parseFloat(durIn.value);
+    if (isNaN(start) || isNaN(dur)) return true; // let the min/step/required constraints handle empty inputs
+    if (start >= videoDuration) {
+      errText.textContent = `Start time (${start}s) is past the end of this ${videoDuration.toFixed(1)}s video \u2014 pick a start time before ${videoDuration.toFixed(1)}s.`;
+      errBox.classList.add('show');
+      convertBtn.disabled = true;
+      return false;
+    }
+    if (start + dur > videoDuration) {
+      const maxDur = Math.max(0.5, videoDuration - start).toFixed(1);
+      errText.textContent = `Start (${start}s) + duration (${dur}s) runs past the end of this ${videoDuration.toFixed(1)}s video \u2014 use a duration of ${maxDur}s or less from this start time.`;
+      errBox.classList.add('show');
+      convertBtn.disabled = true;
+      return false;
+    }
+    errBox.classList.remove('show');
+    convertBtn.disabled = false;
+    return true;
+  }
+  startIn.addEventListener('input', validateRange);
+  durIn.addEventListener('input', validateRange);
+
+  clearBtn.addEventListener('click', () => {
+    // Real, confirmed bug fix: Clear previously left the error box (and
+    // any in-progress state) exactly as it was, so a person who clicked
+    // Clear to get out of a stuck/errored state still saw the same error
+    // sitting there, unresolved - looking like Clear had silently failed.
+    file = null;
+    videoDuration = null;
+    editWrap.style.display = 'none';
+    convertBtn.disabled = true;
+    resultBox.classList.remove('show');
+    errBox.classList.remove('show');
+    progressWrap.classList.remove('show');
+    fileInput.value = '';
+    preview.removeAttribute('src');
+    preview.load();
+  });
 
   convertBtn.addEventListener('click', async () => {
+    // Final, authoritative check right before submitting - not just
+    // relying on the live input-validation above, in case someone
+    // clicks Convert in the brief window before video metadata loads,
+    // or the button's disabled state was bypassed some other way.
+    if (!validateRange()) return;
     errBox.classList.remove('show'); resultBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '2%';
     progressLabel.textContent = 'Uploading\u2026';

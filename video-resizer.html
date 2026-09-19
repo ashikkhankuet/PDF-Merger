@@ -173,7 +173,7 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  clearBtn.addEventListener('click', () => { file=null; editWrap.style.display='none'; resizeBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  clearBtn.addEventListener('click', () => { file=null; editWrap.style.display='none'; resizeBtn.disabled=true; resultBox.classList.remove('show'); errBox.classList.remove('show'); progressWrap.classList.remove('show'); fileInput.value=''; });
   wIn.addEventListener('input', () => { if (lockRatio.checked && !syncing) { syncing=true; hIn.value = Math.round(wIn.value / ratio / 2) * 2; syncing=false; } });
   hIn.addEventListener('input', () => { if (lockRatio.checked && !syncing) { syncing=true; wIn.value = Math.round(hIn.value * ratio / 2) * 2; syncing=false; } });
 

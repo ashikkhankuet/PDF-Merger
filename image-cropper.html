@@ -179,7 +179,7 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  clearBtn.addEventListener('click', () => { file=null; img=null; stageWrap.style.display='none'; cropBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  clearBtn.addEventListener('click', () => { file=null; img=null; stageWrap.style.display='none'; cropBtn.disabled=true; resultBox.classList.remove('show'); errBox.classList.remove('show'); fileInput.value=''; });
 
   function stageRect() { return stage.getBoundingClientRect(); }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }

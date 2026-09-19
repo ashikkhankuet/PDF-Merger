@@ -156,12 +156,20 @@
   const resultMeta = document.getElementById('resultMeta');
   const downloadBtn = document.getElementById('downloadBtn');
   let file = null;
+  let videoDuration = null;
 
   function setFile(f) {
     if (!f || !f.type.startsWith('video/')) return;
     file = f;
     preview.src = URL.createObjectURL(f);
-    preview.onloadedmetadata = () => { endIn.value = preview.duration.toFixed(1); };
+    videoDuration = null;
+    preview.onloadedmetadata = () => {
+      videoDuration = preview.duration;
+      endIn.value = preview.duration.toFixed(1);
+      startIn.max = Math.max(0, videoDuration - 0.1).toFixed(1);
+      endIn.max = videoDuration.toFixed(1);
+      validateRange();
+    };
     editWrap.style.display = 'block';
     trimBtn.disabled = false;
     resultBox.classList.remove('show'); errBox.classList.remove('show');
@@ -172,15 +180,69 @@
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
-  clearBtn.addEventListener('click', () => { file=null; editWrap.style.display='none'; trimBtn.disabled=true; resultBox.classList.remove('show'); fileInput.value=''; });
+  // Real, confirmed bug fix: Start/End had no real validation against
+  // the video's own length, and equal Start/End values silently produced
+  // an empty output with no explanation - exactly what was reported.
+  // Checked live as the person types, with the real duration and the
+  // real conflicting values named in the message, rather than a generic
+  // error after a wasted upload/conversion attempt.
+  function validateRange() {
+    if (videoDuration === null) return true;
+    const start = parseFloat(startIn.value);
+    const end = parseFloat(endIn.value);
+    if (isNaN(start) || isNaN(end)) return true;
+    if (start >= videoDuration) {
+      errText.textContent = `Start time (${start}s) is past the end of this ${videoDuration.toFixed(1)}s video \u2014 pick a start time before ${videoDuration.toFixed(1)}s.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    if (end > videoDuration) {
+      errText.textContent = `End time (${end}s) is past the end of this ${videoDuration.toFixed(1)}s video \u2014 the latest possible end time is ${videoDuration.toFixed(1)}s.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    if (start === end) {
+      errText.textContent = `Start and end are both ${start}s \u2014 a difference between them is required to create a clip.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    if (start > end) {
+      errText.textContent = `Start (${start}s) is after end (${end}s) \u2014 start must come before end.`;
+      errBox.classList.add('show');
+      trimBtn.disabled = true;
+      return false;
+    }
+    errBox.classList.remove('show');
+    trimBtn.disabled = false;
+    return true;
+  }
+  startIn.addEventListener('input', validateRange);
+  endIn.addEventListener('input', validateRange);
+
+  clearBtn.addEventListener('click', () => {
+    file = null;
+    videoDuration = null;
+    editWrap.style.display = 'none';
+    trimBtn.disabled = true;
+    resultBox.classList.remove('show');
+    errBox.classList.remove('show');
+    progressWrap.classList.remove('show');
+    fileInput.value = '';
+    preview.removeAttribute('src');
+    preview.load();
+  });
 
   trimBtn.addEventListener('click', async () => {
+    if (!validateRange()) return;
     errBox.classList.remove('show'); resultBox.classList.remove('show');
     progressWrap.classList.add('show'); progressFill.style.width = '2%';
     progressLabel.textContent = 'Uploading\u2026';
     trimBtn.disabled = true;
     const start = Math.max(0, parseFloat(startIn.value) || 0);
-    const end = Math.max(start + 0.1, parseFloat(endIn.value) || start + 1);
+    const end = parseFloat(endIn.value);
     const ext = ckExt(file.name);
     const baseName = file.name.replace(/\.[^.]+$/, '');
 

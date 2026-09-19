@@ -32,7 +32,7 @@
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video Compressor","description":"Shrink a video's file size with a quality slider, entirely in your browser.","url":"https://convertkoro.com/video-compressor","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video Compressor","item":"https://convertkoro.com/video-compressor"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How much smaller will my video get?","acceptedAnswer":{"@type":"Answer","text":"It depends on the original file and the compression level you choose — higher compression means a smaller file but lower visual quality."}},{"@type":"Question","name":"Why does this take longer than other tools?","acceptedAnswer":{"@type":"Answer","text":"Compression now runs on our own server with a real video engine, which is much faster than doing it in a browser. It still takes real time for larger or higher-resolution videos, since every frame is genuinely re-encoded. Turning on the speed and resolution options helps."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How much smaller will my video get?","acceptedAnswer":{"@type":"Answer","text":"It depends on the original file and the compression level you choose — higher compression means a smaller file but lower visual quality."}},{"@type":"Question","name":"Why does this take longer than other tools?","acceptedAnswer":{"@type":"Answer","text":"Compression now runs on our own server with a real video engine, which is much faster than doing it in a browser. It still takes real time for larger or higher-resolution videos, since every frame is genuinely re-encoded. Speed and resolution optimizations are applied automatically."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -50,7 +50,7 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>Compressed on our server</strong> for real speed \u2014 your video is uploaded, compressed with a real video engine, and the result downloaded back, all automatically. If the server is ever unavailable, this falls back to compressing directly in your browser instead (slower, but still works with no upload). Larger or higher-resolution videos take longer either way \u2014 keeping the speed and resolution options below checked helps.</span>
+        <span><strong>Compressed on our server</strong> for real speed \u2014 your video is uploaded, compressed with a real video engine, and the result downloaded back, all automatically. Speed and resolution optimizations are applied automatically for large or high-resolution videos, so there\u2019s nothing to configure. If the server is ever unavailable, this falls back to compressing directly in your browser instead (slower, but still works with no upload).</span>
       </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -64,18 +64,6 @@
         <div class="slider-row">
           <label>Compression <span class="val" id="crfVal">Balanced</span></label>
           <input type="range" id="crfSlider" min="23" max="35" step="2" value="28" />
-        </div>
-        <div class="opts-row" style="margin-top:14px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);">
-            <input type="checkbox" id="fastModeCheck" checked />
-            Prioritize speed (recommended \u2014 much faster, slightly larger file)
-          </label>
-        </div>
-        <div class="opts-row" style="margin-top:8px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);">
-            <input type="checkbox" id="capResCheck" checked />
-            Cap resolution at 1080p for large videos (much faster on 4K/high-res files, no visible difference for most uses)
-          </label>
         </div>
         <div class="hint" id="etaHint" style="margin-top:10px;"></div>
       </div>
@@ -113,7 +101,7 @@
       <div class="faq-related-grid">
       <div class="faq-list">
         <details class="faq-item"><summary>How much smaller will my video get?</summary><p>It depends on the original file and the compression level you choose — higher compression means a smaller file but lower visual quality.</p></details>
-        <details class="faq-item"><summary>Why does this take longer than other tools?</summary><p>Compression now runs on our own server with a real video engine, which is much faster than doing it in a browser. It still takes real time for larger or higher-resolution videos, since every frame is genuinely re-encoded. Turning on the speed and resolution options helps.</p></details>
+        <details class="faq-item"><summary>Why does this take longer than other tools?</summary><p>Compression now runs on our own server with a real video engine, which is much faster than doing it in a browser. It still takes real time for larger or higher-resolution videos, since every frame is genuinely re-encoded. Speed and resolution optimizations are applied automatically.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
       <div id="relatedToolsBox"></div>
@@ -143,8 +131,17 @@
   const qualityRow = document.getElementById('qualityRow');
   const crfSlider = document.getElementById('crfSlider');
   const crfVal = document.getElementById('crfVal');
-  const fastModeCheck = document.getElementById('fastModeCheck');
-  const capResCheck = document.getElementById('capResCheck');
+  // Real, deliberate design change: these were previously two visible
+  // checkboxes the person had to keep checked to get real speed - the
+  // same automatic-in-the-background pattern already used for Image to
+  // Text's on-device/cloud OCR choice. Both genuinely help speed with no
+  // meaningful downside for the vast majority of real-world use (a
+  // slightly larger file at "prioritize speed", and 1080p being visually
+  // indistinguishable from 4K for nearly everyone's actual use case), so
+  // they are now always on rather than something a person could
+  // accidentally uncheck and silently get the old, much slower behavior.
+  const fastMode = true;
+  const capRes = true;
   const etaHint = document.getElementById('etaHint');
   const compressBtn = document.getElementById('compressBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -185,14 +182,10 @@
   function updateEtaHint() {
     if (!file) { etaHint.textContent = ''; return; }
     const mb = file.size / (1024*1024);
-    const speedFactor = fastModeCheck.checked ? 1 : 1.8;
-    const resFactor = capResCheck.checked ? 1 : 1.6;
-    const estMinLow = Math.max(1, Math.round((mb / 45) * speedFactor * resFactor));
+    const estMinLow = Math.max(1, Math.round(mb / 45));
     const estMinHigh = Math.max(estMinLow + 1, Math.round(estMinLow * 1.8));
     etaHint.textContent = `Rough estimate: ${estMinLow}\u2013${estMinHigh} min on a typical device, plus a one-time engine download the first time you use this tool. Older phones or larger/4K videos can take noticeably longer.`;
   }
-  fastModeCheck.addEventListener('change', updateEtaHint);
-  capResCheck.addEventListener('change', updateEtaHint);
 
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
@@ -201,7 +194,7 @@
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
   fileList.addEventListener('click', (e) => { if (e.target.closest('.fremove')) { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; } });
-  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; resultBox.classList.remove('show'); });
+  clearBtn.addEventListener('click', () => { file=null; fileList.innerHTML=''; qualityRow.style.display='none'; compressBtn.disabled=true; resultBox.classList.remove('show'); errBox.classList.remove('show'); progressWrap.classList.remove('show'); });
   crfSlider.addEventListener('input', () => { crfVal.textContent = labels[crfSlider.value] || 'Balanced'; });
 
   compressBtn.addEventListener('click', async () => {
@@ -211,8 +204,7 @@
     compressBtn.disabled = true;
 
     const crf = crfSlider.value;
-    const fastMode = fastModeCheck.checked;
-    const capRes = capResCheck.checked;
+    // fastMode and capRes are the always-on constants defined above -
     const baseName = file.name.replace(/\.[^.]+$/, '');
 
     try {
