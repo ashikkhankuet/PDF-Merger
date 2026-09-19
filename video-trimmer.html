@@ -30,6 +30,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script src="ffmpeg-tools.js"></script>
+<script src="media-server-pipeline.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video Trimmer","description":"Trim a video to the section you need, entirely in your browser.","url":"https://convertkoro.com/video-trimmer","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video Trimmer","item":"https://convertkoro.com/video-trimmer"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does trimming re-encode the whole video?","acceptedAnswer":{"@type":"Answer","text":"No — trimming uses a fast copy mode that cuts without fully re-encoding, so it’s much quicker than compression or resizing."}},{"@type":"Question","name":"Can I trim multiple clips from one video?","acceptedAnswer":{"@type":"Answer","text":"One clip per conversion — run the tool again with different start/end times for additional clips."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -50,12 +51,12 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>First use downloads a ~25MB video engine</strong> to your browser (one-time, cached after). Works best on files under ~200MB &mdash; very large videos may be slow or run out of memory on some devices.</span>
+        <span><strong>Trimmed on our server</strong> for real speed. If the server is ever unavailable, this falls back to trimming directly in your browser instead. Trimming is kept fast by not re-encoding the video, so the cut may land up to a couple of seconds off your exact start time on some files &mdash; this is a real technical tradeoff for speed, not a bug.</span>
       </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a video file here</strong>
-        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; stays on your device</div>
+        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; trimmed on our server, deleted afterward</div>
         <input type="file" id="fileInput" accept="video/*,.mp4,.webm,.mov,.avi,.mpeg,.mpg,.mkv" hidden />
       </div>
       <div id="editWrap" style="display:none;margin-top:18px;">
@@ -175,40 +176,57 @@
 
   trimBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
-    progressLabel.textContent = 'Loading video engine\u2026';
+    progressWrap.classList.add('show'); progressFill.style.width = '2%';
+    progressLabel.textContent = 'Uploading\u2026';
     trimBtn.disabled = true;
+    const start = Math.max(0, parseFloat(startIn.value) || 0);
+    const end = Math.max(start + 0.1, parseFloat(endIn.value) || start + 1);
+    const ext = ckExt(file.name);
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+
     try {
-      const compat = ckMediaCompatibility(file);
-      if (!compat.ok) throw new Error(compat.message);
-      const ffmpeg = await ckGetFFmpeg((ratio) => {
-        progressFill.style.width = `${20 + ratio*75}%`;
-        progressLabel.textContent = 'Trimming\u2026';
+      const blob = await ckProcessMediaServerSide(file, 'video-trim', { start, end, ext, mimeType: file.type }, (pct, label) => {
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = label;
       });
-      progressFill.style.width = '20%';
-      progressLabel.textContent = 'Trimming\u2026';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const ext = ckExt(file.name);
-      const inName = 'input.' + ext;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-      const start = Math.max(0, parseFloat(startIn.value) || 0);
-      const end = Math.max(start + 0.1, parseFloat(endIn.value) || start + 1);
-      await ffmpeg.exec(['-i', inName, '-ss', String(start), '-to', String(end), '-c', 'copy', '-avoid_negative_ts', 'make_zero', 'output.' + ext]);
-      const data = (await ffmpeg.readFile('output.' + ext));
-      const blob = new Blob([data.buffer], { type: file.type });
-      const baseName = file.name.replace(/\.[^.]+$/, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}-trimmed.${ext}`);
-      resultMeta.textContent = `${(end-start).toFixed(1)}s \u00b7 ${ckFmtSize(blob.size)}`;
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
-    } catch (err) {
-      progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t trim this video \u2014 try a smaller file or a different format.';
-      errBox.classList.add('show');
+      finishTrim(blob, start, end, ext, baseName);
+    } catch (serverErr) {
+      console.warn('ConvertKoro Video Trimmer: server-side processing failed, falling back to in-browser engine.', serverErr);
+      try {
+        progressLabel.textContent = 'Server unavailable \u2014 falling back to your browser\u2019s own engine\u2026';
+        const compat = ckMediaCompatibility(file);
+        if (!compat.ok) throw new Error(compat.message);
+        const ffmpeg = await ckGetFFmpeg((ratio) => {
+          progressFill.style.width = `${20 + ratio*75}%`;
+          progressLabel.textContent = 'Trimming in your browser\u2026';
+        });
+        progressFill.style.width = '20%';
+        progressLabel.textContent = 'Trimming in your browser\u2026';
+        const inName = 'input.' + ext;
+        await ffmpeg.writeFile(inName, await ckFetchFile(file));
+        await ffmpeg.exec(['-i', inName, '-ss', String(start), '-to', String(end), '-c', 'copy', '-avoid_negative_ts', 'make_zero', 'output.' + ext]);
+        const data = await ffmpeg.readFile('output.' + ext);
+        const blob = new Blob([data.buffer], { type: file.type });
+        finishTrim(blob, start, end, ext, baseName, true);
+      } catch (clientErr) {
+        progressWrap.classList.remove('show');
+        const detail = clientErr && clientErr.message ? clientErr.message : 'unknown error';
+        errText.textContent = `Couldn\u2019t trim this video (${detail}) \u2014 try a smaller file or a different format.`;
+        console.error('ConvertKoro Video Trimmer: both server and in-browser processing failed.', clientErr);
+        errBox.classList.add('show');
+      }
     }
     trimBtn.disabled = false;
   });
+
+  function finishTrim(blob, start, end, ext, baseName, wasFallback) {
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', `${baseName}-trimmed.${ext}`);
+    const line = `${(end-start).toFixed(1)}s \u00b7 ${ckFmtSize(blob.size)}`;
+    resultMeta.textContent = wasFallback ? `${line} \u00b7 trimmed in your browser (server unavailable)` : line;
+    progressFill.style.width = '100%';
+    setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+  }
   window.addEventListener('dragover', (e) => e.preventDefault());
   window.addEventListener('drop', (e) => e.preventDefault());
 })();

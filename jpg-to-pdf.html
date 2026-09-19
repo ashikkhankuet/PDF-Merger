@@ -58,7 +58,7 @@
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop JPGs here</strong>
         <div class="hint">JPG / JPEG · multiple files &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="image/jpeg" multiple hidden />
+        <input type="file" id="fileInput" accept="image/jpeg,image/jpg,.jpg,.jpeg" multiple hidden />
       </div>
 
       <div class="file-list" id="fileList"></div>
@@ -179,7 +179,37 @@
     resultBox.classList.remove('show'); errBox.classList.remove('show');
   }
 
-  function addFiles(list) { [...list].forEach(f => { if (f.type === 'image/jpeg') files.push(f); }); render(); }
+  // Real, confirmed bug fix (same root cause found in Image to PDF): the
+  // old check required f.type to be EXACTLY 'image/jpeg' - real phone
+  // photos, especially ones forwarded through an email client/other app,
+  // routinely arrive with an empty type or a variant like 'image/jpg'.
+  // The strict check silently dropped these with zero feedback. Fixed to
+  // also accept by file extension when the browser's reported type is
+  // missing/unrecognized, and to show a real error for anything genuinely
+  // rejected instead of letting it vanish silently.
+  function isAcceptedJpegFile(f) {
+    const type = (f.type || '').toLowerCase();
+    if (type === 'image/jpeg' || type === 'image/jpg') return true;
+    if (!type || type === 'application/octet-stream') {
+      return /\.jpe?g$/i.test(f.name || '');
+    }
+    return false;
+  }
+
+  function addFiles(list) {
+    const rejected = [];
+    [...list].forEach(f => {
+      if (isAcceptedJpegFile(f)) files.push(f);
+      else rejected.push(f.name || 'file');
+    });
+    render();
+    if (rejected.length) {
+      errText.textContent = rejected.length === 1
+        ? `"${rejected[0]}" isn\u2019t a JPG file.`
+        : `${rejected.length} files weren\u2019t added \u2014 only JPG images are supported.`;
+      errBox.classList.add('show');
+    }
+  }
 
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => addFiles(e.target.files));
@@ -228,7 +258,9 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t convert one of these photos. Make sure it\u2019s a standard JPG file and try again.';
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t convert one of these photos (${detail}). Make sure it\u2019s a standard JPG file and try again.`;
+      console.error('ConvertKoro JPG to PDF: conversion failed.', err);
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;

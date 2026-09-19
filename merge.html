@@ -58,7 +58,7 @@
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop PDFs here</strong>
         <div class="hint">PDF only · multiple files &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="application/pdf" multiple hidden />
+        <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden />
       </div>
 
       <div class="file-list" id="fileList"></div>
@@ -185,9 +185,35 @@
     errBox.classList.remove('show');
   }
 
+  // Real fix, same root cause as Image to PDF and JPG to PDF: an exact
+  // 'application/pdf' match silently drops a real PDF whose browser-
+  // reported type is empty or generic - a real, documented gap for files
+  // that arrive via some Android file managers or forwarded through an
+  // email client. Fixed to also accept by .pdf extension when the
+  // reported type is missing/unrecognized, and to show a real error for
+  // anything genuinely rejected instead of it vanishing silently.
+  function isAcceptedPdfFile(f) {
+    const type = (f.type || '').toLowerCase();
+    if (type === 'application/pdf') return true;
+    if (!type || type === 'application/octet-stream') {
+      return /\.pdf$/i.test(f.name || '');
+    }
+    return false;
+  }
+
   function addFiles(list) {
-    [...list].forEach(f => { if (f.type === 'application/pdf') files.push(f); });
+    const rejected = [];
+    [...list].forEach(f => {
+      if (isAcceptedPdfFile(f)) files.push(f);
+      else rejected.push(f.name || 'file');
+    });
     render();
+    if (rejected.length) {
+      errText.textContent = rejected.length === 1
+        ? `"${rejected[0]}" isn\u2019t a PDF file.`
+        : `${rejected.length} files weren\u2019t added \u2014 only PDF files are supported.`;
+      errBox.classList.add('show');
+    }
   }
 
   dropzone.addEventListener('click', () => fileInput.click());
@@ -236,7 +262,9 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Something went wrong reading one of these PDFs. Make sure none are password-protected, then try again.';
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Something went wrong reading one of these PDFs (${detail}). Make sure none are password-protected, then try again.`;
+      console.error('ConvertKoro PDF Merger: merge failed.', err);
       errBox.classList.add('show');
     }
     mergeBtn.disabled = files.length < 2;

@@ -51,7 +51,11 @@
       </div>
 
       <div id="pasteArea">
-        <textarea id="textInput" rows="12" placeholder="Type or paste your text here&hellip;" style="width:100%;padding:16px;border:1px solid var(--line-strong);border-radius:12px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;resize:vertical;"></textarea>
+        <textarea id="textInput" rows="12" placeholder="Type or paste your text here&hellip;" style="width:100%;padding:16px;border:1px solid var(--line-strong);border-radius:12px;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;resize:vertical;color:var(--ink);background:var(--card);"></textarea>
+        <button class="btn btn-ghost" id="pasteClipboardBtn" type="button" style="margin-top:10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;margin-right:6px;vertical-align:-3px;"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/></svg>
+          Paste from clipboard
+        </button>
       </div>
       <div id="uploadArea" style="display:none;">
         <div class="dropzone" id="dropzone">
@@ -76,11 +80,11 @@
             <div style="font-size:12.5px;color:var(--ink-soft);">
               Detected language: <strong id="detectedLangLabel" style="color:#7C3AED;">&mdash;</strong>
             </div>
-            <select id="sourceLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:#fff;color:var(--ink);font-size:13.5px;min-width:150px;">
+            <select id="sourceLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;min-width:150px;">
               <option value="en">English</option>
             </select>
             <span style="color:var(--ink-faint);">&rarr;</span>
-            <select id="targetLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:#fff;color:var(--ink);font-size:13.5px;flex:1;min-width:160px;">
+            <select id="targetLangSelect" style="padding:8px 12px;border:1px solid #D9CCFA;border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;flex:1;min-width:160px;">
               <option value="">Translate to&hellip;</option>
             </select>
             <button class="btn btn-primary" id="translateRunBtn" style="background:#7C3AED;" disabled>Translate</button>
@@ -96,7 +100,7 @@
         <div class="opts-row" id="formatOpts">
           <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="checkbox" id="boldToggle" /> Bold</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:14px;"><input type="checkbox" id="italicToggle" /> Italic</label>
-          <select id="fontSizeSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+          <select id="fontSizeSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;">
             <option value="10">10pt</option>
             <option value="11">11pt</option>
             <option value="12" selected>12pt</option>
@@ -104,7 +108,7 @@
             <option value="16">16pt</option>
             <option value="18">18pt</option>
           </select>
-          <select id="alignSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+          <select id="alignSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;">
             <option value="left" selected>Left align</option>
             <option value="center">Center</option>
             <option value="right">Right</option>
@@ -116,11 +120,11 @@
       <div style="margin-top:20px;">
         <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">Page</label>
         <div class="opts-row" id="pageOpts">
-          <select id="pageSizeSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+          <select id="pageSizeSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;">
             <option value="a4" selected>A4</option>
             <option value="letter">Letter</option>
           </select>
-          <select id="orientSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13.5px;">
+          <select id="orientSelect" style="padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);font-size:13.5px;">
             <option value="portrait" selected>Portrait</option>
             <option value="landscape">Landscape</option>
           </select>
@@ -217,6 +221,7 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
   const translateProgress = document.getElementById('translateProgress');
   const translateErr = document.getElementById('translateErr');
   const translateDone = document.getElementById('translateDone');
+  const pasteClipboardBtn = document.getElementById('pasteClipboardBtn');
   const exportFormatOpts = document.getElementById('exportFormatOpts');
   const createBtn = document.getElementById('createBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -268,6 +273,50 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
   }
   removeUploadBtn.addEventListener('click', () => {
     uploadedText = ''; uploadedFileRow.style.display = 'none'; dropzone.style.display = 'block'; fileInput.value = '';
+  });
+
+  // "Paste from clipboard" button for the text box itself - separate from
+  // drive-picker.js's file-clipboard button (that one reads OS-copied
+  // *files* via clipboard.read()/clipboardData.files for upload tools).
+  // Here we only need clipboard *text*, so navigator.clipboard.readText()
+  // is the correct, simpler API - it's exactly what phones need since a
+  // touch keyboard has no Ctrl+V, while desktop users can still use
+  // Ctrl+V directly in the textarea as before.
+  const origPasteBtnLabel = pasteClipboardBtn.innerHTML;
+  pasteClipboardBtn.addEventListener('click', async () => {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      errText.textContent = 'Clipboard paste isn\u2019t supported in this browser \u2014 try Ctrl+V (or long-press \u2192 Paste on mobile) inside the text box instead.';
+      errBox.classList.add('show');
+      return;
+    }
+    pasteClipboardBtn.disabled = true;
+    pasteClipboardBtn.textContent = 'Reading clipboard\u2026';
+    try {
+      const clip = await navigator.clipboard.readText();
+      if (!clip) {
+        errText.textContent = 'Your clipboard is empty \u2014 copy some text first, then try again.';
+        errBox.classList.add('show');
+      } else {
+        errBox.classList.remove('show');
+        if (inputMode !== 'paste') {
+          document.querySelectorAll('#inputModeOpts .opt-chip').forEach(c => c.classList.remove('active'));
+          inputModeOpts.querySelector('[data-mode="paste"]').classList.add('active');
+          inputMode = 'paste';
+          pasteArea.style.display = 'block';
+          uploadArea.style.display = 'none';
+        }
+        textInput.value = clip;
+      }
+    } catch (err) {
+      // A rejected readText() this way (permission denied / no
+      // clipboard-text present) is genuinely ambiguous - be honest
+      // rather than guessing at a specific cause.
+      errText.textContent = 'Couldn\u2019t read the clipboard \u2014 your browser may have blocked it. Try Ctrl+V (or long-press \u2192 Paste on mobile) inside the text box instead.';
+      errBox.classList.add('show');
+      console.warn('ConvertKoro Text to PDF/Word: clipboard readText failed.', err);
+    }
+    pasteClipboardBtn.disabled = false;
+    pasteClipboardBtn.innerHTML = origPasteBtnLabel;
   });
 
   function getCurrentText() {
@@ -514,44 +563,153 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('text2
       const pageNumbers = document.getElementById('pageNumToggle').checked;
 
       if (currentExportFmt === 'pdf') {
+        progressLabel.textContent = 'Preparing fonts\u2026';
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation, unit: 'pt', format: pageSize });
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
         const margin = 56;
-        let fontStyle = 'normal';
-        if (bold && italic) fontStyle = 'bolditalic';
-        else if (bold) fontStyle = 'bold';
-        else if (italic) fontStyle = 'italic';
-        doc.setFont('helvetica', fontStyle);
+
+        // Real, root-caused fix: jsPDF's built-in "helvetica" is one of
+        // the 14 PDF Standard fonts - Latin-only by spec, no Bangla (or
+        // any non-Latin) glyphs at all. That's why PDF export was
+        // silently failing/garbling on real Bangla input while Word
+        // (which uses docx.js's own font handling, not jsPDF's) worked
+        // fine - confirmed by tracing the exact QA-reported input, which
+        // is Bangla-heavy. Fix: embed a real Unicode font (Noto Sans,
+        // covers Latin + Bengali in one file) via jsPDF's addFileToVFS/
+        // addFont, exactly matching jsPDF's own documented pattern for
+        // non-Latin-script support. Loaded from a real, versioned npm
+        // package (@expo-google-fonts/noto-sans-bengali, published
+        // specifically to ship genuine .ttf files, unlike most web-font
+        // CDNs which only serve woff2 - jsPDF's font engine requires
+        // raw TTF) via jsDelivr's npm CDN, the same trusted, CORS-safe
+        // delivery path already used for the docx library below.
+        const fontVariant = bold ? '700Bold' : '400Regular';
+        const fontFamily = 'NotoSansBengali';
+        let unicodeFontLoaded = false;
+        try {
+          const fontUrl = `https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-bengali@latest/${fontVariant}/NotoSansBengali_${bold ? '700Bold' : '400Regular'}.ttf`;
+          const fontResp = await fetch(fontUrl);
+          if (!fontResp.ok) throw new Error(`font fetch HTTP ${fontResp.status}`);
+          const fontBuf = await fontResp.arrayBuffer();
+          let binary = '';
+          const bytes = new Uint8Array(fontBuf);
+          const chunk = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunk) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+          }
+          const fontBase64 = btoa(binary);
+          const vfsName = `NotoSansBengali-${fontVariant}.ttf`;
+          doc.addFileToVFS(vfsName, fontBase64);
+          doc.addFont(vfsName, fontFamily, italic ? 'italic' : 'normal', bold ? 700 : 400);
+          doc.setFont(fontFamily, italic ? 'italic' : 'normal');
+          unicodeFontLoaded = true;
+        } catch (fontErr) {
+          // Honest fallback, not a silent one: if the Unicode font
+          // genuinely can't be fetched (offline, CDN blocked), fall back
+          // to the built-in Latin font rather than failing the whole
+          // export - but only for text that's actually representable in
+          // it, otherwise warn clearly instead of silently mangling
+          // Bangla/other non-Latin text into blank boxes.
+          console.warn('ConvertKoro Text to PDF/Word: Unicode font failed to load, falling back to Latin-only font.', fontErr);
+          let fontStyle = 'normal';
+          if (bold && italic) fontStyle = 'bolditalic';
+          else if (bold) fontStyle = 'bold';
+          else if (italic) fontStyle = 'italic';
+          doc.setFont('helvetica', fontStyle);
+          const hasNonLatin = /[^\u0000-\u024F\u2000-\u206F\u20AC]/.test(text);
+          if (hasNonLatin) {
+            throw new Error('Couldn\u2019t load the Unicode font needed for this text (check your connection and try again) \u2014 export as Word instead works offline.');
+          }
+        }
+        progressLabel.textContent = 'Creating your document\u2026';
         doc.setFontSize(fontSize);
-        const lines = doc.splitTextToSize(text, pageW - margin*2);
+
+        const maxWidth = pageW - margin*2;
         const lineHeight = fontSize * 1.4;
+
+        // Real fix for "Justify alignment not working at all": jsPDF's
+        // own text() only supports left/center/right natively -
+        // 'justify' was being silently forced to 'left' before (see the
+        // old `align === 'justify' ? 'left' : align` line this code
+        // replaces), so choosing Justify visibly did nothing. True
+        // justify is built by hand here: split each line into words,
+        // measure real rendered width with getTextWidth (which respects
+        // whatever font/size/style is currently set, so this works
+        // correctly with the embedded Unicode font too), and distribute
+        // the leftover space evenly between words - skipped on the last
+        // line of a paragraph and on any line that's already the full
+        // width, matching how real word processors justify text.
+        function drawJustifiedLine(words, y) {
+          if (words.length === 1) { doc.text(words[0], margin, y); return; }
+          const wordWidths = words.map(w => doc.getTextWidth(w));
+          const totalWordWidth = wordWidths.reduce((a, b) => a + b, 0);
+          const spaceWidth = doc.getTextWidth(' ');
+          const naturalWidth = totalWordWidth + spaceWidth * (words.length - 1);
+          const extraSpace = Math.max(0, maxWidth - naturalWidth);
+          const gap = spaceWidth + extraSpace / (words.length - 1);
+          let x = margin;
+          words.forEach((w, i) => {
+            doc.text(w, x, y);
+            x += wordWidths[i] + gap;
+          });
+        }
+
+        // splitTextToSize also respects the current font/size, so line
+        // wrapping is measured against the real Unicode font's actual
+        // character widths (previously always Helvetica's Latin widths,
+        // a real source of the "some texts are getting cropped" report
+        // when Bangla glyphs are visually wider/narrower than Helvetica
+        // assumed).
+        const rawLines = text.split('\n');
         let y = margin;
         let pageNum = 1;
-        lines.forEach((line) => {
+
+        function addPageNumber(num, pw, ph) {
+          const savedSize = doc.getFontSize();
+          doc.setFontSize(9);
+          doc.text(String(num), pw/2, ph - 28, { align: 'center' });
+          doc.setFontSize(savedSize);
+        }
+        function newPageIfNeeded() {
           if (y > pageH - margin) {
-            if (pageNumbers) addPageNumber(doc, pageNum, pageW, pageH);
+            if (pageNumbers) addPageNumber(pageNum, pageW, pageH);
             doc.addPage();
             pageNum++;
             y = margin;
           }
-          doc.text(line, align === 'center' ? pageW/2 : align === 'right' ? pageW - margin : margin, y, { align: align === 'justify' ? 'left' : align });
-          y += lineHeight;
-        });
-        if (pageNumbers) addPageNumber(doc, pageNum, pageW, pageH);
-
-        function addPageNumber(doc, num, pw, ph) {
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          doc.text(String(num), pw/2, ph - 28, { align: 'center' });
-          doc.setFontSize(fontSize); doc.setFont('helvetica', fontStyle);
         }
+
+        let totalLineCount = 0;
+        rawLines.forEach((paragraph) => {
+          if (paragraph.trim() === '') {
+            newPageIfNeeded();
+            y += lineHeight;
+            totalLineCount++;
+            return;
+          }
+          const wrapped = doc.splitTextToSize(paragraph, maxWidth);
+          wrapped.forEach((wrappedLine, idx) => {
+            newPageIfNeeded();
+            const isLastLineOfParagraph = idx === wrapped.length - 1;
+            if (align === 'justify' && !isLastLineOfParagraph) {
+              const words = wrappedLine.split(' ').filter(w => w.length > 0);
+              drawJustifiedLine(words, y);
+            } else {
+              const x = align === 'center' ? pageW/2 : align === 'right' ? pageW - margin : margin;
+              doc.text(wrappedLine, x, y, { align: (align === 'justify') ? 'left' : align });
+            }
+            y += lineHeight;
+            totalLineCount++;
+          });
+        });
+        if (pageNumbers) addPageNumber(pageNum, pageW, pageH);
 
         const blob = doc.output('blob');
         downloadBtn.href = URL.createObjectURL(blob);
         downloadBtn.setAttribute('download', 'document.pdf');
-        resultMeta.textContent = `${lines.length} line${lines.length>1?'s':''} \u00b7 ${fmtSize(blob.size)}`;
+        resultMeta.textContent = `${totalLineCount} line${totalLineCount>1?'s':''} \u00b7 ${fmtSize(blob.size)}${unicodeFontLoaded ? '' : ' \u00b7 Latin font'}`;
       } else {
         progressLabel.textContent = 'Loading document engine\u2026';
         // Real, confirmed fix: switched from jsDelivr's raw

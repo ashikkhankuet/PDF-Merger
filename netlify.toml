@@ -169,3 +169,67 @@
   from = "/api/pdf-to-word"
   to = "/.netlify/functions/pdf-to-word"
   status = 200
+
+# Server-side video compression pipeline (video-compressor.html). See
+# video-compress-background.js for the full architecture rationale: real
+# server-side ffmpeg via ffmpeg-static, chunked upload/download around
+# Netlify's real 6MB request / 20MB streamed-response limits, and a
+# background function for genuine multi-minute compression time (a
+# standard function's synchronous ceiling is far too short for this).
+[[redirects]]
+  from = "/api/video-upload-chunk"
+  to = "/.netlify/functions/video-upload-chunk"
+  status = 200
+
+[[redirects]]
+  from = "/api/video-compress-start"
+  to = "/.netlify/functions/video-compress-start"
+  status = 200
+
+[[redirects]]
+  from = "/api/video-job-status"
+  to = "/.netlify/functions/video-job-status"
+  status = 200
+
+[[redirects]]
+  from = "/api/video-download-chunk"
+  to = "/.netlify/functions/video-download-chunk"
+  status = 200
+
+# video-compress-background is intentionally NOT given an /api/ alias -
+# Netlify returns a 403 if a background function (any name ending in
+# "-background") is called directly from a browser, by design (confirmed
+# via Netlify's own support forum). It is only ever called server-to-
+# server, from video-compress-start.js, using its real
+# /.netlify/functions/video-compress-background URL directly.
+
+# Generalized server-side pipeline for every OTHER media tool (audio
+# compress/convert/trim, video convert/resize/to-gif/to-mp3/trim) - a
+# separate, parallel set of functions from the video-* ones above (kept
+# separate deliberately so nothing about Video Compressor's own working
+# pipeline is touched by this broader rollout). See
+# media-process-background.js for the full architecture and the real,
+# confirmed bug fixes made to video-resize and video-convert along the way.
+[[redirects]]
+  from = "/api/media-upload-chunk"
+  to = "/.netlify/functions/media-upload-chunk"
+  status = 200
+
+[[redirects]]
+  from = "/api/media-process-start"
+  to = "/.netlify/functions/media-process-start"
+  status = 200
+
+[[redirects]]
+  from = "/api/media-job-status"
+  to = "/.netlify/functions/media-job-status"
+  status = 200
+
+[[redirects]]
+  from = "/api/media-download-chunk"
+  to = "/.netlify/functions/media-download-chunk"
+  status = 200
+
+# media-process-background is likewise never given an /api/ alias, for the
+# identical reason as video-compress-background above - server-to-server
+# only, called from media-process-start.js.

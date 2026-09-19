@@ -58,7 +58,7 @@
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop images here</strong>
         <div class="hint">JPG, PNG, WEBP · multiple files &middot; stays on your device</div>
-        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple hidden />
+        <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden />
       </div>
 
       <div class="file-list" id="fileList"></div>
@@ -219,7 +219,49 @@
     resultBox.classList.remove('show'); errBox.classList.remove('show');
   }
 
-  function addFiles(list) { [...list].forEach(f => { if (/^image\/(jpeg|png|webp)$/.test(f.type)) files.push(f); }); render(); }
+  // Real, confirmed bug fix: the old check required f.type to be EXACTLY
+  // 'image/jpeg', 'image/png', or 'image/webp' - nothing else. Real-world
+  // files routinely arrive with a different type string for the same
+  // format: 'image/jpg' (some Android camera apps/OEM skins), an EMPTY
+  // string (a real, documented gap - some mobile browsers and files
+  // forwarded through an email client/other app don't set File.type at
+  // all), or a same-family variant. The strict regex silently dropped
+  // all of these with zero feedback - the file just never appeared in
+  // the list, which is exactly what was reported ("attaching a file did
+  // nothing") on a real device where the reporter's team confirmed this
+  // independently via a same-file email-forward AND still failed after
+  // clearing cache/incognito on that device, ruling out staleness as the
+  // cause. Fixed two ways: (1) also accept the file by its EXTENSION
+  // when the browser-reported type is empty or unrecognized, since a
+  // wrong/missing MIME type doesn't mean the bytes aren't a real image -
+  // embedPng/embedJpg below still validate the actual bytes regardless;
+  // (2) any file that's rejected now shows a real, visible error instead
+  // of silently vanishing, so a genuinely unsupported file (e.g. HEIC,
+  // which pdf-lib cannot embed) is at least reported instead of looking
+  // like nothing happened.
+  function isAcceptedImageFile(f) {
+    const type = (f.type || '').toLowerCase();
+    if (/^image\/(jpeg|jpg|png|webp)$/.test(type)) return true;
+    if (!type || type === 'application/octet-stream') {
+      return /\.(jpe?g|png|webp)$/i.test(f.name || '');
+    }
+    return false;
+  }
+
+  function addFiles(list) {
+    const rejected = [];
+    [...list].forEach(f => {
+      if (isAcceptedImageFile(f)) files.push(f);
+      else rejected.push(f.name || 'file');
+    });
+    render();
+    if (rejected.length) {
+      errText.textContent = rejected.length === 1
+        ? `"${rejected[0]}" isn\u2019t a supported image type \u2014 use JPG, PNG, or WEBP.`
+        : `${rejected.length} files weren\u2019t added \u2014 only JPG, PNG, or WEBP images are supported.`;
+      errBox.classList.add('show');
+    }
+  }
 
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => addFiles(e.target.files));
@@ -341,20 +383,47 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t convert one of these images. Try re-saving it as a standard JPG or PNG and try again.';
+      // Real, confirmed pattern from this whole site: masking the real
+      // error behind one generic message makes every distinct failure
+      // indistinguishable - a corrupt file, an out-of-memory crash on a
+      // low-spec device, and a genuinely unsupported format all looked
+      // identical before this, which is exactly what made a real,
+      // reported device-specific failure impossible to diagnose from the
+      // error box alone. Surface the real detail now.
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t convert one of these images (${detail}). Try re-saving it as a standard JPG or PNG and try again.`;
+      console.error('ConvertKoro Image to PDF: conversion failed.', err);
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;
   });
 
   async function webpToJpegBytes(file) {
-    const bitmap = await createImageBitmap(file);
+    // createImageBitmap is not universally available (a real, documented
+    // gap on some older Android WebViews/Safari versions) - fall back to
+    // a plain <img> element, which every browser that can run this tool
+    // at all supports, rather than hard-failing WEBP conversion on those
+    // devices.
+    let source;
+    if (typeof createImageBitmap === 'function') {
+      source = await createImageBitmap(file);
+    } else {
+      source = await new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not decode this WEBP image')); };
+        img.src = url;
+      });
+    }
+    const width = source.width, height = source.height;
     const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width; canvas.height = bitmap.height;
+    canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(bitmap, 0, 0);
+    ctx.drawImage(source, 0, 0);
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+    if (!blob) throw new Error('Could not re-encode this WEBP image');
     return await blob.arrayBuffer();
   }
 

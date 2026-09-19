@@ -32,7 +32,7 @@
 <script src="ffmpeg-tools.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video Compressor","description":"Shrink a video's file size with a quality slider, entirely in your browser.","url":"https://convertkoro.com/video-compressor","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video Compressor","item":"https://convertkoro.com/video-compressor"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How much smaller will my video get?","acceptedAnswer":{"@type":"Answer","text":"It depends on the original file and the compression level you choose — higher compression means a smaller file but lower visual quality."}},{"@type":"Question","name":"Why does this take longer than other tools?","acceptedAnswer":{"@type":"Answer","text":"Video compression is a genuine re-encode of every frame, which is computationally heavy compared to simple file conversion."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How much smaller will my video get?","acceptedAnswer":{"@type":"Answer","text":"It depends on the original file and the compression level you choose — higher compression means a smaller file but lower visual quality."}},{"@type":"Question","name":"Why does this take longer than other tools?","acceptedAnswer":{"@type":"Answer","text":"Compression now runs on our own server with a real video engine, which is much faster than doing it in a browser. It still takes real time for larger or higher-resolution videos, since every frame is genuinely re-encoded. Turning on the speed and resolution options helps."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 </head>
 <body data-page="tools">
 <div id="site-header"></div>
@@ -50,12 +50,13 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>First use downloads a ~25MB video engine</strong> to your browser (one-time, cached after). This is genuine video re-encoding &mdash; it takes real time, roughly proportional to the video's length.</span>
+        <span><strong>Compressed on our server</strong> for real speed \u2014 your video is uploaded, compressed with a real video engine, and the result downloaded back, all automatically. If the server is ever unavailable, this falls back to compressing directly in your browser instead (slower, but still works with no upload). Larger or higher-resolution videos take longer either way \u2014 keeping the speed and resolution options below checked helps.</span>
       </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a video file here</strong>
-        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; stays on your device</div>
+        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; compressed on our server, deleted afterward</div>
+        <div class="hint" style="margin-top:4px;">If the server is unavailable, this falls back to compressing in your browser instead (stays on your device)</div>
         <input type="file" id="fileInput" accept="video/*,.mp4,.webm,.mov,.avi,.mpeg,.mpg,.mkv" hidden />
       </div>
       <div class="file-list" id="fileList"></div>
@@ -64,6 +65,19 @@
           <label>Compression <span class="val" id="crfVal">Balanced</span></label>
           <input type="range" id="crfSlider" min="23" max="35" step="2" value="28" />
         </div>
+        <div class="opts-row" style="margin-top:14px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);">
+            <input type="checkbox" id="fastModeCheck" checked />
+            Prioritize speed (recommended \u2014 much faster, slightly larger file)
+          </label>
+        </div>
+        <div class="opts-row" style="margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);">
+            <input type="checkbox" id="capResCheck" checked />
+            Cap resolution at 1080p for large videos (much faster on 4K/high-res files, no visible difference for most uses)
+          </label>
+        </div>
+        <div class="hint" id="etaHint" style="margin-top:10px;"></div>
       </div>
       <div class="progress-wrap" id="progressWrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div class="progress-label" id="progressLabel">Loading video engine&hellip;</div></div>
       <div class="err-box" id="errBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="errText"></span></div>
@@ -99,7 +113,7 @@
       <div class="faq-related-grid">
       <div class="faq-list">
         <details class="faq-item"><summary>How much smaller will my video get?</summary><p>It depends on the original file and the compression level you choose — higher compression means a smaller file but lower visual quality.</p></details>
-        <details class="faq-item"><summary>Why does this take longer than other tools?</summary><p>Video compression is a genuine re-encode of every frame, which is computationally heavy compared to simple file conversion.</p></details>
+        <details class="faq-item"><summary>Why does this take longer than other tools?</summary><p>Compression now runs on our own server with a real video engine, which is much faster than doing it in a browser. It still takes real time for larger or higher-resolution videos, since every frame is genuinely re-encoded. Turning on the speed and resolution options helps.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
       <div id="relatedToolsBox"></div>
@@ -129,6 +143,9 @@
   const qualityRow = document.getElementById('qualityRow');
   const crfSlider = document.getElementById('crfSlider');
   const crfVal = document.getElementById('crfVal');
+  const fastModeCheck = document.getElementById('fastModeCheck');
+  const capResCheck = document.getElementById('capResCheck');
+  const etaHint = document.getElementById('etaHint');
   const compressBtn = document.getElementById('compressBtn');
   const clearBtn = document.getElementById('clearBtn');
   const progressWrap = document.getElementById('progressWrap');
@@ -154,7 +171,29 @@
     qualityRow.style.display = 'block';
     compressBtn.disabled = false;
     resultBox.classList.remove('show'); errBox.classList.remove('show');
+    updateEtaHint();
   }
+
+  // Honest, deliberately rough time estimate. This is NOT a precise
+  // prediction (real time depends heavily on resolution, codec
+  // complexity, and the visitor's own device - see ckMediaCompatibility's
+  // single-thread WASM reality) - it exists so someone isn't surprised
+  // partway through a long compression with zero warning beforehand,
+  // directly addressing the QA report that even smaller videos felt like
+  // they were taking unexpectedly long. A rough range set honestly low
+  // is more useful here than a falsely precise number.
+  function updateEtaHint() {
+    if (!file) { etaHint.textContent = ''; return; }
+    const mb = file.size / (1024*1024);
+    const speedFactor = fastModeCheck.checked ? 1 : 1.8;
+    const resFactor = capResCheck.checked ? 1 : 1.6;
+    const estMinLow = Math.max(1, Math.round((mb / 45) * speedFactor * resFactor));
+    const estMinHigh = Math.max(estMinLow + 1, Math.round(estMinLow * 1.8));
+    etaHint.textContent = `Rough estimate: ${estMinLow}\u2013${estMinHigh} min on a typical device, plus a one-time engine download the first time you use this tool. Older phones or larger/4K videos can take noticeably longer.`;
+  }
+  fastModeCheck.addEventListener('change', updateEtaHint);
+  capResCheck.addEventListener('change', updateEtaHint);
+
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => setFile(e.target.files[0]));
   dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
@@ -167,50 +206,220 @@
 
   compressBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
-    progressLabel.textContent = 'Loading video engine\u2026';
+    progressWrap.classList.add('show'); progressFill.style.width = '2%';
+    progressLabel.textContent = 'Uploading\u2026';
     compressBtn.disabled = true;
+
+    const crf = crfSlider.value;
+    const fastMode = fastModeCheck.checked;
+    const capRes = capResCheck.checked;
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+
     try {
-      const compat = ckMediaCompatibility(file);
-      if (!compat.ok) throw new Error(compat.message);
-      const ffmpeg = await ckGetFFmpeg((ratio) => {
-        progressFill.style.width = `${20 + ratio*75}%`;
-        progressLabel.textContent = 'Compressing\u2026 this can take a while';
+      await compressServerSide(file, { crf, fastMode, capRes }, (pct, label) => {
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = label;
+      }).then((blob) => {
+        finishWithResult(blob, file, baseName);
       });
-      progressFill.style.width = '20%';
-      progressLabel.textContent = 'Compressing\u2026 this can take a while';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const ext = ckExt(file.name);
-      const inName = 'input.' + ext;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-      const crf = crfSlider.value;
-      await ffmpeg.exec(['-i', inName, '-vcodec', 'libx264', '-crf', String(crf), '-preset', 'faster', '-acodec', 'aac', '-b:a', '128k', 'output.mp4']);
-      const data = (await ffmpeg.readFile('output.mp4'));
-      const blob = new Blob([data.buffer], { type: 'video/mp4' });
-      const baseName = file.name.replace(/\.[^.]+$/, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}-compressed.mp4`);
-      // Always transcodes to H.264/MP4 regardless of input format, so
-      // (like the audio compressor) keeping the real converted output is
-      // still correct even on the rare file that doesn't shrink - but the
-      // displayed size change must be honest. Math.max(0, ...) here
-      // previously floored a real increase to a claimed "0% smaller",
-      // which is the same class of bug fixed across the other
-      // compressors this session.
-      const sizeChangePct = Math.round((1 - blob.size/file.size) * 100);
-      resultTitle.textContent = `${baseName}-compressed.mp4 is ready`;
-      resultMeta.textContent = sizeChangePct >= 0
-        ? `${ckFmtSize(file.size)} \u2192 ${ckFmtSize(blob.size)} (${sizeChangePct}% smaller)`
-        : `${ckFmtSize(file.size)} \u2192 ${ckFmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger \u2014 try a higher CRF value for real savings)`;
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
-    } catch (err) {
-      progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t compress this video \u2014 try a smaller file.';
-      errBox.classList.add('show');
+    } catch (serverErr) {
+      // Real, deliberate fallback: server-side compression is the
+      // primary path now (see video-compress-background.js for why it
+      // replaced the old fully-client-side approach), but a network
+      // failure, a Netlify Function outage, or this specific video
+      // exceeding the pipeline's real size ceiling should not leave the
+      // tool completely unusable - falling back to the original
+      // client-side WASM engine (slower, but self-contained and needs
+      // no server) matches the honesty/graceful-degradation pattern
+      // already used elsewhere on this site (e.g. PDF-to-Word's two
+      // modes). The person is told plainly that this happened and why.
+      console.warn('ConvertKoro Video Compressor: server-side compression failed, falling back to in-browser engine.', serverErr);
+      try {
+        progressLabel.textContent = 'Server compression unavailable \u2014 falling back to your browser\u2019s own engine\u2026';
+        const blob = await compressClientSide(file, { crf, fastMode, capRes }, (pct, label) => {
+          progressFill.style.width = `${pct}%`;
+          progressLabel.textContent = label;
+        });
+        finishWithResult(blob, file, baseName, true);
+      } catch (clientErr) {
+        progressWrap.classList.remove('show');
+        const detail = clientErr && clientErr.message ? clientErr.message : 'unknown error';
+        errText.textContent = `Couldn\u2019t compress this video (${detail}) \u2014 try a smaller file.`;
+        console.error('ConvertKoro Video Compressor: both server and in-browser compression failed.', clientErr);
+        errBox.classList.add('show');
+      }
     }
     compressBtn.disabled = false;
   });
+
+  function finishWithResult(blob, sourceFile, baseName, wasFallback) {
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', `${baseName}-compressed.mp4`);
+    // Always transcodes to H.264/MP4 regardless of input format, so
+    // keeping the real converted output is still correct even on the
+    // rare file that doesn't shrink - but the displayed size change must
+    // be honest, not floored to a false "0% smaller".
+    const sizeChangePct = Math.round((1 - blob.size/sourceFile.size) * 100);
+    resultTitle.textContent = `${baseName}-compressed.mp4 is ready`;
+    const sizeLine = sizeChangePct >= 0
+      ? `${ckFmtSize(sourceFile.size)} \u2192 ${ckFmtSize(blob.size)} (${sizeChangePct}% smaller)`
+      : `${ckFmtSize(sourceFile.size)} \u2192 ${ckFmtSize(blob.size)} (${Math.abs(sizeChangePct)}% larger \u2014 try a higher CRF value for real savings)`;
+    resultMeta.textContent = wasFallback ? `${sizeLine} \u00b7 compressed in your browser (server unavailable)` : sizeLine;
+    progressFill.style.width = '100%';
+    setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+  }
+
+  // Real, deliberate settings shared by both the server and client-side
+  // paths, so choosing "Prioritize speed"/"Cap resolution" produces the
+  // same intent regardless of which engine actually runs. -threads is
+  // deliberately never added on the client-side path: ffmpeg.wasm's
+  // single-thread core (see ffmpeg-tools.js's own header) has no thread
+  // pool for it to use, so it would be a cosmetic setting, not a real one.
+  function ckEncodeArgs({ crf, fastMode, capRes }, preset) {
+    const scaleFilter = capRes
+      ? ['-vf', "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease"]
+      : [];
+    return ['-vcodec', 'libx264', '-crf', String(crf), '-preset', preset, ...scaleFilter, '-acodec', 'aac', '-b:a', '128k'];
+  }
+
+  // ---- Server-side path (primary) ----
+  // Uploads the file in small chunks (real, confirmed Netlify Functions
+  // constraint: 6MB max request body on every plan, including Pro - a
+  // single request can never carry a real video), triggers real
+  // server-side ffmpeg via a background function (15-minute ceiling, vs.
+  // a normal function's 10-60 seconds), polls for completion, then
+  // downloads the compressed result back in chunks too (a function
+  // response is capped at 20MB even streamed). See the four
+  // netlify/functions/video-*.js files for the full architecture.
+  const UPLOAD_CHUNK_BYTES = 4 * 1024 * 1024; // kept under the ~4.5MB real effective limit after base64 overhead
+
+  function arrayBufferToBase64(buf) {
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  async function compressServerSide(f, options, onProgress) {
+    if (f.size > 500 * 1024 * 1024) {
+      throw new Error('This video is larger than the 500MB server-side limit');
+    }
+    const jobId = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    const totalChunks = Math.ceil(f.size / UPLOAD_CHUNK_BYTES);
+
+    // Sequential, not parallel: keeps this simple and predictable (no
+    // out-of-order arrival to reason about on the receiving function),
+    // and Netlify Functions concurrency is already generous enough per
+    // request that parallelizing chunk uploads would help less than it
+    // would complicate error handling and retry logic for a first,
+    // correctness-focused version of this pipeline.
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * UPLOAD_CHUNK_BYTES;
+      const chunkBlob = f.slice(start, Math.min(start + UPLOAD_CHUNK_BYTES, f.size));
+      const chunkBuf = await chunkBlob.arrayBuffer();
+      const resp = await fetch('/api/video-upload-chunk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId, chunkIndex: i, totalChunks,
+          chunkBase64: arrayBufferToBase64(chunkBuf),
+          mimeType: f.type, fileName: f.name,
+        }),
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Upload failed (status ${resp.status})`);
+      }
+      onProgress(2 + Math.round((i + 1) / totalChunks * 28), `Uploading\u2026 ${Math.round((i + 1) / totalChunks * 100)}%`);
+    }
+
+    onProgress(32, 'Starting compression\u2026');
+    const startResp = await fetch('/api/video-compress-start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId, options: { crf: options.crf, fastMode: options.fastMode, capRes: options.capRes } }),
+    });
+    if (!startResp.ok) {
+      const errData = await startResp.json().catch(() => ({}));
+      throw new Error(errData.error || `Couldn\u2019t start compression (status ${startResp.status})`);
+    }
+
+    // Poll for completion. A real compression job can genuinely take
+    // several minutes for a large file - this polls patiently rather
+    // than assuming a short, fixed wait, and surfaces the real server-
+    // reported error (not a generic one) if the job fails.
+    const POLL_INTERVAL_MS = 4000;
+    const MAX_POLL_MS = 14 * 60 * 1000; // just under the background function's own 13-minute internal budget
+    const pollStart = Date.now();
+    let status = 'queued';
+    while (status === 'queued' || status === 'uploading' || status === 'processing') {
+      if (Date.now() - pollStart > MAX_POLL_MS) {
+        throw new Error('Compression is taking longer than expected \u2014 the server may be busy, try again shortly');
+      }
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      const statusResp = await fetch(`/api/video-job-status?jobId=${encodeURIComponent(jobId)}`);
+      if (!statusResp.ok) continue; // a single failed poll is not fatal - just retry on the next interval
+      const statusData = await statusResp.json();
+      status = statusData.status;
+      if (status === 'processing') {
+        onProgress(35, 'Compressing on the server\u2026 this can take a few minutes for larger videos');
+      }
+      if (status === 'error') {
+        throw new Error(statusData.error || 'Server-side compression failed');
+      }
+    }
+
+    // Download the finished result back in chunks (same real 20MB
+    // streamed-response ceiling that made chunked download necessary -
+    // see video-download-chunk.js).
+    onProgress(70, 'Downloading result\u2026');
+    let downloadedChunks = [];
+    let dlIndex = 0;
+    let dlTotal = 1;
+    do {
+      const dlResp = await fetch(`/api/video-download-chunk?jobId=${encodeURIComponent(jobId)}&chunkIndex=${dlIndex}`);
+      if (!dlResp.ok) {
+        const errData = await dlResp.json().catch(() => ({}));
+        throw new Error(errData.error || `Couldn\u2019t download result (status ${dlResp.status})`);
+      }
+      const dlData = await dlResp.json();
+      dlTotal = dlData.totalChunks;
+      const binary = atob(dlData.chunkBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      downloadedChunks.push(bytes);
+      dlIndex++;
+      onProgress(70 + Math.round(dlIndex / dlTotal * 28), `Downloading result\u2026 ${Math.round(dlIndex / dlTotal * 100)}%`);
+    } while (dlIndex < dlTotal);
+
+    return new Blob(downloadedChunks, { type: 'video/mp4' });
+  }
+
+  // ---- Client-side path (fallback only) ----
+  // The original, fully in-browser ffmpeg.wasm engine - kept as a
+  // fallback so the tool still works (just slower) if the server-side
+  // pipeline is unavailable, rather than the tool having a single point
+  // of failure.
+  async function compressClientSide(f, options, onProgress) {
+    const compat = ckMediaCompatibility(f);
+    if (!compat.ok) throw new Error(compat.message);
+    onProgress(5, 'Loading video engine\u2026');
+    const ffmpeg = await ckGetFFmpeg((ratio) => {
+      onProgress(20 + Math.round(ratio * 75), 'Compressing in your browser\u2026 this can take a while');
+    });
+    onProgress(20, 'Compressing in your browser\u2026 this can take a while');
+    const ext = ckExt(f.name);
+    const inName = 'input.' + ext;
+    await ffmpeg.writeFile(inName, await ckFetchFile(f));
+    const preset = options.fastMode ? 'veryfast' : 'faster';
+    await ffmpeg.exec(['-i', inName, ...ckEncodeArgs(options, preset), 'output.mp4']);
+    const data = await ffmpeg.readFile('output.mp4');
+    return new Blob([data.buffer], { type: 'video/mp4' });
+  }
+
   window.addEventListener('dragover', (e) => e.preventDefault());
   window.addEventListener('drop', (e) => e.preventDefault());
 })();

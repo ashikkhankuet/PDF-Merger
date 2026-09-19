@@ -1,8 +1,9 @@
 {
   "name": "convertkoro-site",
   "private": true,
-  "description": "Static site + Netlify Functions for convertkoro.com. The dependency below is required for the URL Shortener's server-backed short links (netlify/functions/shorten.js, redirect.js) to build correctly.",
+  "description": "Static site + Netlify Functions for convertkoro.com. @netlify/blobs is required for the URL Shortener's server-backed short links (shorten.js, redirect.js) and the server-side video compression pipeline (video-upload-chunk.js, video-compress-background.js, video-job-status.js, video-download-chunk.js, video-compress-start.js), which stores uploaded video chunks and compressed results there. ffmpeg-static provides a real, statically-linked ffmpeg binary for genuine server-side video compression (see video-compress-background.js for why this replaced the previous fully client-side ffmpeg.wasm approach).",
   "dependencies": {
-    "@netlify/blobs": "^10.7.9"
+    "@netlify/blobs": "^10.7.9",
+    "ffmpeg-static": "^5.2.0"
   }
 }

@@ -4,6 +4,7 @@
    ============================================================ */
 
 :root {
+  color-scheme: light;
   --paper:      #F5F7FB;
   --card:       #FFFFFF;
   --ink:        #14181F;
@@ -693,6 +694,17 @@ body.mob-panel-open { overflow: hidden; }
 .callout svg { width: 18px; height: 18px; flex: none; margin-top: 2px; }
 @media (max-width: 560px) { .doc { padding: 22px 20px; } }
 
+/* Defensive global reset: without this, some browsers render native
+   <select>/<option> popup chrome using OS-assumed light colors even
+   when a page sets its own inline color/background on the <select>
+   itself - color-scheme above fixes most cases, but this belongs
+   here too as a fallback so a text color is never left to native
+   defaults on any current or future page. Purely additive - does not
+   change layout, spacing, or any color value pages already set. */
+select, input, textarea {
+  color-scheme: inherit;
+}
+
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
 
@@ -700,6 +712,7 @@ body.mob-panel-open { overflow: hidden; }
    DARK MODE
    ============================================================ */
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --paper:      #070C1A;
   --card:       #0E1526;
   --ink:        #F1F3F8;

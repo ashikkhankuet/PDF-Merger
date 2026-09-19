@@ -172,7 +172,7 @@
 </main>
 <div id="site-footer"></div>
 <script src="https://docs.opencv.org/4.8.0/opencv.js" async></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="nav.js"></script>
@@ -557,6 +557,14 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('doc-s
   let ocrWorker = null;
   async function getOcrWorker() {
     if (ocrWorker) return ocrWorker;
+    // Real, confirmed fix: this call already used Tesseract.js v5's
+    // signature (language + OEM passed directly to createWorker), but the
+    // script tag above was still loading v4.1.1, which only accepts a
+    // single options object here - a real, silent mismatch (v4 would have
+    // misread 'eng+ben' as if it were meant to be the options object).
+    // Upgrading the script tag to v5 (verified against v5's real published
+    // source, same change already made in Image to Text) makes this
+    // existing call correct rather than requiring a code rewrite here.
     ocrWorker = await Tesseract.createWorker('eng+ben', 1, {
       logger: (m) => {
         if (m.status === 'recognizing text') {

@@ -19,3 +19,10 @@
 
 /nav.js
   Cache-Control: public, max-age=3600, must-revalidate
+
+# version.json is the whole basis of the new-deploy-detection banner in
+# nav.js - if this were cached at all (by the browser or any intermediate
+# CDN layer), a tab could keep polling a stale cached copy of its own
+# check and never notice a real new deploy. Must always hit the network.
+/version.json
+  Cache-Control: no-store

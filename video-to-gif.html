@@ -30,6 +30,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script src="ffmpeg-tools.js"></script>
+<script src="media-server-pipeline.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video to GIF","description":"Turn a video clip into an animated GIF, entirely in your browser.","url":"https://convertkoro.com/video-to-gif","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video to GIF","item":"https://convertkoro.com/video-to-gif"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why keep GIF clips short?","acceptedAnswer":{"@type":"Answer","text":"GIFs don’t compress as efficiently as video — a 5–10 second clip keeps the file size reasonable."}},{"@type":"Question","name":"Can I choose which part of the video becomes the GIF?","acceptedAnswer":{"@type":"Answer","text":"Yes — set the start time and duration to pick exactly the clip you want."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -55,7 +56,7 @@
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a video file here</strong>
-        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; stays on your device</div>
+        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; processed on our server, deleted afterward</div>
         <input type="file" id="fileInput" accept="video/*,.mp4,.webm,.mov,.avi,.mpeg,.mpg,.mkv" hidden />
       </div>
       <div id="editWrap" style="display:none;margin-top:18px;">
@@ -179,55 +180,62 @@
 
   convertBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
-    progressLabel.textContent = 'Loading video engine\u2026';
+    progressWrap.classList.add('show'); progressFill.style.width = '2%';
+    progressLabel.textContent = 'Uploading\u2026';
     convertBtn.disabled = true;
+    const start = Math.max(0, parseFloat(startIn.value) || 0);
+    const dur = Math.max(0.5, Math.min(15, parseFloat(durIn.value) || 5));
+    const width = Math.max(100, parseInt(widthIn.value) || 480);
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+
     try {
-      const compat = ckMediaCompatibility(file);
-      if (!compat.ok) throw new Error(compat.message);
-      const ffmpeg = await ckGetFFmpeg((ratio) => {
-        progressFill.style.width = `${20 + ratio*75}%`;
-        progressLabel.textContent = 'Rendering GIF\u2026';
+      const blob = await ckProcessMediaServerSide(file, 'video-to-gif', { start, dur, width }, (pct, label) => {
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = label;
       });
-      progressFill.style.width = '20%';
-      progressLabel.textContent = 'Rendering GIF\u2026';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const ext = ckExt(file.name);
-      const inName = 'input.' + ext;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-      const start = Math.max(0, parseFloat(startIn.value) || 0);
-      const dur = Math.max(0.5, Math.min(15, parseFloat(durIn.value) || 5));
-      const width = Math.max(100, parseInt(widthIn.value) || 480);
-      // Custom palette generation (palettegen/paletteuse) rather than
-      // letting ffmpeg fall back to its default GIF encoder - GIF is
-      // limited to 256 colors, and ffmpeg's default palette is a fixed,
-      // generic one that doesn't account for the actual clip's colors at
-      // all, producing visible banding and poor dithering on anything
-      // with gradients or subtle color variation (confirmed via
-      // established, widely-documented ffmpeg practice for GIF output -
-      // this is the standard fix, not an experimental tweak). Done in a
-      // single ffmpeg invocation via split+filter_complex rather than two
-      // separate passes/files, since that's supported and simpler here.
-      await ffmpeg.exec([
-        '-ss', String(start), '-t', String(dur), '-i', inName,
-        '-filter_complex', `[0:v]fps=10,scale=${width}:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse`,
-        'output.gif'
-      ]);
-      const data = (await ffmpeg.readFile('output.gif'));
-      const blob = new Blob([data.buffer], { type: 'image/gif' });
-      const baseName = file.name.replace(/\.[^.]+$/, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}.gif`);
-      resultMeta.textContent = `${dur}s \u00b7 ${ckFmtSize(blob.size)}`;
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
-    } catch (err) {
-      progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t create a GIF from this video \u2014 try a shorter clip.';
-      errBox.classList.add('show');
+      finishGif(blob, dur, baseName);
+    } catch (serverErr) {
+      console.warn('ConvertKoro Video to GIF: server-side processing failed, falling back to in-browser engine.', serverErr);
+      try {
+        progressLabel.textContent = 'Server unavailable \u2014 falling back to your browser\u2019s own engine\u2026';
+        const compat = ckMediaCompatibility(file);
+        if (!compat.ok) throw new Error(compat.message);
+        const ffmpeg = await ckGetFFmpeg((ratio) => {
+          progressFill.style.width = `${20 + ratio*75}%`;
+          progressLabel.textContent = 'Rendering GIF in your browser\u2026';
+        });
+        progressFill.style.width = '20%';
+        progressLabel.textContent = 'Rendering GIF in your browser\u2026';
+        const ext = ckExt(file.name);
+        const inName = 'input.' + ext;
+        await ffmpeg.writeFile(inName, await ckFetchFile(file));
+        await ffmpeg.exec([
+          '-ss', String(start), '-t', String(dur), '-i', inName,
+          '-filter_complex', `[0:v]fps=10,scale=${width}:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse`,
+          'output.gif'
+        ]);
+        const data = await ffmpeg.readFile('output.gif');
+        const blob = new Blob([data.buffer], { type: 'image/gif' });
+        finishGif(blob, dur, baseName, true);
+      } catch (clientErr) {
+        progressWrap.classList.remove('show');
+        const detail = clientErr && clientErr.message ? clientErr.message : 'unknown error';
+        errText.textContent = `Couldn\u2019t create a GIF from this video (${detail}) \u2014 try a shorter clip.`;
+        console.error('ConvertKoro Video to GIF: both server and in-browser processing failed.', clientErr);
+        errBox.classList.add('show');
+      }
     }
     convertBtn.disabled = false;
   });
+
+  function finishGif(blob, dur, baseName, wasFallback) {
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', `${baseName}.gif`);
+    const line = `${dur}s \u00b7 ${ckFmtSize(blob.size)}`;
+    resultMeta.textContent = wasFallback ? `${line} \u00b7 rendered in your browser (server unavailable)` : line;
+    progressFill.style.width = '100%';
+    setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+  }
   window.addEventListener('dragover', (e) => e.preventDefault());
   window.addEventListener('drop', (e) => e.preventDefault());
 })();

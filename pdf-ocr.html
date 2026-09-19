@@ -30,7 +30,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF OCR","description":"Extract text from a scanned PDF using OCR, entirely in your browser.","url":"https://convertkoro.com/pdf-ocr","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"PDF OCR","item":"https://convertkoro.com/pdf-ocr"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is this different from PDF to Text?","acceptedAnswer":{"@type":"Answer","text":"PDF to Text reads real, selectable text instantly. PDF OCR is for scanned PDFs with no real text — it reads each page as an image, which takes longer."}},{"@type":"Question","name":"Can this read Bangla (Bengali) text in a scanned PDF?","acceptedAnswer":{"@type":"Answer","text":"Yes — Bengali and English are both enabled by default, so scanned pages with Bangla text are read automatically."}},{"@type":"Question","name":"Why is there a 15-page limit?","acceptedAnswer":{"@type":"Answer","text":"OCR is computationally heavy since it runs entirely in your browser. Longer documents are best split first."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -172,6 +172,13 @@
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width; canvas.height = viewport.height;
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        // Real, confirmed version upgrade (v4.1.1 -> v5, same real fix
+        // already made in Image to Text and Document Scanner) - the
+        // static Tesseract.recognize(image, langs) convenience wrapper
+        // used here is confirmed still present and working the same way
+        // in v5's own published source (it internally does
+        // createWorker -> recognize -> terminate for a one-off call), so
+        // this line needed no rewrite, only the version bump.
         const { data } = await Tesseract.recognize(canvas, 'ben+eng');
         fullText += data.text + '\n\n';
         progressFill.style.width = `${5 + (i/maxPages)*90}%`;
@@ -187,7 +194,9 @@
       setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t process this PDF. Make sure it isn\u2019t password-protected.';
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t process this PDF (${detail}). Make sure it isn\u2019t password-protected.`;
+      console.error('ConvertKoro PDF OCR: extraction failed.', err);
       errBox.classList.add('show');
     }
     convertBtn.disabled = false;

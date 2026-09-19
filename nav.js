@@ -813,3 +813,104 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHeader(page);
   renderFooter();
 });
+
+// Real, deliberate feature: detects a new deploy while a visitor already
+// has a tab open, and offers them a one-click way to pick it up - without
+// forcing a refresh on them mid-task (mid-conversion, half-filled form,
+// unsaved text). This does NOT replace the existing Cache-Control:
+// no-cache header on HTML pages (see _headers) - that already guarantees
+// any FRESH page load or manual refresh gets the latest deploy. This adds
+// the other half: a tab that's been open and idle since before the last
+// deploy, which no caching header can affect since nothing re-fetches the
+// page on its own.
+//
+// How it works: version.json is regenerated with a fresh timestamp on
+// every deploy (see the packaging step). This page's own copy of that
+// timestamp is captured once on load; a slow background poll (every 5
+// minutes - frequent enough to notice a deploy within a reasonable time,
+// far too infrequent to matter for bandwidth or Netlify's request count)
+// re-fetches version.json and compares. A mismatch means a new deploy has
+// gone out since this tab was opened.
+//
+// Deliberately NOT auto-reloading: this site's tools do real, sometimes
+// lengthy client-side work (building a PDF, running OCR, typing a long
+// paste-in text) that a surprise reload would destroy with zero warning -
+// exactly the kind of silent data loss this whole project has been
+// careful to avoid elsewhere (e.g. the honest paste-button messaging).
+// Instead, a small, dismissible banner offers a refresh; the visitor
+// stays in full control of when.
+(function () {
+  let currentVersion = null;
+  let checkTimer = null;
+  let bannerShown = false;
+
+  async function fetchVersion() {
+    try {
+      // cache: 'no-store' - this fetch must always hit the real network,
+      // never the browser's own HTTP cache, or the whole mechanism could
+      // end up comparing two cached copies of the same stale value.
+      const resp = await fetch('/version.json', { cache: 'no-store' });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      return data && data.deployedAt ? data.deployedAt : null;
+    } catch (err) {
+      // A failed check (offline, flaky connection) is not an error worth
+      // surfacing - it just means try again on the next scheduled poll.
+      return null;
+    }
+  }
+
+  function showUpdateBanner() {
+    if (bannerShown) return;
+    bannerShown = true;
+    const banner = document.createElement('div');
+    banner.setAttribute('role', 'status');
+    banner.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;background:var(--ink);color:var(--paper);padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:14px;font-family:"IBM Plex Sans",sans-serif;font-size:13.5px;max-width:calc(100vw - 32px);';
+    banner.innerHTML = '<span>A new version of ConvertKoro is available.</span>';
+    const refreshBtn = document.createElement('button');
+    refreshBtn.textContent = 'Refresh';
+    refreshBtn.style.cssText = 'background:var(--signal);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;flex:none;';
+    refreshBtn.addEventListener('click', () => location.reload());
+    const dismissBtn = document.createElement('button');
+    dismissBtn.setAttribute('aria-label', 'Dismiss');
+    dismissBtn.textContent = '\u00d7';
+    dismissBtn.style.cssText = 'background:none;color:var(--paper);border:none;font-size:18px;cursor:pointer;flex:none;line-height:1;opacity:.7;';
+    dismissBtn.addEventListener('click', () => banner.remove());
+    banner.appendChild(refreshBtn);
+    banner.appendChild(dismissBtn);
+    document.body.appendChild(banner);
+  }
+
+  async function checkForUpdate() {
+    const latest = await fetchVersion();
+    if (!latest) return;
+    if (currentVersion === null) {
+      currentVersion = latest;
+      return;
+    }
+    if (latest !== currentVersion) {
+      showUpdateBanner();
+      // Stop polling once a new version is known and shown - the
+      // banner's own Refresh button is now the correct next action,
+      // not repeated background checks.
+      if (checkTimer) clearInterval(checkTimer);
+    }
+  }
+
+  // Only run this on an actual page load where the browser tab could
+  // plausibly stay open a long time - skip entirely if the page was
+  // restored from the back/forward cache (bfcache), which already forces
+  // a fresh network check on most browsers for this kind of page.
+  window.addEventListener('load', () => {
+    checkForUpdate();
+    checkTimer = setInterval(checkForUpdate, 5 * 60 * 1000);
+  });
+
+  // Also check immediately whenever the tab regains focus/visibility -
+  // catches the common real case of someone switching back to a
+  // long-idle ConvertKoro tab after using other apps, without waiting
+  // for the next scheduled 5-minute poll.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkForUpdate();
+  });
+})();

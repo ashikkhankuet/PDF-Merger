@@ -30,6 +30,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script src="ffmpeg-tools.js"></script>
+<script src="media-server-pipeline.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video Resizer","description":"Resize a video to exact pixel dimensions, entirely in your browser.","url":"https://convertkoro.com/video-resizer","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video Resizer","item":"https://convertkoro.com/video-resizer"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Will resizing affect video quality?","acceptedAnswer":{"@type":"Answer","text":"Shrinking generally looks sharp. Enlarging beyond the original resolution can look softer since no new detail is created."}},{"@type":"Question","name":"Can I resize to a specific aspect ratio like 16:9?","acceptedAnswer":{"@type":"Answer","text":"Yes — uncheck \"Keep aspect ratio\" and enter your exact target width and height."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -50,12 +51,12 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>First use downloads a ~25MB video engine</strong> to your browser (one-time, cached after). Re-encoding takes real time &mdash; the larger the video, the longer it takes. Output is always MP4, regardless of the input format.</span>
+        <span><strong>Resized on our server</strong> for real speed. If the server is ever unavailable, this falls back to resizing directly in your browser instead (slower, but still works with no upload). Output is always MP4, regardless of the input format.</span>
       </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a video file here</strong>
-        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; stays on your device</div>
+        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; resized on our server, deleted afterward</div>
         <input type="file" id="fileInput" accept="video/*,.mp4,.webm,.mov,.avi,.mpeg,.mpg,.mkv" hidden />
       </div>
       <div id="editWrap" style="display:none;margin-top:18px;">
@@ -178,52 +179,64 @@
 
   resizeBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
-    progressLabel.textContent = 'Loading video engine\u2026';
+    progressWrap.classList.add('show'); progressFill.style.width = '2%';
+    progressLabel.textContent = 'Uploading\u2026';
     resizeBtn.disabled = true;
+    let w = Math.max(16, Math.round((parseInt(wIn.value) || 1280) / 2) * 2);
+    let h = Math.max(16, Math.round((parseInt(hIn.value) || 720) / 2) * 2);
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+
     try {
-      const compat = ckMediaCompatibility(file);
-      if (!compat.ok) throw new Error(compat.message);
-      const ffmpeg = await ckGetFFmpeg((r) => {
-        progressFill.style.width = `${20 + r*75}%`;
-        progressLabel.textContent = 'Resizing\u2026';
+      const blob = await ckProcessMediaServerSide(file, 'video-resize', { w, h }, (pct, label) => {
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = label;
       });
-      progressFill.style.width = '20%';
-      progressLabel.textContent = 'Resizing\u2026';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const ext = ckExt(file.name);
-      const inName = 'input.' + ext;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-      let w = Math.max(16, Math.round((parseInt(wIn.value) || 1280) / 2) * 2);
-      let h = Math.max(16, Math.round((parseInt(hIn.value) || 720) / 2) * 2);
-      // -c:a aac (not the previous -c:a copy) - a real, confirmed risk
-      // found during this audit: stream-copying audio only works when
-      // the source codec is valid inside the MP4 container. This tool
-      // now accepts MKV/AVI/MPEG inputs (added in an earlier pass),
-      // which can carry audio codecs like Opus or Vorbis that older
-      // MP4-muxer versions (including the specific, somewhat dated
-      // ffmpeg.wasm core this site loads) may not accept via stream
-      // copy - the documented failure mode there is either an outright
-      // error or, in some ffmpeg versions, a muxed file with the audio
-      // silently dropped. Re-encoding to AAC is universally MP4-safe
-      // and removes this risk entirely, matching the same choice
-      // already made in Video Compressor.
-      await ffmpeg.exec(['-i', inName, '-vf', `scale=${w}:${h}`, '-c:a', 'aac', '-b:a', '128k', 'output.mp4']);
-      const data = (await ffmpeg.readFile('output.mp4'));
-      const blob = new Blob([data.buffer], { type: 'video/mp4' });
-      const baseName = file.name.replace(/\.[^.]+$/, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}-${w}x${h}.mp4`);
-      resultMeta.textContent = `${w}\u00d7${h}px \u00b7 ${ckFmtSize(blob.size)}`;
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
-    } catch (err) {
-      progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t resize this video \u2014 try a smaller file.';
-      errBox.classList.add('show');
+      finishResize(blob, w, h, baseName);
+    } catch (serverErr) {
+      console.warn('ConvertKoro Video Resizer: server-side processing failed, falling back to in-browser engine.', serverErr);
+      try {
+        progressLabel.textContent = 'Server unavailable \u2014 falling back to your browser\u2019s own engine\u2026';
+        const compat = ckMediaCompatibility(file);
+        if (!compat.ok) throw new Error(compat.message);
+        const ffmpeg = await ckGetFFmpeg((r) => {
+          progressFill.style.width = `${20 + r*75}%`;
+          progressLabel.textContent = 'Resizing in your browser\u2026';
+        });
+        progressFill.style.width = '20%';
+        progressLabel.textContent = 'Resizing in your browser\u2026';
+        const ext = ckExt(file.name);
+        const inName = 'input.' + ext;
+        await ffmpeg.writeFile(inName, await ckFetchFile(file));
+        // REAL BUG FIX (confirmed root cause of "size increased instead
+        // of reduced"): this command previously had NO -crf at all, so
+        // libx264 silently used its own default (CRF 23) regardless of
+        // the target resolution - resizing DOWN from an already-
+        // compressed source could produce a LARGER file than the
+        // original despite smaller dimensions. Fixed with an explicit
+        // CRF so output size actually tracks a controlled quality level,
+        // matching the same fix applied server-side above.
+        await ffmpeg.exec(['-i', inName, '-vf', `scale=${w}:${h}`, '-c:v', 'libx264', '-crf', '23', '-preset', 'faster', '-c:a', 'aac', '-b:a', '128k', 'output.mp4']);
+        const data = await ffmpeg.readFile('output.mp4');
+        const blob = new Blob([data.buffer], { type: 'video/mp4' });
+        finishResize(blob, w, h, baseName, true);
+      } catch (clientErr) {
+        progressWrap.classList.remove('show');
+        const detail = clientErr && clientErr.message ? clientErr.message : 'unknown error';
+        errText.textContent = `Couldn\u2019t resize this video (${detail}) \u2014 try a smaller file.`;
+        console.error('ConvertKoro Video Resizer: both server and in-browser processing failed.', clientErr);
+        errBox.classList.add('show');
+      }
     }
     resizeBtn.disabled = false;
   });
+
+  function finishResize(blob, w, h, baseName, wasFallback) {
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', `${baseName}-${w}x${h}.mp4`);
+    resultMeta.textContent = wasFallback ? `${w}\u00d7${h}px \u00b7 ${ckFmtSize(blob.size)} \u00b7 resized in your browser (server unavailable)` : `${w}\u00d7${h}px \u00b7 ${ckFmtSize(blob.size)}`;
+    progressFill.style.width = '100%';
+    setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+  }
   window.addEventListener('dragover', (e) => e.preventDefault());
   window.addEventListener('drop', (e) => e.preventDefault());
 })();

@@ -30,6 +30,7 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script src="ffmpeg-tools.js"></script>
+<script src="media-server-pipeline.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Video to MP3","description":"Extract the audio track from a video as MP3, entirely in your browser.","url":"https://convertkoro.com/video-to-mp3","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Video to MP3","item":"https://convertkoro.com/video-to-mp3"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does this keep the original audio quality?","acceptedAnswer":{"@type":"Answer","text":"The audio is re-encoded as MP3 at a solid standard quality, suitable for most listening purposes."}},{"@type":"Question","name":"Can I extract audio from any video format?","acceptedAnswer":{"@type":"Answer","text":"Yes — MP4, WebM, MOV, and most common formats work."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
@@ -55,7 +56,7 @@
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a video file here</strong>
-        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; stays on your device</div>
+        <div class="hint">MP4, WebM, MOV, AVI, MPEG, MKV &middot; processed on our server, deleted afterward</div>
         <input type="file" id="fileInput" accept="video/*,.mp4,.webm,.mov,.avi,.mpeg,.mpg,.mkv" hidden />
       </div>
       <div class="file-list" id="fileList"></div>
@@ -164,39 +165,55 @@
 
   convertBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '5%';
-    progressLabel.textContent = 'Loading video engine\u2026';
+    progressWrap.classList.add('show'); progressFill.style.width = '2%';
+    progressLabel.textContent = 'Uploading\u2026';
     convertBtn.disabled = true;
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+
     try {
-      const compat = ckMediaCompatibility(file);
-      if (!compat.ok) throw new Error(compat.message);
-      const ffmpeg = await ckGetFFmpeg((ratio) => {
-        progressFill.style.width = `${20 + ratio*75}%`;
-        progressLabel.textContent = 'Extracting audio\u2026';
+      const blob = await ckProcessMediaServerSide(file, 'video-to-mp3', {}, (pct, label) => {
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = label;
       });
-      progressFill.style.width = '20%';
-      progressLabel.textContent = 'Extracting audio\u2026';
-      const fetchFile = ckFetchFile; // real v0.12 API - fetchFile now comes from @ffmpeg/util, wrapped in ffmpeg-tools.js
-      const ext = ckExt(file.name);
-      const inName = 'input.' + ext;
-      await ffmpeg.writeFile(inName, await fetchFile(file));
-      await ffmpeg.exec(['-i', inName, '-vn', '-acodec', 'libmp3lame', '-q:a', '4', 'output.mp3']);
-      const data = (await ffmpeg.readFile('output.mp3'));
-      const blob = new Blob([data.buffer], { type: 'audio/mp3' });
-      const baseName = file.name.replace(/\.[^.]+$/, '');
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.setAttribute('download', `${baseName}.mp3`);
-      resultTitle.textContent = `${baseName}.mp3 is ready`;
-      resultMeta.textContent = ckFmtSize(blob.size);
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
-    } catch (err) {
-      progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t process this video \u2014 try a smaller file or a different format.';
-      errBox.classList.add('show');
+      finishExtract(blob, baseName);
+    } catch (serverErr) {
+      console.warn('ConvertKoro Video to MP3: server-side processing failed, falling back to in-browser engine.', serverErr);
+      try {
+        progressLabel.textContent = 'Server unavailable \u2014 falling back to your browser\u2019s own engine\u2026';
+        const compat = ckMediaCompatibility(file);
+        if (!compat.ok) throw new Error(compat.message);
+        const ffmpeg = await ckGetFFmpeg((ratio) => {
+          progressFill.style.width = `${20 + ratio*75}%`;
+          progressLabel.textContent = 'Extracting audio in your browser\u2026';
+        });
+        progressFill.style.width = '20%';
+        progressLabel.textContent = 'Extracting audio in your browser\u2026';
+        const ext = ckExt(file.name);
+        const inName = 'input.' + ext;
+        await ffmpeg.writeFile(inName, await ckFetchFile(file));
+        await ffmpeg.exec(['-i', inName, '-vn', '-acodec', 'libmp3lame', '-q:a', '4', 'output.mp3']);
+        const data = await ffmpeg.readFile('output.mp3');
+        const blob = new Blob([data.buffer], { type: 'audio/mp3' });
+        finishExtract(blob, baseName, true);
+      } catch (clientErr) {
+        progressWrap.classList.remove('show');
+        const detail = clientErr && clientErr.message ? clientErr.message : 'unknown error';
+        errText.textContent = `Couldn\u2019t process this video (${detail}) \u2014 try a smaller file or a different format.`;
+        console.error('ConvertKoro Video to MP3: both server and in-browser processing failed.', clientErr);
+        errBox.classList.add('show');
+      }
     }
     convertBtn.disabled = false;
   });
+
+  function finishExtract(blob, baseName, wasFallback) {
+    downloadBtn.href = URL.createObjectURL(blob);
+    downloadBtn.setAttribute('download', `${baseName}.mp3`);
+    resultTitle.textContent = `${baseName}.mp3 is ready`;
+    resultMeta.textContent = wasFallback ? `${ckFmtSize(blob.size)} \u00b7 extracted in your browser (server unavailable)` : ckFmtSize(blob.size);
+    progressFill.style.width = '100%';
+    setTimeout(() => { progressWrap.classList.remove('show'); resultBox.classList.add('show'); }, 200);
+  }
   window.addEventListener('dragover', (e) => e.preventDefault());
   window.addEventListener('drop', (e) => e.preventDefault());
 })();

@@ -25,7 +25,7 @@
 <style>
   .download-menu-item:hover { background: var(--bg-soft, #f2f4f8); }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RHH2X3HHZ6"></script>
@@ -1412,9 +1412,18 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('img2t
         progressLabel.textContent = m.status.charAt(0).toUpperCase() + m.status.slice(1) + '\u2026';
       }
     };
-    const worker = await Tesseract.createWorker({ logger: progressLogger });
-    await worker.loadLanguage(lang);
-    await worker.initialize(lang);
+    // Real, deliberate version upgrade (Tesseract.js v4.1.1 -> v5),
+    // migrated correctly rather than just bumping the script tag - v4's
+    // separate createWorker() / worker.loadLanguage() / worker.initialize()
+    // calls are deprecated no-ops in v5 (confirmed directly from v5's own
+    // source: they now only console.warn and do nothing), replaced by
+    // passing the language directly to createWorker(lang), which loads and
+    // initializes it in one step. This upgrade is not cosmetic - v5 is
+    // confirmed by the library's own release notes to fix a real iOS 17
+    // compatibility break present in v4, and to cut worker memory usage by
+    // roughly 47%, which is directly relevant to a real, reported failure
+    // on a lower-spec device that a higher-spec device didn't hit.
+    const worker = await Tesseract.createWorker(lang, 1, { logger: progressLogger });
 
     const recognizeOpts = {
       // No forced page-segmentation mode here specifically: an earlier version
@@ -1664,7 +1673,16 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('img2t
       setTimeout(() => progressWrap.classList.remove('show'), 250);
     } catch (err) {
       progressWrap.classList.remove('show');
-      errText.textContent = 'Couldn\u2019t read this image. Try a clearer photo with good lighting and try again.';
+      // Real, confirmed pattern already established elsewhere on this
+      // site: a generic message here made a genuine device-specific
+      // failure (reported independently, reproduced on a real device,
+      // persisted after cache-clear and in incognito - ruling out
+      // staleness) impossible to diagnose, since both a network block
+      // and an on-device resource failure looked identical. Surface the
+      // real detail now.
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t read this image (${detail}). Try a clearer photo with good lighting and try again.`;
+      console.error('ConvertKoro Image-to-Text: extraction failed.', err);
       errBox.classList.add('show');
       // Offer the manual on-device retry here — this catch only fires when
       // BOTH the cloud call and the automatic on-device fallback above have
@@ -1855,7 +1873,8 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('img2t
       }
     } catch (err) {
       console.error('ConvertKoro Image-to-Text: on-device re-read failed.', err);
-      errText.textContent = 'Couldn\u2019t read this image on-device. Try a clearer photo with good lighting.';
+      const detail = err && err.message ? err.message : 'unknown error';
+      errText.textContent = `Couldn\u2019t read this image on-device (${detail}). Try a clearer photo with good lighting.`;
       errBox.classList.add('show');
     } finally {
       enhancedBtn.disabled = false;
