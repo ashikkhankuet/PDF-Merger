@@ -13,9 +13,33 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const ffmpegPath = require('ffmpeg-static');
+const ffmpegStaticPath = require('ffmpeg-static');
 
 const BLOBS_SITE_ID = '3471490a-08e9-48b0-af64-6b1e0171be73';
+
+// REAL, CRITICAL FIX (this was very likely the actual cause of every
+// media tool failing outright, not a tuning issue): AWS Lambda - which
+// Netlify Functions run on - makes every location in the deployed
+// function bundle READ-ONLY at runtime; only /tmp is writable, and
+// critically, only /tmp reliably allows executing a binary at all. The
+// require('ffmpeg-static') path above resolves to a location INSIDE the
+// read-only deployed bundle (e.g. /var/task/node_modules/ffmpeg-static/
+// ffmpeg) - calling execFile directly on that path is a well-documented,
+// common real failure ("[Errno 13] Permission denied") for exactly this
+// reason, confirmed across multiple independent real-world AWS Lambda +
+// ffmpeg write-ups, all converging on the same fix: copy the binary to
+// /tmp once, chmod it executable there, and run THAT copy. Cached at
+// module scope so a warm (reused) function invocation doesn't redo this
+// copy on every request - only a cold start pays the one-time cost.
+let ffmpegTmpPath = null;
+function getExecutableFfmpegPath() {
+  if (ffmpegTmpPath && fs.existsSync(ffmpegTmpPath)) return ffmpegTmpPath;
+  const dest = path.join(os.tmpdir(), 'ffmpeg-bin');
+  fs.copyFileSync(ffmpegStaticPath, dest);
+  fs.chmodSync(dest, 0o755);
+  ffmpegTmpPath = dest;
+  return dest;
+}
 
 function getBlobsStore(name) {
   return getStore({
@@ -29,8 +53,9 @@ const EXEC_TIMEOUT_MS = 13 * 60 * 1000;
 const DOWNLOAD_CHUNK_BYTES = 4 * 1024 * 1024;
 
 function runFfmpeg(args) {
+  const execPath = getExecutableFfmpegPath();
   return new Promise((resolve, reject) => {
-    execFile(ffmpegPath, args, { timeout: EXEC_TIMEOUT_MS, maxBuffer: 1024 * 1024 * 20 }, (err, stdout, stderr) => {
+    execFile(execPath, args, { timeout: EXEC_TIMEOUT_MS, maxBuffer: 1024 * 1024 * 20 }, (err, stdout, stderr) => {
       if (err) {
         const detail = (stderr || err.message || 'unknown ffmpeg error').slice(-2000);
         return reject(new Error(detail));

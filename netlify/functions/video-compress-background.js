@@ -44,7 +44,23 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const ffmpegPath = require('ffmpeg-static');
+const ffmpegStaticPath = require('ffmpeg-static');
+
+// REAL, CRITICAL FIX (see media-process-background.js for the full
+// write-up): AWS Lambda's deployed function bundle is read-only at
+// runtime, so execFile-ing the ffmpeg-static path directly (which
+// resolves inside that read-only bundle) is a well-documented real
+// failure mode. Copy to /tmp (the one writable, executable location)
+// once, chmod it executable, cache across warm invocations.
+let ffmpegTmpPath = null;
+function getExecutableFfmpegPath() {
+  if (ffmpegTmpPath && fs.existsSync(ffmpegTmpPath)) return ffmpegTmpPath;
+  const dest = path.join(os.tmpdir(), 'ffmpeg-bin');
+  fs.copyFileSync(ffmpegStaticPath, dest);
+  fs.chmodSync(dest, 0o755);
+  ffmpegTmpPath = dest;
+  return dest;
+}
 
 const BLOBS_SITE_ID = '3471490a-08e9-48b0-af64-6b1e0171be73';
 
@@ -63,8 +79,9 @@ function getBlobsStore(name) {
 const EXEC_TIMEOUT_MS = 13 * 60 * 1000; // 13 minutes
 
 function runFfmpeg(args) {
+  const execPath = getExecutableFfmpegPath();
   return new Promise((resolve, reject) => {
-    execFile(ffmpegPath, args, { timeout: EXEC_TIMEOUT_MS, maxBuffer: 1024 * 1024 * 20 }, (err, stdout, stderr) => {
+    execFile(execPath, args, { timeout: EXEC_TIMEOUT_MS, maxBuffer: 1024 * 1024 * 20 }, (err, stdout, stderr) => {
       if (err) {
         // ffmpeg writes its real diagnostic output to stderr even on
         // success - only surface it as the error detail on actual
