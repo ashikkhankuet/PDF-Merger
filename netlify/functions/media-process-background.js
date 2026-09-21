@@ -34,6 +34,9 @@ const BLOBS_SITE_ID = '3471490a-08e9-48b0-af64-6b1e0171be73';
 let ffmpegTmpPath = null;
 function getExecutableFfmpegPath() {
   if (ffmpegTmpPath && fs.existsSync(ffmpegTmpPath)) return ffmpegTmpPath;
+  if (!fs.existsSync(ffmpegStaticPath)) {
+    throw new Error(`ffmpeg-static binary not found at ${ffmpegStaticPath} - it likely wasn't included in the deployed function bundle`);
+  }
   const dest = path.join(os.tmpdir(), 'ffmpeg-bin');
   fs.copyFileSync(ffmpegStaticPath, dest);
   fs.chmodSync(dest, 0o755);

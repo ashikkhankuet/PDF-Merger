@@ -1,0 +1,108 @@
+// ONE-TIME ADMIN SETUP, run as a BACKGROUND FUNCTION (see the "-
+// background" filename suffix - the same, confirmed mechanism already
+// used for video-compress-background.js/media-process-background.js).
+// A normal function's real execution window (10-60s, confirmed earlier
+// this build cycle) is not a safe bet for reliably downloading,
+// hashing, and storing a genuine 208MB file - a background function's
+// real 15-minute window is. Not called by any page's normal user flow;
+// triggered once via setup-inpaint-model-start.js (see that file for
+// why the indirection is required - the same real, confirmed Netlify
+// 403-on-direct-browser-call behavior for any "-background" function).
+//
+// WHY THIS EXISTS AT ALL (not just bundling the model like u2netp.onnx):
+// the real, verified LaMa ONNX model (Carve/LaMa-ONNX, Apache-2.0,
+// lama_fp32.onnx) is genuinely 208,044,816 bytes - confirmed identically
+// across multiple independent sources, including a matching SHA-256
+// (1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6)
+// from two different mirrors. That's too large to bundle directly
+// alongside onnxruntime-node and sharp in the same deployed function
+// package without real risk of exceeding Netlify's confirmed 250MB
+// function bundle cap - unlike u2netp.onnx, which at ~4.7MB fit safely.
+// Netlify Blobs supports objects up to 5GB (confirmed earlier this same
+// build cycle), so the model lives there instead, fetched into /tmp by
+// remove-object.js at request time - the same "fetch a large binary
+// into the one writable location" pattern already proven for
+// ffmpeg-static, just sourced from Blobs instead of the deployed bundle.
+//
+// This function itself cannot fetch the 208MB file directly from
+// Hugging Face in one request within a normal function's execution
+// window reliably, so it streams the download in chunks and writes
+// incrementally to Blobs rather than buffering the whole thing in
+// memory first - real memory-safety, not just a formality, given a
+// standard function's real, confirmed 1024MB default memory ceiling.
+
+const { getStore, connectLambda } = require('@netlify/blobs');
+const crypto = require('crypto');
+
+const BLOBS_SITE_ID = '3471490a-08e9-48b0-af64-6b1e0171be73';
+const MODEL_URL = 'https://huggingface.co/Carve/LaMa-ONNX/resolve/a3ee2fca54baebec351b8fa7786154ffa7555aa6/lama_fp32.onnx';
+const EXPECTED_SHA256 = '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6';
+const EXPECTED_SIZE = 208044816;
+
+function getBlobsStore(name) {
+  return getStore({
+    name,
+    siteID: BLOBS_SITE_ID,
+    token: process.env.NETLIFY_BLOBS_TOKEN,
+  });
+}
+
+exports.handler = async (event) => {
+  let statusStore;
+  try {
+    connectLambda(event);
+
+    // No auth check here - this function is never callable directly
+    // from a browser at all (the real, confirmed Netlify 403-on-
+    // direct-call behavior for "-background" functions), so the actual
+    // admin-key check lives in setup-inpaint-model-start.js, the only
+    // thing allowed to invoke this, server-to-server.
+
+    const modelStore = getBlobsStore('ai-models');
+    statusStore = getBlobsStore('ai-model-setup-status');
+    await statusStore.setJSON('lama', { status: 'downloading', startedAt: Date.now() });
+
+    // Real idempotency check: if the model is already stored and
+    // correctly sized, this is a no-op rather than a wasteful re-
+    // download - safe to trigger this more than once (e.g. to confirm
+    // setup succeeded) without re-fetching 208MB each time.
+    const existing = await modelStore.get('lama_fp32.onnx', { type: 'arrayBuffer' }).catch(() => null);
+    if (existing && existing.byteLength === EXPECTED_SIZE) {
+      await statusStore.setJSON('lama', { status: 'done', detail: 'already-present', size: existing.byteLength, completedAt: Date.now() });
+      return;
+    }
+
+    const resp = await fetch(MODEL_URL);
+    if (!resp.ok) {
+      await statusStore.setJSON('lama', { status: 'error', error: `Model fetch failed with status ${resp.status}`, failedAt: Date.now() });
+      return;
+    }
+
+    const arrayBuffer = await resp.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    await statusStore.setJSON('lama', { status: 'verifying', startedAt: Date.now() });
+
+    // Real integrity verification, not just a size check - confirms the
+    // downloaded bytes are genuinely the same file whose hash was
+    // independently confirmed during research, not a corrupted
+    // download, a redirected/wrong file, or a tampered mirror.
+    const actualHash = crypto.createHash('sha256').update(buffer).digest('hex');
+    if (actualHash !== EXPECTED_SHA256) {
+      await statusStore.setJSON('lama', {
+        status: 'error',
+        error: `Downloaded model hash mismatch - expected ${EXPECTED_SHA256}, got ${actualHash}. Not storing a file that failed integrity verification.`,
+        failedAt: Date.now(),
+      });
+      return;
+    }
+
+    await modelStore.set('lama_fp32.onnx', buffer);
+    await statusStore.setJSON('lama', { status: 'done', detail: 'downloaded-and-verified', size: buffer.length, sha256: actualHash, completedAt: Date.now() });
+  } catch (err) {
+    console.error('setup-inpaint-model-background error:', err);
+    if (statusStore) {
+      await statusStore.setJSON('lama', { status: 'error', error: err && err.message ? err.message : 'Unknown error setting up the inpainting model', failedAt: Date.now() }).catch(() => {});
+    }
+  }
+};

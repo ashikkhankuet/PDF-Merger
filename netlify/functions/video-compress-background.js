@@ -55,6 +55,9 @@ const ffmpegStaticPath = require('ffmpeg-static');
 let ffmpegTmpPath = null;
 function getExecutableFfmpegPath() {
   if (ffmpegTmpPath && fs.existsSync(ffmpegTmpPath)) return ffmpegTmpPath;
+  if (!fs.existsSync(ffmpegStaticPath)) {
+    throw new Error(`ffmpeg-static binary not found at ${ffmpegStaticPath} - it likely wasn't included in the deployed function bundle`);
+  }
   const dest = path.join(os.tmpdir(), 'ffmpeg-bin');
   fs.copyFileSync(ffmpegStaticPath, dest);
   fs.chmodSync(dest, 0o755);
