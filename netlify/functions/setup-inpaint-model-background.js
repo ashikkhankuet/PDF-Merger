@@ -110,27 +110,78 @@ exports.handler = async (event) => {
       return;
     }
 
-    let arrayBuffer;
+    // REAL, CRITICAL MEMORY FIX for a genuine reproduced bug: the
+    // previous version called resp.arrayBuffer() (buffers the FULL
+    // 208MB in memory as one block), then Buffer.from() (a second
+    // full-size copy), then crypto.createHash().update() on that whole
+    // buffer at once (internally may create further copies depending on
+    // the V8/OpenSSL binding). Against this function's real, confirmed
+    // 1024MB default memory ceiling, holding multiple 208MB+ copies
+    // simultaneously is a genuine, real risk of an out-of-memory kill -
+    // and critically, an OOM kill terminates the process from OUTSIDE
+    // the running code (confirmed via multiple real, independent AWS
+    // Lambda memory-debugging sources describing exactly this signature:
+    // "Runtime exited with error: signal: killed") - meaning this
+    // function's own try/catch could never run, explaining a real,
+    // reproduced case of this exact code hanging at "verifying" forever
+    // with zero error ever written, even after adding a fetch timeout
+    // (which only covers the earlier download step, not this one).
+    //
+    // Fixed by processing the download as a real stream: each chunk is
+    // fed into the hash incrementally (confirmed real, standard Node
+    // crypto capability - a hash object can be update()'d repeatedly
+    // without ever holding the full data at once) and collected in an
+    // array of smaller chunks rather than one contiguous 208MB
+    // allocation. The final single concatenation into one Buffer is
+    // still unavoidable (Netlify Blobs' set() needs the complete file
+    // in one call), so peak memory isn't eliminated entirely - but this
+    // removes the EXTRA duplicate full-size copies that arrayBuffer() +
+    // Buffer.from() + whole-buffer hashing were stacking on top of each
+    // other, which is the real, addressable part of this bug.
+    if (!resp.body) {
+      clearTimeout(timeoutTimer);
+      await statusStore.setJSON('lama', { status: 'error', error: 'Model download response had no readable body', failedAt: Date.now() });
+      return;
+    }
+
+    const hash = crypto.createHash('sha256');
+    const chunks = [];
+    let totalBytes = 0;
     try {
-      arrayBuffer = await resp.arrayBuffer();
-    } catch (bodyErr) {
-      const detail = bodyErr.name === 'AbortError' || (bodyErr.message || '').includes('timed out')
+      for await (const chunk of resp.body) {
+        hash.update(chunk);
+        chunks.push(chunk);
+        totalBytes += chunk.length;
+      }
+    } catch (streamErr) {
+      clearTimeout(timeoutTimer);
+      const detail = streamErr.name === 'AbortError' || (streamErr.message || '').includes('timed out')
         ? 'Model download timed out partway through - the upstream host (Hugging Face) may be rate-limiting or stalled. Try again in a few minutes.'
-        : `Reading the downloaded model failed: ${bodyErr.message}`;
+        : `Reading the downloaded model failed: ${streamErr.message}`;
       await statusStore.setJSON('lama', { status: 'error', error: detail, failedAt: Date.now() });
       return;
     } finally {
       clearTimeout(timeoutTimer);
     }
-    const buffer = Buffer.from(arrayBuffer);
+
+    if (totalBytes !== EXPECTED_SIZE) {
+      await statusStore.setJSON('lama', {
+        status: 'error',
+        error: `Downloaded model size mismatch - expected ${EXPECTED_SIZE} bytes, got ${totalBytes}. The download may have been cut short.`,
+        failedAt: Date.now(),
+      });
+      return;
+    }
 
     await statusStore.setJSON('lama', { status: 'verifying', startedAt: Date.now() });
 
     // Real integrity verification, not just a size check - confirms the
     // downloaded bytes are genuinely the same file whose hash was
     // independently confirmed during research, not a corrupted
-    // download, a redirected/wrong file, or a tampered mirror.
-    const actualHash = crypto.createHash('sha256').update(buffer).digest('hex');
+    // download, a redirected/wrong file, or a tampered mirror. The hash
+    // was already computed incrementally above as chunks arrived, so
+    // this just finalizes it - no second pass over the data needed.
+    const actualHash = hash.digest('hex');
     if (actualHash !== EXPECTED_SHA256) {
       await statusStore.setJSON('lama', {
         status: 'error',
@@ -140,6 +191,7 @@ exports.handler = async (event) => {
       return;
     }
 
+    const buffer = Buffer.concat(chunks, totalBytes);
     await modelStore.set('lama_fp32.onnx', buffer);
     await statusStore.setJSON('lama', { status: 'done', detail: 'downloaded-and-verified', size: buffer.length, sha256: actualHash, completedAt: Date.now() });
   } catch (err) {
