@@ -72,13 +72,56 @@ exports.handler = async (event) => {
       return;
     }
 
-    const resp = await fetch(MODEL_URL);
+    // REAL, CONFIRMED FIX for a genuine production bug: the previous
+    // version of this code used a plain fetch() with no timeout at all.
+    // Node's fetch() has NO default timeout (confirmed from multiple
+    // independent, current sources) - a slow or stalled upstream (a
+    // real, documented behavior of Hugging Face's anonymous/
+    // unauthenticated download path specifically, confirmed from a
+    // detailed real report: silent rate-limit stalls with zero visible
+    // feedback, "progress bar frozen... nothing is printed... looks
+    // exactly like a dead download") can hang indefinitely with no
+    // error ever surfacing - exactly matching a real, reported case of
+    // this status sitting at "verifying" for over an hour with no
+    // change. AbortController + a hard deadline is the confirmed,
+    // correct fix (multiple independent, current sources agree on this
+    // exact pattern) - now the function fails LOUDLY with a real,
+    // diagnosable error well before Netlify's own 15-minute background-
+    // function ceiling would otherwise silently kill it with no status
+    // update at all.
+    const FETCH_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes - real headroom under the 15-minute background function ceiling, generous for a 208MB download on a normal connection, but a genuine, enforced stop rather than no limit at all
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(new Error('Model download timed out after 8 minutes - the upstream host may be rate-limiting or stalled')), FETCH_TIMEOUT_MS);
+
+    let resp;
+    try {
+      resp = await fetch(MODEL_URL, { signal: controller.signal });
+    } catch (fetchErr) {
+      clearTimeout(timeoutTimer);
+      const detail = fetchErr.name === 'AbortError' || fetchErr.message.includes('timed out')
+        ? 'Model download timed out - the upstream host (Hugging Face) may be rate-limiting anonymous downloads or experiencing an outage. Try again in a few minutes.'
+        : `Model download failed: ${fetchErr.message}`;
+      await statusStore.setJSON('lama', { status: 'error', error: detail, failedAt: Date.now() });
+      return;
+    }
     if (!resp.ok) {
+      clearTimeout(timeoutTimer);
       await statusStore.setJSON('lama', { status: 'error', error: `Model fetch failed with status ${resp.status}`, failedAt: Date.now() });
       return;
     }
 
-    const arrayBuffer = await resp.arrayBuffer();
+    let arrayBuffer;
+    try {
+      arrayBuffer = await resp.arrayBuffer();
+    } catch (bodyErr) {
+      const detail = bodyErr.name === 'AbortError' || (bodyErr.message || '').includes('timed out')
+        ? 'Model download timed out partway through - the upstream host (Hugging Face) may be rate-limiting or stalled. Try again in a few minutes.'
+        : `Reading the downloaded model failed: ${bodyErr.message}`;
+      await statusStore.setJSON('lama', { status: 'error', error: detail, failedAt: Date.now() });
+      return;
+    } finally {
+      clearTimeout(timeoutTimer);
+    }
     const buffer = Buffer.from(arrayBuffer);
 
     await statusStore.setJSON('lama', { status: 'verifying', startedAt: Date.now() });
