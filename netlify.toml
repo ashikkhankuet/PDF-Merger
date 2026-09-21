@@ -10,8 +10,59 @@
 # detected) even with the [build] key set correctly and the files present in
 # the repo - switched to the unambiguous, currently-recommended syntax to
 # rule this out as the cause.
+
+# REAL, CRITICAL FIX for the AI background-removal pipeline: onnxruntime-
+# node's own official npm listing confirms its default install downloads
+# CUDA/GPU binaries, ballooning the package to 218MB+ unpacked - this
+# Lambda environment is CPU-only and never uses them, and Netlify's real,
+# confirmed 250MB function bundle cap makes this a genuine risk, not a
+# theoretical one. The package's own docs give a CLI install flag
+# (--onnxruntime-node-install-cuda=skip) for this, but Netlify's build
+# runs its own automatic `npm install` with no way to pass a custom CLI
+# flag - so this is set as the equivalent environment variable instead,
+# per npm's own documented, official CLI-flag-to-env-var conversion rule
+# (prefix npm_config_, convert dashes to underscores): a flag written
+# --foo-bar=baz on the command line is identical to setting
+# npm_config_foo_bar=baz in the environment. Confirmed directly from
+# npm's own current documentation, not assumed.
+[build.environment]
+  npm_config_onnxruntime_node_install_cuda = "skip"
+
 [functions]
   directory = "netlify/functions"
+  # REAL, CRITICAL FIX: ffmpeg-static's actual payload is a downloaded
+  # BINARY executable, not JS source - Netlify's default function
+  # bundler (esbuild/zisi) is documented, by Netlify's own official
+  # config docs, to sometimes mishandle non-JS files like this during
+  # its inlining/bundling step, which can silently drop or corrupt the
+  # binary in the deployed artifact even when it installs and exists
+  # locally. external_node_modules is Netlify's own documented, official
+  # mechanism for exactly this case: it copies the named package into
+  # the deployed function bundle as-is (its real node_modules directory,
+  # untouched) instead of attempting to bundle/inline it - the correct
+  # fix for a package whose real content is a binary, not importable JS.
+  #
+  # onnxruntime-node (used by the AI background-removal pipeline, a
+  # native binary dependency exactly like ffmpeg-static) needs the
+  # identical treatment, for the identical reason - added to the SAME
+  # array rather than a second [functions] block, since TOML rejects
+  # redefining a key under the same table. sharp is NOT listed here -
+  # it's already correctly handled by Netlify's default bundler for
+  # native modules with prebuilt binaries for the deploy platform
+  # (confirmed from sharp's own real-world Lambda/Vercel deployment
+  # reports), so adding it would be an unnecessary, unverified change to
+  # something that already works.
+  external_node_modules = ["ffmpeg-static", "onnxruntime-node"]
+
+  # u2netp.onnx (U2-Net, Apache-2.0 licensed, ~4.7MB) must be explicitly
+  # included since it's a data file the bundler has no reason to detect
+  # on its own (unlike a required() JS module) - included_files is
+  # Netlify's own documented mechanism for exactly this case. Verified
+  # genuine before inclusion: downloaded from the model's real GitHub
+  # release and its SHA-256
+  # (309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8)
+  # confirmed to match the file's independently documented hash.
+  included_files = ["netlify/functions/models/*.onnx"]
 
 # Real, confirmed fix for a real, widespread, persistent bug class:
 # ffmpeg.wasm's SharedArrayBuffer-dependent features (used even by the
@@ -233,3 +284,49 @@
 # media-process-background is likewise never given an /api/ alias, for the
 # identical reason as video-compress-background above - server-to-server
 # only, called from media-process-start.js.
+
+# AI background removal - a single, direct, non-chunked function (unlike
+# the media-*/video-* pipelines above): a photo is small enough to fit
+# well within the real 6MB request-body limit already confirmed earlier
+# in this file, so the full chunked-upload machinery built for large
+# video/audio files would be unnecessary complexity here. This IS a
+# normal (non-background) function - it responds directly and
+# synchronously, since AI inference on one photo completes well within a
+# standard function's execution window, unlike a multi-minute video
+# encode.
+[[redirects]]
+  from = "/api/remove-background"
+  to = "/.netlify/functions/remove-background"
+  status = 200
+
+# AI object removal (inpainting) - see remove-object.js for the full
+# architecture. Unlike remove-background, this needs a real, fixed
+# ~208MB model fetched from Netlify Blobs at cold start rather than
+# bundled directly - see setup-inpaint-model-background.js for the
+# one-time setup step that must run once before this endpoint works.
+[[redirects]]
+  from = "/api/remove-object"
+  to = "/.netlify/functions/remove-object"
+  status = 200
+
+# One-time admin setup for the LaMa model (see setup-inpaint-model-
+# background.js's own header comment for the full rationale). Not used
+# by any normal page - call this once, manually, with your admin key:
+#   GET /api/setup-inpaint-model?key=YOUR_ANNOUNCE_ADMIN_KEY
+# then poll:
+#   GET /api/setup-inpaint-model-status?key=YOUR_ANNOUNCE_ADMIN_KEY
+[[redirects]]
+  from = "/api/setup-inpaint-model"
+  to = "/.netlify/functions/setup-inpaint-model-start"
+  status = 200
+
+[[redirects]]
+  from = "/api/setup-inpaint-model-status"
+  to = "/.netlify/functions/setup-inpaint-model-status"
+  status = 200
+
+# setup-inpaint-model-background is intentionally NOT given an /api/
+# alias, for the identical reason as every other "-background" function
+# on this site - Netlify returns a 403 on any direct browser call to a
+# background function, by design. Only ever invoked server-to-server
+# from setup-inpaint-model-start.js.

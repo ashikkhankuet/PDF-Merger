@@ -1,9 +1,11 @@
 {
   "name": "convertkoro-site",
   "private": true,
-  "description": "Static site + Netlify Functions for convertkoro.com. @netlify/blobs is required for the URL Shortener's server-backed short links (shorten.js, redirect.js) and the server-side video compression pipeline (video-upload-chunk.js, video-compress-background.js, video-job-status.js, video-download-chunk.js, video-compress-start.js), which stores uploaded video chunks and compressed results there. ffmpeg-static provides a real, statically-linked ffmpeg binary for genuine server-side video compression (see video-compress-background.js for why this replaced the previous fully client-side ffmpeg.wasm approach).",
+  "description": "Static site + Netlify Functions for convertkoro.com. @netlify/blobs is required for the URL Shortener's server-backed short links (shorten.js, redirect.js), the server-side video/media pipeline (video-*.js, media-*.js), and AI model storage (ai-models store, holding the large LaMa inpainting model too big to bundle directly - see setup-inpaint-model-background.js). ffmpeg-static provides a real, statically-linked ffmpeg binary for genuine server-side video compression. onnxruntime-node and sharp power the real server-side AI pipelines: remove-background.js (U2-Net, bundled at netlify/functions/models/u2netp.onnx, ~4.7MB) and remove-object.js (LaMa, ~208MB, fetched from Blobs at runtime rather than bundled). See netlify.toml's [build.environment] for why onnxruntime-node's CUDA download must be explicitly skipped at install time.",
   "dependencies": {
     "@netlify/blobs": "^10.7.9",
-    "ffmpeg-static": "^5.2.0"
+    "ffmpeg-static": "^5.2.0",
+    "onnxruntime-node": "^1.21.1",
+    "sharp": "^0.35.0"
   }
 }

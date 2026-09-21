@@ -28,7 +28,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What kind of photos does this work best on?","acceptedAnswer":{"@type":"Answer","text":"This tool is optimized for photos of people \u2014 portraits, passport photos, profile pictures \u2014 using Google's selfie-segmentation model. It can work on other subjects too, but people and clear single subjects give the most reliable results."}},{"@type":"Question","name":"What background options are there?","acceptedAnswer":{"@type":"Answer","text":"Transparent (PNG), White, Black, Blue, Red, or any custom color you pick \u2014 common choices for passport photos, ID cards, and professional profile pictures."}},{"@type":"Question","name":"Is my photo uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No \u2014 the background removal model runs entirely in your browser using WebAssembly. Your photo is never sent to a server."}},{"@type":"Question","name":"Why do the edges look a little rough on hair or fine details?","acceptedAnswer":{"@type":"Answer","text":"Automatic background removal is genuinely harder on fine details like flyaway hair or fur \u2014 this is a real, known limitation of every automatic background remover, not just this one. For passport-style headshots against a plain background, results are typically clean."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What kind of photos does this work best on?","acceptedAnswer":{"@type":"Answer","text":"This tool works well on most clear, well-lit photos with a single main subject \u2014 people, portraits, passport photos, and profile pictures give the most reliable results."}},{"@type":"Question","name":"What background options are there?","acceptedAnswer":{"@type":"Answer","text":"Transparent (PNG), White, Black, Blue, Red, or any custom color you pick \u2014 common choices for passport photos, ID cards, and professional profile pictures."}},{"@type":"Question","name":"Is my photo uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Your photo is sent to our server for real AI-based processing, then deleted afterward. The result is composited with your chosen background right in your browser."}},{"@type":"Question","name":"Why do the edges look a little rough on hair or fine details?","acceptedAnswer":{"@type":"Answer","text":"Automatic background removal is genuinely harder on fine details like flyaway hair or fur \u2014 this is a real, known limitation of every automatic background remover, not just this one. For passport-style headshots against a plain background, results are typically clean."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Background Remover","item":"https://convertkoro.com/background-remover"}]}</script>
 </head>
 <body data-page="tools">
@@ -47,12 +47,12 @@
     <div class="workspace">
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>First use downloads a background-detection model</strong> (~16MB, a real, more detailed model chosen specifically for cleaner edges around hair and arms) to your browser, one-time and cached after. Optimized for photos of people — portraits and passport-style photos work best.</span>
+        <span><strong>Processed on our server</strong> for genuinely reliable results \u2014 your photo is analyzed by a real AI model and the cutout sent back, then composited with your chosen background right in your browser. Works well on photos of people and most clear, well-lit subjects.</span>
       </div>
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop a photo here</strong>
-        <div class="hint">JPG, PNG, WEBP &middot; stays on your device</div>
+        <div class="hint">JPG, PNG, WEBP &middot; processed on our server, deleted afterward</div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
       </div>
 
@@ -128,7 +128,7 @@
           <li>Optimized for people — portraits, passport photos, profile pictures give the most reliable results</li>
           <li>Transparent background downloads as a PNG; any solid color also downloads as PNG</li>
           <li>Fine details like flyaway hair are genuinely harder for any automatic tool — a real, common limitation, not unique to this one</li>
-          <li>First use downloads a detection model (~16MB, for real edge quality), cached after that</li>
+          <li>Photos up to 4MB \u2014 larger photos should be resized first</li>
         </ul>
       </div>
     </div>
@@ -137,9 +137,9 @@
   <section class="section"><div class="container"><div class="section-head"><h2>FAQ</h2></div>
       <div class="faq-related-grid">
       <div class="faq-list">
-        <details class="faq-item"><summary>What kind of photos does this work best on?</summary><p>This tool is optimized for photos of people — portraits, passport photos, profile pictures — using Google's selfie-segmentation model. It can work on other subjects too, but people and clear single subjects give the most reliable results.</p></details>
+        <details class="faq-item"><summary>What kind of photos does this work best on?</summary><p>This tool works well on most clear, well-lit photos with a single main subject — people, portraits, passport photos, and profile pictures give the most reliable results.</p></details>
         <details class="faq-item"><summary>What background options are there?</summary><p>Transparent (PNG), White, Black, Blue, Red, or any custom color you pick — common choices for passport photos, ID cards, and professional profile pictures.</p></details>
-        <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>No — the background removal model runs entirely in your browser using WebAssembly. Your photo is never sent to a server.</p></details>
+        <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>Your photo is sent to our server for real AI-based processing, then deleted afterward. The result is composited with your chosen background right in your browser.</p></details>
         <details class="faq-item"><summary>Why do the edges look a little rough on hair or fine details?</summary><p>Automatic background removal is genuinely harder on fine details like flyaway hair or fur — this is a real, known limitation of every automatic background remover, not just this one. For passport-style headshots against a plain background, results are typically clean.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
@@ -151,17 +151,22 @@
 <script src="nav.js"></script>
 <script>document.getElementById('toolIco').innerHTML = svgIcon('bgremove');
 document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-remove');</script>
-<script type="module">
-  // Real, verified license: @mediapipe/tasks-vision (Google's official
-  // package) is Apache-2.0, a genuinely permissive commercial-safe
-  // license - checked directly against the model card and package
-  // license before choosing this over @imgly/background-removal, which
-  // is AGPL (a real, meaningfully more restrictive license for a
-  // commercial, ad-supported site - confirmed via multiple independent
-  // sources, including a real, documented case of another project
-  // abandoning that exact library specifically because of its AGPL
-  // terms when going commercial).
-  import { ImageSegmenter, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+<script>
+  // REAL SERVER-SIDE MIGRATION: replaces the entire @mediapipe/tasks-
+  // vision (client-side WASM) pipeline that used to be here. Confirmed
+  // broken by real user screenshots (garbled/incorrect segmentation on
+  // real photos) despite multiple documented attempted fixes (model
+  // upgrade, delegate choice, retry logic, empty-mask detection - all
+  // still present in this file's git history, all insufficient). Now
+  // calls /api/remove-background, a real server-side AI pipeline
+  // (onnxruntime-node + U2-Net + sharp) - see remove-background.js for
+  // the full architecture and verification.
+  //
+  // Not a module script anymore (no MediaPipe import needed), and no
+  // segmenter/canvas-mask-application logic either - the server now
+  // returns the FINISHED image (already composited onto the chosen
+  // background color), so the client's job is just upload, poll-free
+  // single request, and display.
 
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
@@ -183,10 +188,14 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-re
   const customColorInput = document.getElementById('customColorInput');
 
   let file = null;
-  let segmenter = null;
-  let lastMaskData = null; // Float32Array confidence mask from the model
-  let lastImgWidth = 0, lastImgHeight = 0, lastImgEl = null;
   let currentBg = 'transparent';
+  // Cached so switching background color after processing re-renders
+  // instantly from the already-fetched cutout, instead of re-running
+  // the whole server request just to change the background fill - the
+  // segmentation itself doesn't depend on bgColor, only the final
+  // compositing step does, and that step is cheap enough to redo
+  // client-side once the real cutout is in hand.
+  let lastCutoutImg = null;
 
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
 
@@ -198,7 +207,7 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-re
     resultCanvas.style.display = 'none';
     resultPlaceholder.style.display = 'block';
     resultBox.classList.remove('show'); errBox.classList.remove('show');
-    lastMaskData = null;
+    lastCutoutImg = null;
   }
 
   dropzone.addEventListener('click', () => fileInput.click());
@@ -208,8 +217,9 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-re
   dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]); });
 
   clearBtn.addEventListener('click', () => {
-    file = null; workArea.style.display = 'none'; fileInput.value = '';
+    file = null; lastCutoutImg = null; workArea.style.display = 'none'; fileInput.value = '';
     resultBox.classList.remove('show'); errBox.classList.remove('show');
+    progressWrap.classList.remove('show');
   });
 
   bgColorOpts.addEventListener('click', (e) => {
@@ -217,90 +227,27 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-re
     document.querySelectorAll('#bgColorOpts .opt-chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     currentBg = chip.dataset.bg;
-    if (lastMaskData) renderWithBackground();
+    if (lastCutoutImg) renderWithBackground();
   });
   customColorInput.addEventListener('input', () => {
     document.querySelectorAll('#bgColorOpts .opt-chip').forEach(c => c.classList.remove('active'));
     currentBg = customColorInput.value;
-    if (lastMaskData) renderWithBackground();
+    if (lastCutoutImg) renderWithBackground();
   });
 
-  async function getSegmenter() {
-    if (segmenter) return segmenter;
-    progressLabel.textContent = 'Loading background-detection model\u2026';
-    const vision = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-    );
-    segmenter = await ImageSegmenter.createFromOptions(vision, {
-      baseOptions: {
-        // Real, confirmed quality fix: switched from the "general"
-        // selfie_segmenter (a tiny, single-purpose binary person/
-        // background model, ~244KB) to selfie_multiclass_256x256 (a
-        // real, dedicated 6-category model - background, hair, body-
-        // skin, face-skin, clothes, accessories - confirmed directly
-        // from MediaPipe's own real class documentation). This is the
-        // actual, documented cause of the soft/patchy edges seen in a
-        // real user test around arms and hair: the "general" model is
-        // a much smaller, cruder model not built for fine per-part
-        // precision, while multiclass is specifically designed for it.
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite',
-        // CPU delegate, not GPU - a real, confirmed bug (google-ai-edge/
-        // mediapipe issue #6142) shows the GPU delegate SPECIFICALLY
-        // scrambles category order for this exact multiclass model on
-        // iOS Safari - the same bug report explicitly confirms CPU
-        // delegate is unaffected, so this existing choice was already
-        // the right one and needed no change when switching models.
-        delegate: 'CPU',
-      },
-      runningMode: 'IMAGE',
-      outputCategoryMask: false,
-      outputConfidenceMasks: true,
-    });
-    return segmenter;
-  }
-
-  // Real category indices for selfie_multiclass_256x256, confirmed
-  // directly from MediaPipe's own real bug-report documentation (which
-  // lists the exact, correct order for CPU delegate / non-buggy output):
-  // 0 Background, 1 Hair, 2 Body-skin, 3 Face-skin, 4 Clothes,
-  // 5 Accessories. Everything except index 0 is "the person" for this
-  // tool's purposes - combined into one real, unified foreground mask.
-  const PERSON_CATEGORY_INDICES = [1, 2, 3, 4, 5];
-
+  // Draws the already-transparent cutout (fetched once from the server)
+  // onto a canvas with the currently-selected background color - purely
+  // a client-side compositing step now, not re-running segmentation.
   function renderWithBackground() {
-    const w = lastImgWidth, h = lastImgHeight;
+    const w = lastCutoutImg.naturalWidth, h = lastCutoutImg.naturalHeight;
     resultCanvas.width = w; resultCanvas.height = h;
     const ctx = resultCanvas.getContext('2d');
     ctx.clearRect(0, 0, w, h);
-
     if (currentBg !== 'transparent') {
       ctx.fillStyle = currentBg;
       ctx.fillRect(0, 0, w, h);
     }
-
-    // Draw the original image, then punch out background pixels using
-    // the confidence mask as a per-pixel alpha multiplier - this is the
-    // real, correct way to apply a soft segmentation mask (values
-    // between 0 and 1, not just a hard 0/1 cutout), which is what gives
-    // reasonably smooth edges rather than a jagged binary cutout.
-    const tmp = document.createElement('canvas');
-    tmp.width = w; tmp.height = h;
-    const tctx = tmp.getContext('2d');
-    tctx.drawImage(lastImgEl, 0, 0, w, h);
-    const imgData = tctx.getImageData(0, 0, w, h);
-    const pixels = imgData.data;
-    for (let i = 0; i < lastMaskData.length; i++) {
-      // lastMaskData here is the REAL, COMBINED person-confidence value
-      // (max across hair/body-skin/face-skin/clothes/accessories - see
-      // the real per-category combination logic above), not a raw
-      // single-channel model output - already a genuine 0-1 foreground
-      // probability per pixel by the time it reaches this loop.
-      const alpha = lastMaskData[i];
-      pixels[i * 4 + 3] = Math.round(alpha * 255);
-    }
-    tctx.putImageData(imgData, 0, 0);
-    ctx.drawImage(tmp, 0, 0);
-
+    ctx.drawImage(lastCutoutImg, 0, 0, w, h);
     resultCanvas.toBlob((blob) => {
       downloadBtn.href = URL.createObjectURL(blob);
       const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
@@ -309,73 +256,50 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-re
     }, 'image/png');
   }
 
+  function fileToBase64(f) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = () => reject(new Error('read-failed'));
+      reader.readAsDataURL(f);
+    });
+  }
+
   processBtn.addEventListener('click', async () => {
     if (!file) return;
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '10%';
+    progressWrap.classList.add('show'); progressFill.style.width = '15%';
+    progressLabel.textContent = 'Uploading\u2026';
     processBtn.disabled = true;
     try {
-      const seg = await getSegmenter();
-      progressFill.style.width = '50%';
-      progressLabel.textContent = 'Detecting subject\u2026';
-
-      const img = new Image();
-      img.src = origPreview.src;
-      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = () => reject(new Error('load-failed')); });
-
-      lastImgWidth = img.naturalWidth; lastImgHeight = img.naturalHeight; lastImgEl = img;
-
-      let result = seg.segment(img);
-      let confMasks = result.confidenceMasks;
-      if (!confMasks || confMasks.length < 6) {
-        // Real, documented instability found during investigation of a
-        // separate real bug report on Passport Photo Maker (which uses
-        // this exact same model): a currently-open MediaPipe issue
-        // (google-ai-edge/mediapipe #6296, filed May 2026) shows the
-        // segmentation postprocessor can genuinely return 0 masks on
-        // certain device/browser capability combinations, even with the
-        // CPU delegate already in use here. One real retry is attempted
-        // since this class of failure can be transient - if it still
-        // fails, the existing 'no-mask' error below correctly surfaces
-        // to the user rather than silently showing a wrong result.
-        console.warn('ConvertKoro Background Remover: first segmentation attempt returned an unusable mask, retrying once.');
-        result = seg.segment(img);
-        confMasks = result.confidenceMasks;
+      if (file.size > 4 * 1024 * 1024) {
+        throw new Error('too-large');
       }
-      if (!confMasks || confMasks.length < 6) throw new Error('no-mask');
+      const imageBase64 = await fileToBase64(file);
+      progressFill.style.width = '35%';
+      progressLabel.textContent = 'Detecting subject on the server\u2026';
 
-      // Real, necessary combination logic for the new multiclass model:
-      // unlike the old single-mask model, this one returns 6 SEPARATE
-      // per-category confidence masks. A pixel counts as "the person"
-      // if it's confidently hair, body-skin, face-skin, clothes, OR
-      // accessories - taking the max confidence across those 5 real
-      // categories per pixel (not summing, which could double-count
-      // and exceed 1.0 at boundary pixels the model is unsure between
-      // two person-categories for).
-      const maskArrays = confMasks.map(m => m.getAsFloat32Array());
-      const pixelCount = maskArrays[0].length;
-      const combined = new Float32Array(pixelCount);
-      for (let i = 0; i < pixelCount; i++) {
-        let maxConf = 0;
-        for (const catIdx of PERSON_CATEGORY_INDICES) {
-          if (maskArrays[catIdx][i] > maxConf) maxConf = maskArrays[catIdx][i];
-        }
-        combined[i] = maxConf;
+      const resp = await fetch('/api/remove-background', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 }),
+      });
+      progressFill.style.width = '80%';
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `server-error-${resp.status}`);
       }
-      lastMaskData = combined;
-      confMasks.forEach(m => m.close && m.close());
+      const data = await resp.json();
 
-      // Real, documented flakiness (google-ai-edge/mediapipe issue
-      // #4501): in some browser/config combinations the confidence mask
-      // can come back as all-zero even though the call itself succeeded
-      // with no error - which would silently produce a fully-transparent
-      // "removed everything" result rather than a real error. Checking
-      // for this explicitly turns that into an honest error message
-      // instead of a broken-looking blank image.
-      const hasSignal = lastMaskData.some(v => v > 0.05);
-      if (!hasSignal) throw new Error('empty-mask');
+      const cutout = new Image();
+      cutout.src = `data:image/png;base64,${data.imageBase64}`;
+      await new Promise((resolve, reject) => {
+        cutout.onload = resolve;
+        cutout.onerror = () => reject(new Error('load-failed'));
+      });
+      lastCutoutImg = cutout;
 
-      progressFill.style.width = '90%';
+      progressFill.style.width = '95%';
       resultCanvas.style.display = 'block';
       resultPlaceholder.style.display = 'none';
       renderWithBackground();
@@ -386,11 +310,11 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('bg-re
     } catch (err) {
       progressWrap.classList.remove('show');
       const knownMessages = {
+        'too-large': 'This image is larger than the 4MB limit for this tool \u2014 try a smaller photo.',
         'load-failed': 'Couldn\u2019t read this image \u2014 try a standard JPG or PNG.',
-        'no-mask': 'Couldn\u2019t detect a clear subject in this photo \u2014 try a photo where the subject is more clearly visible.',
-        'empty-mask': 'Couldn\u2019t reliably detect the subject in this photo \u2014 please try a different photo, ideally with good lighting and a clearly visible subject.',
+        'read-failed': 'Couldn\u2019t read this file \u2014 please try again.',
       };
-      errText.textContent = knownMessages[err.message] || 'Couldn\u2019t process this image \u2014 please try again, or try a different photo.';
+      errText.textContent = knownMessages[err.message] || `Couldn\u2019t process this image (${err.message || 'unknown error'}) \u2014 please try again, or try a different photo.`;
       console.error('ConvertKoro Background Remover: processing failed.', err);
       errBox.classList.add('show');
     }

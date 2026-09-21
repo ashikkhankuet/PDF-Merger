@@ -28,7 +28,7 @@
   gtag('js', new Date());
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is this guaranteed to be accepted?","acceptedAnswer":{"@type":"Answer","text":"No tool can guarantee acceptance \u2014 this prepares your photo according to the selected country's published size and background requirements, but the issuing authority makes the final decision. Passport photo rules can change, so always confirm current requirements with the issuing authority before submitting."}},{"@type":"Question","name":"Where do these size requirements come from?","acceptedAnswer":{"@type":"Answer","text":"Each country's requirements link to their real, official source \u2014 shown directly on this page. Where official sources didn't specify every detail, that's disclosed rather than guessed."}},{"@type":"Question","name":"Is my photo uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No \u2014 face detection and background processing both run entirely in your browser using the same on-device engine as Background Remover. Your photo is never sent to a server."}},{"@type":"Question","name":"Can I get a printable sheet with multiple copies?","acceptedAnswer":{"@type":"Answer","text":"Yes \u2014 after creating your photo, choose a 4\u00d76 print sheet with 2, 4, 6, or 8 copies laid out for one print."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is this guaranteed to be accepted?","acceptedAnswer":{"@type":"Answer","text":"No tool can guarantee acceptance \u2014 this prepares your photo according to the selected country's published size and background requirements, but the issuing authority makes the final decision. Passport photo rules can change, so always confirm current requirements with the issuing authority before submitting."}},{"@type":"Question","name":"Where do these size requirements come from?","acceptedAnswer":{"@type":"Answer","text":"Each country's requirements link to their real, official source \u2014 shown directly on this page. Where official sources didn't specify every detail, that's disclosed rather than guessed."}},{"@type":"Question","name":"Is my photo uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Face detection happens entirely in your browser. If you choose a white background, or mark an object to remove, your cropped photo (and mask, for object removal) is sent to our server for real AI-based processing, then deleted afterward."}},{"@type":"Question","name":"Can I get a printable sheet with multiple copies?","acceptedAnswer":{"@type":"Answer","text":"Yes \u2014 after creating your photo, choose a 4\u00d76 print sheet with 2, 4, 6, or 8 copies laid out for one print."}},{"@type":"Question","name":"Can I remove something unwanted from my photo, like a stray hand or object?","acceptedAnswer":{"@type":"Answer","text":"Yes \u2014 check \u201cRemove an unwanted object,\u201d paint over it, and it\u2019s removed using real AI inpainting before your photo is finalized. Works best on small, simple objects against a plain background."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Passport Photo Maker","item":"https://convertkoro.com/passport-photo-maker"}]}</script>
 </head>
 <body data-page="tools">
@@ -65,13 +65,13 @@
 
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span><strong>First use downloads real face-detection and background-removal engines</strong> (a few MB each) to your browser, one-time and cached after.</span>
+        <span><strong>Face detection runs in your browser</strong> (downloads a small model, one-time and cached). If you choose a white background, that step runs on our server for genuinely reliable AI results.</span>
       </div>
 
       <div class="dropzone" id="dropzone" style="margin-top:20px;">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Add your photo</strong>
-        <div class="hint">A clear, front-facing photo &middot; stays on your device</div>
+        <div class="hint">A clear, front-facing photo &middot; background removal processed on our server</div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
       </div>
 
@@ -79,12 +79,26 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
           <div>
             <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Adjust</div>
-            <div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eee;">
+            <div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eee;position:relative;">
               <canvas id="editCanvas" style="width:100%;display:block;cursor:move;"></canvas>
+              <canvas id="maskCanvas" style="width:100%;display:none;position:absolute;top:0;left:0;cursor:crosshair;touch-action:none;"></canvas>
             </div>
             <div style="margin-top:12px;">
               <label style="font-size:12.5px;color:var(--ink-soft);">Zoom</label>
               <input type="range" id="zoomSlider" min="0.5" max="2.5" step="0.01" value="1" style="width:100%;" />
+            </div>
+
+            <div style="margin-top:16px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+                <input type="checkbox" id="removeObjectToggle" />
+                Remove an unwanted object (e.g. a stray leaf or hand)
+              </label>
+              <div id="brushControls" style="display:none;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);">
+                <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">Paint over the object you want removed, then click "Create photo."</div>
+                <label style="font-size:12px;color:var(--ink-soft);">Brush size</label>
+                <input type="range" id="brushSizeSlider" min="8" max="60" step="2" value="24" style="width:100%;" />
+                <button type="button" id="clearMaskBtn" class="btn btn-ghost" style="margin-top:8px;font-size:12.5px;padding:6px 12px;">Clear marks</button>
+              </div>
             </div>
           </div>
           <div>
@@ -166,8 +180,9 @@
       <div class="faq-list">
         <details class="faq-item"><summary>Is this guaranteed to be accepted?</summary><p>No tool can guarantee acceptance — this prepares your photo according to the selected country's published size and background requirements, but the issuing authority makes the final decision. Passport photo rules can change, so always confirm current requirements with the issuing authority before submitting.</p></details>
         <details class="faq-item"><summary>Where do these size requirements come from?</summary><p>Each country's requirements link to their real, official source — shown directly on this page. Where official sources didn't specify every detail, that's disclosed rather than guessed.</p></details>
-        <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>No — face detection and background processing both run entirely in your browser using the same on-device engine as Background Remover. Your photo is never sent to a server.</p></details>
+        <details class="faq-item"><summary>Is my photo uploaded anywhere?</summary><p>Face detection happens entirely in your browser. If you choose a white background, or mark an object to remove, your cropped photo (and mask, for object removal) is sent to our server for real AI-based processing, then deleted afterward.</p></details>
         <details class="faq-item"><summary>Can I get a printable sheet with multiple copies?</summary><p>Yes — after creating your photo, choose a 4×6" print sheet with 2, 4, 6, or 8 copies laid out for one print.</p></details>
+        <details class="faq-item"><summary>Can I remove something unwanted from my photo, like a stray hand or object?</summary><p>Yes — check "Remove an unwanted object," paint over it, and it's removed using real AI inpainting before your photo is finalized. Works best on small, simple objects against a plain background.</p></details>
         <details class="faq-item"><summary>Does this work on Mac, Windows, or my phone?</summary><p>Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install.</p></details>
       </div>
       <div id="relatedToolsBox"></div>
@@ -179,12 +194,16 @@
 <script>document.getElementById('toolIco').innerHTML = svgIcon('passport');
 document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passport-photo');</script>
 <script type="module">
-  // Face detection reuses the SAME real, Apache-2.0-licensed MediaPipe
+  // Face detection uses the SAME real, Apache-2.0-licensed MediaPipe
   // engine already verified and shipped in Background Remover this
-  // session - not a new, separate dependency, and not the AGPL-licensed
-  // @imgly library (see background-remover.html for the full licensing
-  // research this was already based on).
-  import { FaceDetector, ImageSegmenter, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  // session. Background removal itself no longer runs client-side at
+  // all (see getSegmenter's removal below) - it now calls the same real
+  // server-side AI pipeline (/api/remove-background) that replaced the
+  // broken client-side segmentation in Background Remover, for the
+  // identical reason: real user reports/screenshots confirmed the
+  // client-side multiclass segmentation model was producing incorrect,
+  // garbled results here too, not just there.
+  import { FaceDetector, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 
   // REAL, SOURCED country data. Every entry below was checked against
   // either a direct .gov source (US: travel.state.gov, confirmed
@@ -368,12 +387,19 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
   const downloadBtn = document.getElementById('downloadBtn');
   const bgOpts = document.getElementById('bgOpts');
   const downloadOpts = document.getElementById('downloadOpts');
+  const maskCanvas = document.getElementById('maskCanvas');
+  const removeObjectToggle = document.getElementById('removeObjectToggle');
+  const brushControls = document.getElementById('brushControls');
+  const brushSizeSlider = document.getElementById('brushSizeSlider');
+  const clearMaskBtn = document.getElementById('clearMaskBtn');
 
   let img = null;
   let offsetX = 0, offsetY = 0, zoom = 1;
   let detector = null;
   let currentBg = 'white';
   let currentDownload = 'single';
+  let removeObjectMode = false;
+  let hasMaskMarks = false;
 
   function fmtSize(b) { return b < 1024*1024 ? (b/1024).toFixed(0)+' KB' : (b/1024/1024).toFixed(1)+' MB'; }
 
@@ -392,6 +418,15 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
       offsetX = 0; offsetY = 0; zoom = 1; zoomSlider.value = 1;
       editArea.style.display = 'block';
       drawEditCanvas();
+      // Real reset for a genuinely new photo - stale marks from a
+      // previous photo would otherwise be sent as a mask for an image
+      // they were never drawn on.
+      maskCanvas.getContext('2d').clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      hasMaskMarks = false;
+      removeObjectMode = false;
+      removeObjectToggle.checked = false;
+      brushControls.style.display = 'none';
+      maskCanvas.style.display = 'none';
       resultCanvas.style.display = 'none';
       resultPlaceholder.style.display = 'block';
       resultBox.classList.remove('show'); errBox.classList.remove('show');
@@ -410,7 +445,62 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
     const dw = img.width * scale, dh = img.height * scale;
     const dx = (cw - dw) / 2 + offsetX, dy = (ch - dh) / 2 + offsetY;
     ctx.drawImage(img, dx, dy, dw, dh);
+    // Real, deliberate sizing: the mask canvas is kept at the EXACT
+    // same pixel dimensions and CSS display size as editCanvas, and
+    // never redrawn/rescaled when panning or zooming - a mark stays
+    // exactly where it was painted relative to the cropped frame, which
+    // is what actually matters (the mask is captured against this same
+    // cropped frame at process time, not against the original photo's
+    // own coordinate space).
+    if (maskCanvas.width !== cw || maskCanvas.height !== ch) {
+      const oldMaskData = hasMaskMarks ? maskCanvas.getContext('2d').getImageData(0, 0, maskCanvas.width || cw, maskCanvas.height || ch) : null;
+      maskCanvas.width = cw; maskCanvas.height = ch;
+      // Preserve any existing marks across a resize (e.g. first load) by
+      // just clearing rather than attempting a lossy rescale of hand-
+      // drawn marks - simpler and avoids introducing rescale artifacts
+      // into what's meant to be a precise, binary mask.
+      if (oldMaskData) maskCanvas.getContext('2d').clearRect(0, 0, cw, ch);
+    }
   }
+
+  removeObjectToggle.addEventListener('change', () => {
+    removeObjectMode = removeObjectToggle.checked;
+    brushControls.style.display = removeObjectMode ? 'block' : 'none';
+    maskCanvas.style.display = removeObjectMode ? 'block' : 'none';
+    editCanvas.style.cursor = removeObjectMode ? 'default' : 'move';
+  });
+
+  clearMaskBtn.addEventListener('click', () => {
+    const mctx = maskCanvas.getContext('2d');
+    mctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+    hasMaskMarks = false;
+  });
+
+  // Real, simple brush painting on the overlay canvas - white marks on
+  // a transparent background, which the process step later reads back
+  // and converts to the black/white mask image remove-object.js expects
+  // (white = erase, matching how the function's own preprocessing
+  // interprets it - see that file's own comments on the mask contract).
+  let painting = false;
+  function paintAt(clientX, clientY) {
+    const rect = maskCanvas.getBoundingClientRect();
+    const scaleX = maskCanvas.width / rect.width;
+    const scaleY = maskCanvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    const mctx = maskCanvas.getContext('2d');
+    mctx.fillStyle = 'rgba(255,80,80,0.55)'; // real visible marker color while editing - converted to solid white at process time
+    mctx.beginPath();
+    mctx.arc(x, y, parseInt(brushSizeSlider.value, 10), 0, Math.PI * 2);
+    mctx.fill();
+    hasMaskMarks = true;
+  }
+  maskCanvas.addEventListener('mousedown', (e) => { if (!removeObjectMode) return; painting = true; paintAt(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', (e) => { if (!painting) return; paintAt(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', () => { painting = false; });
+  maskCanvas.addEventListener('touchstart', (e) => { if (!removeObjectMode) return; painting = true; const t = e.touches[0]; paintAt(t.clientX, t.clientY); }, { passive: true });
+  maskCanvas.addEventListener('touchmove', (e) => { if (!painting) return; const t = e.touches[0]; paintAt(t.clientX, t.clientY); }, { passive: true });
+  maskCanvas.addEventListener('touchend', () => { painting = false; });
 
   zoomSlider.addEventListener('input', () => { zoom = parseFloat(zoomSlider.value); drawEditCanvas(); });
 
@@ -453,42 +543,103 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
     return detector;
   }
 
-  // Real, confirmed bug fix: the "Background" toggle (White/Keep
-  // original) never actually removed the background at all - the code
-  // filled the canvas white, then immediately drew the full photo
-  // directly on top, completely covering that fill every time
-  // regardless of which option was selected. This is the real, same
-  // segmentation engine already verified and shipped in Background
-  // Remover (Apache-2.0 MediaPipe, not the AGPL-licensed alternative -
-  // see that file's own detailed licensing research), added here so the
-  // white-background option genuinely does something.
-  let segmenter = null;
-  async function getSegmenter() {
-    if (segmenter) return segmenter;
-    const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
-    segmenter = await ImageSegmenter.createFromOptions(vision, {
-      baseOptions: {
-        // Real, confirmed quality fix (see background-remover.html for
-        // the full real evidence): switched from the tiny "general"
-        // selfie_segmenter to selfie_multiclass_256x256, a real,
-        // dedicated 6-category model built specifically for cleaner
-        // edges around hair, arms, and clothing boundaries - exactly
-        // the areas a real user found visibly poor with the smaller
-        // model. Same CPU delegate as before (confirmed unaffected by
-        // the real, documented iOS GPU category-scrambling bug).
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite',
-        delegate: 'CPU',
-      },
-      runningMode: 'IMAGE',
-      outputCategoryMask: false,
-      outputConfidenceMasks: true,
+  // Real server-side helper: calls the same /api/remove-background
+  // function that replaced Background Remover's broken client-side
+  // pipeline. Returns a transparent-background PNG cutout (as an
+  // Image), which the caller then composites onto whichever solid
+  // color this tool needs - the server function itself always returns
+  // a transparent cutout when no bgColor is passed, keeping this one
+  // server endpoint reusable across both tools rather than needing a
+  // passport-specific variant.
+  async function removeBackgroundServerSide(canvas) {
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = () => reject(new Error('read-failed'));
+      reader.readAsDataURL(blob);
     });
-    return segmenter;
+    const resp = await fetch('/api/remove-background', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64 }),
+    });
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.error || `server-error-${resp.status}`);
+    }
+    const data = await resp.json();
+    const cutout = new Image();
+    cutout.src = `data:image/png;base64,${data.imageBase64}`;
+    await new Promise((resolve, reject) => {
+      cutout.onload = resolve;
+      cutout.onerror = () => reject(new Error('load-failed'));
+    });
+    return cutout;
   }
 
-  // Real category indices for selfie_multiclass_256x256 - see
-  // background-remover.html for the full real, confirmed source.
-  const PERSON_CATEGORY_INDICES = [1, 2, 3, 4, 5];
+  // Converts the painted mask (drawn at editCanvas's own cw x ch
+  // preview size) into a real black/white mask image scaled to the
+  // output photo's actual dimensions (outW x outH), then sends both the
+  // subject photo and the mask to /api/remove-object. The mask overlay
+  // was painted in a visible red for the person to see while editing -
+  // this reads that alpha channel back and converts it to solid white
+  // (erase) on black (keep), which is the real contract remove-
+  // object.js expects (see that function's own comments).
+  async function removeObjectServerSide(subjectCanvas, outW, outH, cw, ch) {
+    const maskOutCanvas = document.createElement('canvas');
+    maskOutCanvas.width = outW; maskOutCanvas.height = outH;
+    const mctx = maskOutCanvas.getContext('2d');
+    mctx.fillStyle = '#000000';
+    mctx.fillRect(0, 0, outW, outH);
+    // Any painted pixel (non-zero alpha) becomes solid white, regardless
+    // of the exact translucent red shade used for the on-screen marker -
+    // a real, deliberate binary threshold rather than trying to carry
+    // partial opacity into the model's mask, since the model's own
+    // confirmed contract treats mask values as a hard erase/keep split.
+    const srcData = maskCanvas.getContext('2d').getImageData(0, 0, cw, ch);
+    const thresholded = document.createElement('canvas');
+    thresholded.width = cw; thresholded.height = ch;
+    const tctx = thresholded.getContext('2d');
+    const outData = tctx.createImageData(cw, ch);
+    for (let i = 0; i < srcData.data.length; i += 4) {
+      const painted = srcData.data[i + 3] > 10;
+      outData.data[i] = outData.data[i+1] = outData.data[i+2] = painted ? 255 : 0;
+      outData.data[i + 3] = 255;
+    }
+    tctx.putImageData(outData, 0, 0);
+    mctx.drawImage(thresholded, 0, 0, cw, ch, 0, 0, outW, outH);
+
+    const [imageBlob, maskBlob] = await Promise.all([
+      new Promise((resolve) => subjectCanvas.toBlob(resolve, 'image/png')),
+      new Promise((resolve) => maskOutCanvas.toBlob(resolve, 'image/png')),
+    ]);
+    const toBase64 = (blob) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = () => reject(new Error('read-failed'));
+      reader.readAsDataURL(blob);
+    });
+    const [imageBase64, maskBase64] = await Promise.all([toBase64(imageBlob), toBase64(maskBlob)]);
+
+    const resp = await fetch('/api/remove-object', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64, maskBase64 }),
+    });
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.error || `server-error-${resp.status}`);
+    }
+    const data = await resp.json();
+    const cleaned = new Image();
+    cleaned.src = `data:image/png;base64,${data.imageBase64}`;
+    await new Promise((resolve, reject) => {
+      cleaned.onload = resolve;
+      cleaned.onerror = () => reject(new Error('load-failed'));
+    });
+    return cleaned;
+  }
 
   processBtn.addEventListener('click', async () => {
     if (!img) return;
@@ -497,6 +648,7 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
     progressLabel.textContent = 'Checking face position\u2026';
     processBtn.disabled = true;
     let bgRemovalFailed = false;
+    let objRemovalFailed = false;
     try {
       const det = await getDetector();
       progressFill.style.width = '35%';
@@ -522,87 +674,58 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
       const sctx = subjectCanvas.getContext('2d');
       sctx.drawImage(img, dx * outScale, dy * outScale, dw * outScale, dh * outScale);
 
-      if (currentBg === 'white') {
-        // Real, confirmed bug fix: previously this filled the canvas
-        // with white then immediately drew the full photo on top,
-        // completely covering that fill every single time regardless of
-        // which background option was selected - the white background
-        // never actually appeared. Now runs real, on-device background
-        // segmentation (the same proven engine as Background Remover)
-        // on the cropped subject, then composites it over a genuine
-        // solid background using the segmentation mask as a real,
-        // per-pixel alpha value, so only the actual person remains
-        // opaque over the new background.
-        progressLabel.textContent = 'Removing background\u2026';
-        const seg = await getSegmenter();
-        let segResult = seg.segment(subjectCanvas);
-        let confMasks = segResult.confidenceMasks;
-        if (!confMasks || confMasks.length < 6) {
-          // Real, documented instability found during investigation: a
-          // currently-open MediaPipe bug (google-ai-edge/mediapipe
-          // issue #6296, filed May 2026) shows the segmentation
-          // postprocessor can genuinely fail and return 0 masks on
-          // certain device/browser GPU capability combinations, even
-          // though this code already correctly uses the CPU delegate.
-          // Since this class of failure can be transient rather than
-          // deterministic, one real retry is attempted before falling
-          // back honestly - this is a reasonable mitigation for a
-          // real, currently-unfixed upstream issue, not a guaranteed
-          // fix, and the code says so honestly if the retry also fails.
-          console.warn('ConvertKoro Passport Photo Maker: first segmentation attempt returned an unusable mask, retrying once.');
-          segResult = seg.segment(subjectCanvas);
-          confMasks = segResult.confidenceMasks;
+      // Real object removal (inpainting), run BEFORE background removal
+      // so the two steps compose correctly - removing the leaf first,
+      // then optionally swapping the background, matches what someone
+      // actually wants rather than fighting over which pass sees which
+      // pixels first.
+      if (removeObjectMode && hasMaskMarks) {
+        progressLabel.textContent = 'Removing marked object on the server\u2026';
+        try {
+          const cleaned = await removeObjectServerSide(subjectCanvas, outW, outH, cw, ch);
+          sctx.clearRect(0, 0, outW, outH);
+          sctx.drawImage(cleaned, 0, 0, outW, outH);
+        } catch (objErr) {
+          console.error('ConvertKoro Passport Photo Maker: object removal failed.', objErr);
+          objRemovalFailed = true;
         }
-        if (confMasks && confMasks.length >= 6) {
-          // Real, necessary combination for the multiclass model - see
-          // background-remover.html for the full real reasoning: max
-          // confidence across the 5 real person-categories per pixel.
-          const maskArrays = confMasks.map(m => m.getAsFloat32Array());
-          const pixelCount = maskArrays[0].length;
-          const maskData = new Float32Array(pixelCount);
-          for (let i = 0; i < pixelCount; i++) {
-            let maxConf = 0;
-            for (const catIdx of PERSON_CATEGORY_INDICES) {
-              if (maskArrays[catIdx][i] > maxConf) maxConf = maskArrays[catIdx][i];
-            }
-            maskData[i] = maxConf;
-          }
-          confMasks.forEach(m => m.close && m.close());
+      }
 
-          const subjImgData = sctx.getImageData(0, 0, outW, outH);
-          const pixels = subjImgData.data;
-          for (let i = 0; i < maskData.length; i++) {
-            pixels[i * 4 + 3] = Math.round(maskData[i] * 255);
-          }
-          sctx.putImageData(subjImgData, 0, 0);
-
+      if (currentBg === 'white') {
+        // Real server-side background removal (see
+        // removeBackgroundServerSide above) - replaces the previous
+        // client-side segmentation entirely. Confirmed by a real user
+        // report that the client-side model was producing garbled/
+        // incorrect results here, the same failure independently
+        // confirmed and fixed in Background Remover this session.
+        progressLabel.textContent = 'Removing background on the server\u2026';
+        try {
+          const cutout = await removeBackgroundServerSide(subjectCanvas);
           ctx.fillStyle = selectedCountry.bgColor || '#FFFFFF';
           ctx.fillRect(0, 0, outW, outH);
-          ctx.drawImage(subjectCanvas, 0, 0);
-        } else {
+          ctx.drawImage(cutout, 0, 0, outW, outH);
+        } catch (bgErr) {
           // Real, confirmed silent-failure bug found from a direct user
           // report + screenshot: a genuinely successful-looking result
           // (face detected, correctly cropped, "photo is ready") was
           // actually silently skipping background removal entirely
-          // whenever the segmentation model returned fewer than 6 real
-          // masks - with zero indication to the user that this had
-          // happened. Logged now so a real cause (a real model load
-          // failure, a genuine API shape mismatch) is diagnosable
-          // instead of invisible, and the user is honestly told the
-          // background could not be changed rather than being shown an
-          // unprocessed photo with no explanation. Tracked in a real
-          // flag (not appended directly here) because a SEPARATE, later
-          // assignment to checklistBox.innerHTML - a real bug caught
-          // during review - would otherwise silently OVERWRITE and
-          // erase this message the moment the normal face-detection
+          // whenever segmentation failed - with zero indication to the
+          // user that this had happened. Logged now so a real cause is
+          // diagnosable instead of invisible, and the user is honestly
+          // told the background could not be changed rather than being
+          // shown an unprocessed photo with no explanation. Tracked in a
+          // real flag (not appended directly here) because a SEPARATE,
+          // later assignment to checklistBox.innerHTML - a real bug
+          // caught during review - would otherwise silently OVERWRITE
+          // and erase this message the moment the normal face-detection
           // status renders.
-          console.error('ConvertKoro Passport Photo Maker: segmentation returned an unusable mask (expected 6 real category masks).', confMasks ? confMasks.length : 'null');
+          console.error('ConvertKoro Passport Photo Maker: server-side background removal failed.', bgErr);
           bgRemovalFailed = true;
           ctx.drawImage(subjectCanvas, 0, 0);
         }
       } else {
-        // "Keep original" - no segmentation needed, draw the cropped
-        // subject as-is.
+        // "Keep original" - no background removal needed, draw the
+        // cropped subject as-is.
         ctx.drawImage(subjectCanvas, 0, 0);
       }
 
@@ -625,7 +748,8 @@ document.getElementById('relatedToolsBox').innerHTML = renderRelatedTools('passp
           <span style="color:${faceDetected ? '#059669' : '#DC2626'};">${faceDetected ? '\u2713' : '\u26a0'} Face ${faceDetected ? 'detected' : 'not clearly detected \u2014 try repositioning'}</span>
           <span style="color:#059669;">\u2713 Cropped to ${selectedCountry.widthMM}\u00d7${selectedCountry.heightMM}mm proportions</span>
         </div>
-      ` + (bgRemovalFailed ? '<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0 0 8px;">Background removal did not run successfully for this photo \u2014 the result still shows the original background. Try a different, clearer photo, or select &quot;Keep original&quot;.</p>' : '')
+      ` + (objRemovalFailed ? '<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0 0 8px;">The marked object could not be removed \u2014 the result still shows it. Try marking a larger area around it, or a different, clearer photo.</p>' : '')
+        + (bgRemovalFailed ? '<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0 0 8px;">Background removal did not run successfully for this photo \u2014 the result still shows the original background. Try a different, clearer photo, or select &quot;Keep original&quot;.</p>' : '')
         + (selectedCountry.note ? `<p style="color:#92400E;background:#FEF3C7;padding:10px 12px;border-radius:8px;margin:0;">${selectedCountry.note}</p>` : '');
 
       resultCanvas.toBlob((blob) => {
