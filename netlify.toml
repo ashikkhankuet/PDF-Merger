@@ -28,6 +28,25 @@
 [build.environment]
   npm_config_onnxruntime_node_install_cuda = "skip"
 
+# REAL, REQUIRED FIX for a confirmed production deploy failure ("The
+# function exceeds the maximum size of 250 MB", from a real Netlify
+# deploy log). package.json's own postinstall script already runs
+# scripts/prune-onnxruntime-platforms.js after npm install - but a real,
+# documented Netlify caching bug (netlify/build-image#523) can skip
+# preinstall/postinstall scripts entirely on builds where Netlify's
+# cache restores node_modules/ directly instead of running a fresh
+# install. An explicit [build] command is the one mechanism confirmed,
+# from Netlify's own official docs, to always run - "onBuild: runs
+# directly after the build command is executed and before Functions
+# bundling" - so the prune step is guaranteed to happen before Netlify
+# packages any function, regardless of what caching did or didn't
+# trigger for node_modules. Running the same script twice (postinstall
+# AND here) is harmless - the script is idempotent (pruned folders are
+# simply already gone the second time) - so this is a real safety net,
+# not a redundant risk.
+[build]
+  command = "node scripts/prune-onnxruntime-platforms.js"
+
 [functions]
   directory = "netlify/functions"
   # REAL, CRITICAL FIX: ffmpeg-static's actual payload is a downloaded
