@@ -83,6 +83,20 @@
   # confirmed to match the file's independently documented hash.
   included_files = ["netlify/functions/models/*.onnx"]
 
+
+# AI inference is intentionally isolated to these functions. ConvertKoro is on
+# Netlify Pro, so these functions receive extra memory/vCPU without changing
+# any unrelated function. This prevents large ONNX model loading/inference
+# from competing inside the 1GB default allocation.
+[functions."remove-background"]
+  memory = "2gb"
+
+[functions."remove-object"]
+  memory = "4gb"
+
+[functions."setup-inpaint-model-background"]
+  memory = "2gb"
+
 # Real, confirmed fix for a real, widespread, persistent bug class:
 # ffmpeg.wasm's SharedArrayBuffer-dependent features (used even by the
 # single-threaded core's real internal machinery) require the page to be

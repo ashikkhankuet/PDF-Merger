@@ -30,7 +30,6 @@
   gtag('config', 'G-RHH2X3HHZ6');
 </script>
 <script src="ffmpeg-tools.js"></script>
-<script src="media-server-pipeline.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Audio Compressor","description":"Shrink an audio file's size with a bitrate slider, entirely in your browser.","url":"https://convertkoro.com/audio-compressor","applicationCategory":"UtilityApplication","operatingSystem":"Any (runs in browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isAccessibleForFree":true}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why is the output always MP3?","acceptedAnswer":{"@type":"Answer","text":"MP3 at a lower bitrate is what actually shrinks the file &mdash; WAV can't be compressed this way since it's uncompressed by design."}},{"@type":"Question","name":"What bitrate should I pick?","acceptedAnswer":{"@type":"Answer","text":"96 kbps is a solid balance for speech and podcasts. For music, 128&ndash;192 kbps keeps more detail at a larger size."}},{"@type":"Question","name":"Does this work on Mac, Windows, or my phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — it runs in any modern browser on Mac, Windows, Chromebook, iPhone, or Android. No app or software to install."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://convertkoro.com/"},{"@type":"ListItem","position":2,"name":"Audio Compressor","item":"https://convertkoro.com/audio-compressor"}]}</script>
@@ -56,7 +55,7 @@
       <div class="dropzone" id="dropzone">
         <svg class="upload-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <strong>Drop an audio file here</strong>
-        <div class="hint">MP3, WAV, M4A, OGG, FLAC, AAC, WMA &middot; processed on our server, deleted afterward</div>
+        <div class="hint">MP3, WAV, M4A, OGG, FLAC, AAC, WMA &middot; stays on your device</div>
         <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.mpeg,.mpga,.aac,.wma" hidden />
       </div>
       <div class="file-list" id="fileList"></div>
@@ -179,60 +178,26 @@
 
   compressBtn.addEventListener('click', async () => {
     errBox.classList.remove('show'); resultBox.classList.remove('show');
-    progressWrap.classList.add('show'); progressFill.style.width = '2%';
-    progressLabel.textContent = 'Uploading\u2026';
-    compressBtn.disabled = true;
-    const kbps = parseInt(brSlider.value);
-    const baseName = file.name.replace(/\.[^.]+$/, '');
-
+    progressWrap.classList.add('show'); progressFill.style.width = '5%';
+    progressLabel.textContent = 'Preparing media engine…'; compressBtn.disabled = true;
+    const kbps=parseInt(brSlider.value), baseName=file.name.replace(/\.[^.]+$/,'');
     try {
-      const blob = await ckProcessMediaServerSide(file, 'audio-compress', { kbps }, (pct, label) => {
-        progressFill.style.width = `${pct}%`;
-        progressLabel.textContent = label;
-      });
-      finishCompress(blob, baseName);
-    } catch (serverErr) {
-      console.warn('ConvertKoro Audio Compressor: server-side processing failed, falling back to in-browser engine.', serverErr);
-      try {
-        progressLabel.textContent = 'Server unavailable \u2014 falling back to your browser\u2019s own engine\u2026';
-        // Rebuilt on ffmpeg.wasm, replacing the previous
-        // AudioContext.decodeAudioData() + lamejs pipeline entirely - a
-        // real, confirmed bug traced directly from a user-supplied file
-        // pair: the compressed file was a structurally valid MP3 that
-        // was 94% zero-bytes (genuine digital silence), traced to an
-        // embedded ID3 album-art stream the native decoder mishandled
-        // (matches W3C bug 21520). Kept as the fallback path here.
-        const compat = ckMediaCompatibility(file);
-        if (!compat.ok) throw new Error(compat.message);
-        const ffmpeg = await ckGetFFmpeg((ratio) => {
-          progressFill.style.width = `${20 + ratio * 70}%`;
-        });
-        progressFill.style.width = '20%';
-        const ext = ckExt(file.name) || 'mp3';
-        const inName = 'input.' + ext;
-        await ffmpeg.writeFile(inName, await ckFetchFile(file));
-        await ffmpeg.exec(['-i', inName, '-vn', '-acodec', 'libmp3lame', '-b:a', `${kbps}k`, 'output.mp3']);
-        let data;
-        try {
-          data = await ffmpeg.readFile('output.mp3');
-        } catch (readErr) {
-          throw new Error('encode-failed');
-        }
-        if (!data || data.length === 0) throw new Error('empty-output');
-        const blob = new Blob([data.buffer], { type: 'audio/mp3' });
-        finishCompress(blob, baseName, true);
-      } catch (clientErr) {
-        progressWrap.classList.remove('show');
-        const knownMessages = {
-          'encode-failed': 'Couldn\u2019t find playable audio in this file \u2014 it may be corrupted or contain no audio track.',
-          'empty-output': 'The encoder produced an empty file for this audio \u2014 please try again, or try a different bitrate.',
-        };
-        errText.textContent = knownMessages[clientErr.message] || `Couldn\u2019t process this audio file (${clientErr.message || 'unknown error'}) \u2014 try a smaller file or a different format.`;
-        console.error('ConvertKoro Audio Compressor: both server and in-browser processing failed.', clientErr);
-        errBox.classList.add('show');
-      }
+      const compat=ckMediaCompatibility(file); if(!compat.ok) throw new Error(compat.message);
+      const ffmpeg=await ckGetFFmpeg(ratio=>{progressFill.style.width=`${20+ratio*70}%`;});
+      progressFill.style.width='20%'; progressLabel.textContent='Compressing…';
+      const ext=ckExt(file.name)||'mp3', inName='input.'+ext;
+      await ffmpeg.writeFile(inName,await ckFetchFile(file));
+      await ffmpeg.exec(['-i',inName,'-vn','-acodec','libmp3lame','-b:a',`${kbps}k`,'output.mp3']);
+      const data=await ffmpeg.readFile('output.mp3'); if(!data||!data.length) throw new Error('empty-output');
+      finishCompress(new Blob([data.buffer],{type:'audio/mpeg'}),baseName,false);
+      try{await ffmpeg.deleteFile(inName);await ffmpeg.deleteFile('output.mp3');}catch(_e){}
+    } catch(err) {
+      progressWrap.classList.remove('show');
+      const known={'empty-output':'The encoder produced an empty file — please try another bitrate or file.','encode-failed':'Couldn’t find playable audio in this file.'};
+      errText.textContent=known[err.message]||`Couldn’t process this audio file (${err.message||'unknown error'}) — try a smaller file or a different format.`;
+      console.error('ConvertKoro Audio Compressor:',err);errBox.classList.add('show');
     }
-    compressBtn.disabled = false;
+    compressBtn.disabled=false;
   });
 
   function finishCompress(blob, baseName, wasFallback) {
