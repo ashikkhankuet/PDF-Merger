@@ -32,21 +32,21 @@ exports.handler = async (event) => {
     if (!status) {
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, max-age=0' },
         body: JSON.stringify({ status: 'not-started', message: 'No setup has been triggered yet - call /api/setup-inpaint-model first.' }),
       };
     }
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, max-age=0' },
       body: JSON.stringify(status),
     };
   } catch (err) {
     console.error('setup-inpaint-model-status error:', err);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, max-age=0' },
       body: JSON.stringify({ error: err && err.message ? err.message : 'Unknown error checking model setup status' }),
     };
   }

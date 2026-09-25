@@ -37,6 +37,7 @@ const fs = require('fs');
 const BLOBS_SITE_ID = '3471490a-08e9-48b0-af64-6b1e0171be73';
 const MODEL_INPUT_SIZE = 512; // LaMa's fixed real input resolution, confirmed from its own published I/O contract
 const EXPECTED_SIZE = 208044816;
+const EXPECTED_SHA256 = '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6';
 
 function getBlobsStore(name) {
   return getStore({
@@ -55,19 +56,28 @@ let sessionPromise = null;
 
 async function getSession(event) {
   if (sessionPromise) return sessionPromise;
-
   if (!modelTmpPath || !fs.existsSync(modelTmpPath)) {
     connectLambda(event);
     const modelStore = getBlobsStore('ai-models');
-    const modelBuf = await modelStore.get('lama_fp32.onnx', { type: 'arrayBuffer' });
-    if (!modelBuf || modelBuf.byteLength !== EXPECTED_SIZE) {
-      throw new Error('The inpainting model isn\u2019t set up yet - run the one-time setup at /api/setup-inpaint-model first');
+    const metaStore = getBlobsStore('ai-model-meta');
+    const meta = await metaStore.get('lama-v2', { type: 'json' }).catch(() => null);
+    if (!meta || meta.size !== EXPECTED_SIZE || meta.sha256 !== EXPECTED_SHA256 || !meta.totalChunks) {
+      throw new Error('The inpainting model is not set up yet — run the one-time model setup first');
     }
     const dest = path.join(os.tmpdir(), 'lama_fp32.onnx');
-    fs.writeFileSync(dest, Buffer.from(modelBuf));
+    const fd = fs.openSync(dest, 'w');
+    let written = 0;
+    try {
+      for (let i = 0; i < meta.totalChunks; i++) {
+        const key = `lama-v2/chunk-${String(i).padStart(4, '0')}`;
+        const ab = await modelStore.get(key, { type: 'arrayBuffer' });
+        if (!ab) throw new Error(`Inpainting model chunk ${i + 1}/${meta.totalChunks} is missing`);
+        const buf = Buffer.from(ab); fs.writeSync(fd, buf); written += buf.length;
+      }
+    } finally { fs.closeSync(fd); }
+    if (written !== EXPECTED_SIZE) { try { fs.unlinkSync(dest); } catch (_) {} throw new Error(`Inpainting model reconstruction failed (${written}/${EXPECTED_SIZE} bytes)`); }
     modelTmpPath = dest;
   }
-
   sessionPromise = ort.InferenceSession.create(modelTmpPath);
   return sessionPromise;
 }

@@ -28,7 +28,7 @@ exports.handler = async (event) => {
     const siteURL = process.env.URL || `https://${event.headers.host}`;
     const bgResp = await fetch(`${siteURL}/.netlify/functions/setup-inpaint-model-background`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, max-age=0' },
       body: JSON.stringify({}),
     });
     if (bgResp.status !== 202 && bgResp.status !== 200) {
@@ -37,14 +37,14 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, max-age=0' },
       body: JSON.stringify({ ok: true, message: 'Model download started. Poll /api/setup-inpaint-model-status to check progress.' }),
     };
   } catch (err) {
     console.error('setup-inpaint-model-start error:', err);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, max-age=0' },
       body: JSON.stringify({ error: err && err.message ? err.message : 'Unknown error starting model setup' }),
     };
   }
